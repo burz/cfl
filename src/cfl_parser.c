@@ -19,7 +19,7 @@ char* cfl_parse_whitespace(char* start, char* end)
 }
 
 char* cfl_parse_parentheses(
-        cfl_node *node,
+        cfl_node* node,
         cfl_node_parser parser,
         char* start,
         char* end)
@@ -57,7 +57,7 @@ char* cfl_parse_parentheses(
     return start == end_pos ? end_pos + 1 : 0;
 }
 
-char* cfl_parse_bool(cfl_node *node, char* start, char* end)
+char* cfl_parse_bool(cfl_node* node, char* start, char* end)
 {
     if(end - start > 3 && start[0] == 't' && start[1] == 'r' &&
        start[2] == 'u' && start[3] == 'e')
@@ -90,7 +90,7 @@ char* cfl_parse_bool(cfl_node *node, char* start, char* end)
     return 0;
 }
 
-char* cfl_parse_and(cfl_node *node, char* start, char* end)
+char* cfl_parse_and(cfl_node* node, char* start, char* end)
 {
     char* op_pos = start;
 
@@ -124,6 +124,15 @@ char* cfl_parse_and(cfl_node *node, char* start, char* end)
         return 0;
     }
 
+    start = cfl_parse_whitespace(start, op_pos);
+
+    if(start != op_pos)
+    {
+        free(left);
+
+        return 0;
+    }
+
     cfl_node* right = malloc(sizeof(cfl_node));
 
     if(!right)
@@ -150,7 +159,7 @@ char* cfl_parse_and(cfl_node *node, char* start, char* end)
     return start;
 }
 
-char* cfl_parse_or(cfl_node *node, char* start, char* end)
+char* cfl_parse_or(cfl_node* node, char* start, char* end)
 {
     char* op_pos = start;
 
@@ -184,6 +193,15 @@ char* cfl_parse_or(cfl_node *node, char* start, char* end)
         return 0;
     }
 
+    start = cfl_parse_whitespace(start, op_pos);
+
+    if(start != op_pos)
+    {
+        free(left);
+
+        return 0;
+    }
+
     cfl_node* right = malloc(sizeof(cfl_node));
 
     if(!right)
@@ -210,7 +228,7 @@ char* cfl_parse_or(cfl_node *node, char* start, char* end)
     return start;
 }
 
-char* cfl_parse_not(cfl_node *node, char* start, char* end)
+char* cfl_parse_not(cfl_node* node, char* start, char* end)
 {
     if(*(start++) != '!')
         return 0;
@@ -246,7 +264,162 @@ char* cfl_parse_not(cfl_node *node, char* start, char* end)
     return start;
 }
 
-char* cfl_parse_atom(cfl_node *node, char* start, char* end)
+char* cfl_parse_if(cfl_node* node, char* start, char* end)
+{
+    if(end - start < 2 || start[0] != 'i' || start[1] != 'f')
+        return 0;
+
+    start += 2;
+
+    if(start == end)
+        return 0;
+
+    start = cfl_parse_whitespace(start, end);
+
+    char* pos = start;
+    int depth = 1;
+
+    while(pos != end)
+    {
+        if(end - pos > 1 && pos[0] == 'i' && pos[1] == 'f')
+            ++depth;
+        else if(end - pos > 3 && pos[0] == 'e' && pos[1] == 'l' &&
+                pos[2] == 's' && pos[3] == 'e')
+            --depth;
+        else if(end - pos > 3 && depth == 1 &&
+                pos[0] == 't' && pos[1] == 'h' &&
+                pos[2] == 'e' && pos[3] == 'n')
+            break;
+
+        ++pos;
+    }
+
+    if(pos == end || depth != 1)
+        return 0;
+
+    cfl_node* condition = malloc(sizeof(cfl_node));
+
+    if(!condition)
+    {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
+        return 0;
+    }
+
+    start = cfl_parse_expression(condition, start, pos);
+
+    if(!start)
+    {
+        free(condition);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(start, pos);
+
+    if(start != pos)
+    {
+        free(condition);
+
+        return 0;
+    }
+
+    pos += 4;
+    start = pos;
+
+    while(pos != end)
+    {
+        if(end - pos > 1 && pos[0] == 'i' && pos[1] == 'f')
+            ++depth;
+        else if(end - pos > 3 && pos[0] == 'e' && pos[1] == 'l' &&
+                pos[2] == 's' && pos[3] == 'e')
+        {
+            --depth;
+
+            if(depth == 0)
+                break;
+        }
+
+        ++pos;
+    }
+
+    if(pos == end || depth != 0)
+    {
+        free(condition);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(start, pos);
+
+    cfl_node* then_node = malloc(sizeof(cfl_node));
+
+    if(!then_node)
+    {
+        free(condition);
+
+        return 0;
+    }
+
+    start = cfl_parse_expression(then_node, start, pos);
+
+    if(!start)
+    {
+        free(condition);
+        free(then_node);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(start, pos);
+
+    if(start != pos)
+    {
+        free(condition);
+        free(then_node);
+
+        return 0;
+    }
+
+    start += 4;
+
+    start = cfl_parse_whitespace(start, end);
+
+    cfl_node* else_node = malloc(sizeof(cfl_node));
+
+    if(!else_node)
+    {
+        free(condition);
+        free(then_node);
+
+        return 0;
+    }
+
+    start = cfl_parse_expression(else_node, start, end);
+
+    if(!start)
+    {
+        free(condition);
+        free(then_node);
+        free(else_node);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_if(node, condition, then_node, else_node))
+    {
+        free(condition);
+        free(then_node);
+        free(else_node);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
@@ -259,7 +432,7 @@ char* cfl_parse_atom(cfl_node *node, char* start, char* end)
     return result;
 }
 
-char* cfl_parse_factor(cfl_node *node, char* start, char* end)
+char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_and(node, start, end);
 
@@ -269,7 +442,7 @@ char* cfl_parse_factor(cfl_node *node, char* start, char* end)
     return result;
 }
 
-char* cfl_parse_term(cfl_node *node, char* start, char* end)
+char* cfl_parse_term(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_or(node, start, end);
 
@@ -279,14 +452,17 @@ char* cfl_parse_term(cfl_node *node, char* start, char* end)
     return result;
 }
 
-char* cfl_parse_expression(cfl_node *node, char* start, char* end)
+char* cfl_parse_expression(cfl_node* node, char* start, char* end)
 {
-    char* result = cfl_parse_term(node, start, end);
+    char* result = cfl_parse_if(node, start, end);
+
+    if(!result)
+        result = cfl_parse_term(node, start, end);
 
     return result;
 }
 
-int cfl_parse_file(cfl_node *node, char* filename)
+int cfl_parse_file(cfl_node* node, char* filename)
 {
     FILE* f = fopen(filename, "rb");
 
@@ -350,7 +526,7 @@ int cfl_parse_file(cfl_node *node, char* filename)
 
     if(pos != end)
     {
-        fprintf(stderr, "ERROR: Could not parse the file %s\n", filename);
+        fprintf(stderr, "ERROR: Could not parse the entire file %s\n", filename);
 
         return 0;
     }

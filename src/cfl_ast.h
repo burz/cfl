@@ -10,7 +10,8 @@ typedef enum {
     CFL_NODE_VARIABLE,
     CFL_NODE_AND,
     CFL_NODE_OR,
-    CFL_NODE_NOT
+    CFL_NODE_NOT,
+    CFL_NODE_IF
 } cfl_node_type;
 
 typedef struct cfl_node_t {
@@ -25,6 +26,10 @@ int cfl_create_node_variable(cfl_node* node, const char* string);
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_not(cfl_node* node, cfl_node* child);
+int cfl_create_node_if(cfl_node* node,
+                       cfl_node* condition,
+                       cfl_node* then_node,
+                       cfl_node* else_node);
 
 void cfl_delete_node(cfl_node* node);
 

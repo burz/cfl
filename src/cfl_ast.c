@@ -81,6 +81,27 @@ int cfl_create_node_not(cfl_node* node, cfl_node* child)
     return 1;
 }
 
+int cfl_create_node_if(
+        cfl_node* node,
+        cfl_node* condition,
+        cfl_node* then_node,
+        cfl_node* else_node)
+{
+    node->type = CFL_NODE_IF;
+    node->number_of_children = 3;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 3);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = condition;
+    node->children[1] = then_node;
+    node->children[2] = else_node;
+
+    return 1;
+}
+
 void cfl_delete_node(cfl_node* node)
 {
     if(node->data)
@@ -126,6 +147,15 @@ void cfl_print_node_inner(cfl_node* node)
         case CFL_NODE_NOT:
             printf("!(");
             cfl_print_node_inner(node->children[0]);
+            printf(")");
+            break;
+        case CFL_NODE_IF:
+            printf("if (");
+            cfl_print_node_inner(node->children[0]);
+            printf(") then (");
+            cfl_print_node_inner(node->children[1]);
+            printf(") else (");
+            cfl_print_node_inner(node->children[2]);
             printf(")");
             break;
         default:
