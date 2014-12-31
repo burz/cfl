@@ -18,9 +18,48 @@ char* cfl_parse_whitespace(char* start, char* end)
     return result;
 }
 
+char* cfl_parse_parentheses(
+        cfl_node *node,
+        cfl_node_parser parser,
+        char* start,
+        char* end)
+{
+    if(*(start++) != '(')
+        return 0;
+
+    int depth = 1;
+    char* end_pos = start;
+
+    while(end_pos != end)
+    {
+        if(*end_pos == ')')
+        {
+            if(--depth == 0)
+                break;
+        }
+        else if(*end_pos == '(')
+            ++depth;
+
+        ++end_pos;
+    }
+
+    if(end_pos == end)
+        return 0;
+
+    start = cfl_parse_whitespace(start, end_pos);
+    start = (*parser)(node, start, end_pos);
+
+    if(!start)
+        return 0;
+
+    start = cfl_parse_whitespace(start, end_pos);
+
+    return start == end_pos ? end_pos + 1 : 0;
+}
+
 char* cfl_parse_bool(cfl_node *node, char* start, char* end)
 {
-    if(end - start > 4 && start[0] == 't' && start[1] == 'r' &&
+    if(end - start > 3 && start[0] == 't' && start[1] == 'r' &&
        start[2] == 'u' && start[3] == 'e')
     {
         if(!cfl_create_node_bool(node, true))
@@ -33,7 +72,7 @@ char* cfl_parse_bool(cfl_node *node, char* start, char* end)
 
         return start + 4;
     }
-    else if(end - start > 5 && start[0] == 'f' &&
+    else if(end - start > 4 && start[0] == 'f' &&
             start[1] == 'a' && start[2] == 'l' &&
             start[3] == 's' && start[4] == 'e')
     {
@@ -65,6 +104,9 @@ char* cfl_parse_expression(cfl_node *node, char* start, char* end)
     start = cfl_parse_whitespace(start, end);
 
     char* result = cfl_parse_term(node, start, end);
+
+    if(!result)
+        result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
     return result;
 }
