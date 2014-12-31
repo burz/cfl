@@ -1,16 +1,16 @@
 CC = gcc
-CFLAGS = -c -g
+CFLAGS = -c -g -Wall
 
 SRCDIR = src
 
 INCL = -I$(SRCDIR)
 
 FILES = \
-    cfl.o
+	cfl_ast.o
 
 all: cfl
 
-cfl: cfl.o $(FILES)
+cfl: cfl_main.o $(FILES)
 	$(CC) -o cfl $^
 
 clean:
