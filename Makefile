@@ -6,7 +6,8 @@ SRCDIR = src
 INCL = -I$(SRCDIR)
 
 FILES = \
-	cfl_ast.o
+	cfl_ast.o \
+    cfl_parser.o
 
 all: cfl
 

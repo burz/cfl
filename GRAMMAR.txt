@@ -7,9 +7,9 @@ x ::= ( a | b | ... | z )
       | _ | ' )*
 
 v ::=   x
-      | True | False
+      | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
-      | Function x -> e
+      | function x -> e
       | [] | [v, v, ..., v]
 
 e ::=   v
@@ -18,9 +18,9 @@ e ::=   v
       | e + e | e - e | e * e | e / e
       | e = e | e < e
       | e e
-      | If e Then e Else e
-      | Let Rec x x = e In e
-      | e : e | Case e Of [] -> e "|" (x : x) -> e
+      | if e then e else e
+      | let rec x x = e in e
+      | e : e | case e of [] -> e "|" (x : x) -> e
 
 ## Parseable grammar for cfl
 
@@ -31,9 +31,9 @@ x ::= ( a | b | ... | z )
       | _ | ' )*
 
 v ::=   x
-      | True | False
+      | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
-      | Function x -> e
+      | function x -> e
       | [] | [v, v, ..., v]
 
 e ::=   v
@@ -42,8 +42,8 @@ e ::=   v
       | e + e | e - e | e * e | e / e | e % e
       | e = e | e < e | e <= e | e > e | e >= e
       | e e
-      | If e Then e Else e
-      | Let x x ... x = e In e
+      | if e then e else e
+      | let x x ... x = e in e
       | e; e
-      | e : e | Case e Of [] -> e "|" (x : x) -> e
+      | e : e | case e of [] -> e "|" (x : x) -> e
 
