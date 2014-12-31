@@ -108,7 +108,12 @@ char* cfl_parse_and(cfl_node *node, char* start, char* end)
     cfl_node* left = malloc(sizeof(cfl_node));
 
     if(!left)
+    {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
         return 0;
+    }
 
     start = cfl_parse_atom(left, start, op_pos);
 
@@ -123,6 +128,9 @@ char* cfl_parse_and(cfl_node *node, char* start, char* end)
 
     if(!right)
     {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
         free(left);
 
         return 0;
@@ -160,7 +168,12 @@ char* cfl_parse_or(cfl_node *node, char* start, char* end)
     cfl_node* left = malloc(sizeof(cfl_node));
 
     if(!left)
+    {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
         return 0;
+    }
 
     start = cfl_parse_factor(left, start, op_pos);
 
@@ -175,6 +188,9 @@ char* cfl_parse_or(cfl_node *node, char* start, char* end)
 
     if(!right)
     {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
         free(left);
 
         return 0;
@@ -202,7 +218,12 @@ char* cfl_parse_not(cfl_node *node, char* start, char* end)
     cfl_node* child_node = malloc(sizeof(cfl_node));
 
     if(!child_node)
+    {
+        fprintf(stderr, "ERROR: Could not allocate enough "
+                        "space for a child node\n");
+
         return 0;
+    }
 
     start = cfl_parse_atom(child_node, start, end);
 
