@@ -90,23 +90,67 @@ char* cfl_parse_bool(cfl_node *node, char* start, char* end)
     return 0;
 }
 
+char* cfl_parse_not(cfl_node *node, char* start, char* end)
+{
+    if(*(start++) != '!')
+        return 0;
+
+    cfl_node* child_node = malloc(sizeof(cfl_node));
+
+    if(!child_node)
+        return 0;
+
+    start = cfl_parse_atom(child_node, start, end);
+
+    if(!start)
+    {
+        free(child_node);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_not(node, child_node))
+    {
+        cfl_delete_node(child_node);
+
+        free(child_node);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_atom(cfl_node *node, char* start, char* end)
+{
+    char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
+
+    if(!result)
+        result = cfl_parse_not(node, start, end);
+
+    if(!result)
+        result = cfl_parse_bool(node, start, end);
+
+    return result;
+}
+
+char* cfl_parse_factor(cfl_node *node, char* start, char* end)
+{
+    char* result = cfl_parse_atom(node, start, end);
+
+    return result;
+}
+
 char* cfl_parse_term(cfl_node *node, char* start, char* end)
 {
-    start = cfl_parse_whitespace(start, end);
-
-    char* result = cfl_parse_bool(node, start, end);
+    char* result = cfl_parse_factor(node, start, end);
 
     return result;
 }
 
 char* cfl_parse_expression(cfl_node *node, char* start, char* end)
 {
-    start = cfl_parse_whitespace(start, end);
-
     char* result = cfl_parse_term(node, start, end);
-
-    if(!result)
-        result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
     return result;
 }
@@ -156,9 +200,9 @@ int cfl_parse_file(cfl_node *node, char* filename)
     program[size] = 0;
 
     char* end = program + size;
-    char* pos;
+    char* pos = cfl_parse_whitespace(program, end);
 
-    pos = cfl_parse_expression(node, program, end);
+    pos = cfl_parse_expression(node, pos, end);
 
     if(!pos)
     {

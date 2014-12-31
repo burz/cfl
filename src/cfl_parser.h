@@ -10,6 +10,8 @@ char* cfl_parse_parentheses(cfl_node *node, cfl_node_parser parser, char* start,
 
 char* cfl_parse_bool(cfl_node *node, char* start, char* end);
 
+char* cfl_parse_atom(cfl_node *node, char* start, char* end);
+char* cfl_parse_factor(cfl_node *node, char* start, char* end);
 char* cfl_parse_term(cfl_node *node, char* start, char* end);
 char* cfl_parse_expression(cfl_node *node, char* start, char* end);
 

@@ -14,7 +14,6 @@ typedef enum {
 } cfl_node_type;
 
 typedef struct cfl_node_t {
-    int line_number;
     cfl_node_type type;
     int number_of_children;
     void* data;
