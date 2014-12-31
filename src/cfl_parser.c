@@ -90,6 +90,110 @@ char* cfl_parse_bool(cfl_node *node, char* start, char* end)
     return 0;
 }
 
+char* cfl_parse_and(cfl_node *node, char* start, char* end)
+{
+    char* op_pos = start;
+
+    while(op_pos != end)
+    {
+        if(*op_pos == '&' && op_pos[1] == '&')
+            break;
+
+        ++op_pos;
+    }
+
+    if(op_pos == end)
+        return 0;
+
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    start = cfl_parse_atom(left, start, op_pos);
+
+    if(!start)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(op_pos + 2, end);
+    start = cfl_parse_factor(right, start, end);
+
+    if(!start || !cfl_create_node_and(node, left, right))
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_or(cfl_node *node, char* start, char* end)
+{
+    char* op_pos = start;
+
+    while(op_pos != end)
+    {
+        if(*op_pos == '|' && op_pos[1] == '|')
+            break;
+
+        ++op_pos;
+    }
+
+    if(op_pos == end)
+        return 0;
+
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    start = cfl_parse_factor(left, start, op_pos);
+
+    if(!start)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(op_pos + 2, end);
+    start = cfl_parse_term(right, start, end);
+
+    if(!start || !cfl_create_node_or(node, left, right))
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
 char* cfl_parse_not(cfl_node *node, char* start, char* end)
 {
     if(*(start++) != '!')
@@ -136,14 +240,20 @@ char* cfl_parse_atom(cfl_node *node, char* start, char* end)
 
 char* cfl_parse_factor(cfl_node *node, char* start, char* end)
 {
-    char* result = cfl_parse_atom(node, start, end);
+    char* result = cfl_parse_and(node, start, end);
+
+    if(!result)
+        result = cfl_parse_atom(node, start, end);
 
     return result;
 }
 
 char* cfl_parse_term(cfl_node *node, char* start, char* end)
 {
-    char* result = cfl_parse_factor(node, start, end);
+    char* result = cfl_parse_or(node, start, end);
+
+    if(!result)
+        result = cfl_parse_factor(node, start, end);
 
     return result;
 }

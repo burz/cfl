@@ -15,7 +15,7 @@ typedef enum {
 
 typedef struct cfl_node_t {
     cfl_node_type type;
-    int number_of_children;
+    unsigned int number_of_children;
     void* data;
     struct cfl_node_t** children;
 } cfl_node;
@@ -27,5 +27,7 @@ int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_not(cfl_node* node, cfl_node* child);
 
 void cfl_delete_node(cfl_node* node);
+
+void cfl_print_node(cfl_node* node);
 
 #endif
