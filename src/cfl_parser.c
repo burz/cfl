@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define UPPER_CASE_A_CHAR 65
 #define UPPER_CASE_Z_CHAR 90
@@ -94,6 +95,14 @@ char* cfl_parse_variable(cfl_node* node, char* start, char* end)
     }
 
     buffer[length] = 0;
+
+    int i = 0;
+
+    for( ; i < NUMBER_OF_RESERVED_WORDS; ++i)
+    {
+        if(!strcmp(buffer, reserved_words[i]))
+            return 0;
+    }
 
     if(!cfl_create_node_variable(node, buffer))
         return 0;

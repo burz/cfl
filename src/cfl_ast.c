@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+char* reserved_words[] = { "true", "false", "function",
+                           "if", "then", "else" };
+
 int cfl_create_node_variable(cfl_node* node, const char* string)
 {
     node->type = CFL_NODE_VARIABLE;
