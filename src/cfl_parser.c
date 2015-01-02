@@ -227,7 +227,7 @@ char* cfl_parse_and(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_atom(left, start, op_pos);
+    start = cfl_parse_molecule(left, start, op_pos);
 
     if(!start)
     {
@@ -398,6 +398,92 @@ char* cfl_parse_not(cfl_node* node, char* start, char* end)
 
         return 0;
     }
+
+    return start;
+}
+
+char* cfl_parse_application(cfl_node* node, char* start, char* end)
+{
+    cfl_node* function = malloc(sizeof(cfl_node));
+
+    if(!function)
+        return 0;
+
+    start = cfl_parse_atom(function, start, end);
+
+    if(!start)
+    {
+        free(function);
+
+        return 0;
+    }
+
+    int argument_count = 0;
+
+    while(start != end)
+    {
+        char* pos = cfl_parse_whitespace(start, end);
+
+        cfl_node* argument = malloc(sizeof(cfl_node));
+
+        if(!argument)
+        {
+            cfl_delete_node(function);
+            free(function);
+
+            return 0;
+        }
+
+        pos = cfl_parse_atom(argument, pos, end);
+
+        if(!pos)
+        {
+            free(argument);
+
+            break;
+        }
+
+        start = pos;
+
+        cfl_node* new_function = malloc(sizeof(cfl_node));
+
+        if(!new_function)
+        {
+            cfl_delete_node(function);
+            free(function);
+            cfl_delete_node(argument);
+            free(argument);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_application(new_function, function, argument))
+        {
+            cfl_delete_node(function);
+            free(function);
+            cfl_delete_node(argument);
+            free(argument);
+            free(new_function);
+
+            return 0;
+        }
+
+        function = new_function;
+
+        ++argument_count;
+    }
+
+    if(!argument_count)
+    {
+        cfl_delete_node(function);
+        free(function);
+
+        return 0;
+    }
+
+    *node = *function;
+
+    free(function);
 
     return start;
 }
@@ -575,13 +661,23 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
     char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
     if(!result)
-        result = cfl_parse_not(node, start, end);
-
-    if(!result)
         result = cfl_parse_bool(node, start, end);
 
     if(!result)
         result = cfl_parse_variable(node, start, end);
+
+    return result;
+}
+
+char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
+{
+    char* result = cfl_parse_not(node, start, end);
+
+    if(!result)
+        result = cfl_parse_application(node, start, end);
+
+    if(!result)
+        result = cfl_parse_atom(node, start, end);
 
     return result;
 }
@@ -591,7 +687,7 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
     char* result = cfl_parse_and(node, start, end);
 
     if(!result)
-        result = cfl_parse_atom(node, start, end);
+        result = cfl_parse_molecule(node, start, end);
 
     return result;
 }
