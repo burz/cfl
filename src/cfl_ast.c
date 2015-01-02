@@ -7,7 +7,7 @@
 char* reserved_words[] = { "true", "false", "function",
                            "if", "then", "else" };
 
-int cfl_create_node_variable(cfl_node* node, const char* string)
+int cfl_create_node_variable(cfl_node* node, char* string)
 {
     node->type = CFL_NODE_VARIABLE;
     node->number_of_children = 0;
@@ -140,6 +140,67 @@ int cfl_create_node_if(
     return 1;
 }
 
+int cfl_copy_node(cfl_node* target, cfl_node* node)
+{
+    switch(node->type)
+    {
+        case CFL_NODE_VARIABLE:
+            cfl_create_node_variable(target, node->data);
+            break;
+        case CFL_NODE_BOOL:
+            cfl_create_node_bool(target, *((bool*) node->data));
+            break;
+        default:
+            target->type = node->type;
+            target->number_of_children = node->number_of_children;
+            target->data = 0;
+            target->children = malloc(sizeof(cfl_node*) *
+                                      target->number_of_children);
+
+            if(!target->children)
+                return 0;
+
+            int i = 0;
+
+            for( ; i < target->number_of_children; ++i)
+            {
+                cfl_node* child = malloc(sizeof(cfl_node));
+
+                if(!child)
+                {
+                    int j = 0;
+
+                    for( ; j < i; ++j)
+                        free(target->children[j]);
+
+                    free(target->children);
+
+                    return 0;
+                }
+
+                if(!cfl_copy_node(child, node->children[i]))
+                {
+                    free(child);
+
+                    int j = 0;
+
+                    for( ; j < i; ++j)
+                        free(target->children[j]);
+
+                    free(target->children);
+
+                    return 0;
+                }
+
+                target->children[i] = child;
+            }
+
+            break;
+    }
+
+    return 1;
+}
+
 void cfl_delete_node(cfl_node* node)
 {
     if(node->data)
@@ -164,11 +225,11 @@ void cfl_print_node_inner(cfl_node* node)
 {
     switch(node->type)
     {
-        case CFL_NODE_BOOL:
-            printf(*((bool*) node->data) ? "true" : "false");
-            break;
         case CFL_NODE_VARIABLE:
             printf("%s", (char*) node->data);
+            break;
+        case CFL_NODE_BOOL:
+            printf(*((bool*) node->data) ? "true" : "false");
             break;
         case CFL_NODE_FUNCTION:
             printf("function ");

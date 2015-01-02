@@ -26,7 +26,7 @@ typedef struct cfl_node_t {
     struct cfl_node_t** children;
 } cfl_node;
 
-int cfl_create_node_variable(cfl_node* node, const char* string);
+int cfl_create_node_variable(cfl_node* node, char* string);
 int cfl_create_node_bool(cfl_node* node, bool value);
 int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
 
@@ -40,6 +40,8 @@ int cfl_create_node_if(cfl_node* node,
                        cfl_node* condition,
                        cfl_node* then_node,
                        cfl_node* else_node);
+
+int cfl_copy_node(cfl_node* target, cfl_node* node);
 
 void cfl_delete_node(cfl_node* node);
 
