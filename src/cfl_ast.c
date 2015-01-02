@@ -5,7 +5,7 @@
 #include <string.h>
 
 char* reserved_words[] = { "true", "false", "function",
-                           "if", "then", "else" };
+                           "if", "then", "else", "let", "in" };
 
 int cfl_create_node_variable(cfl_node* node, char* string)
 {

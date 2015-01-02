@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define MAX_IDENTIFIER_LENGTH 100
-#define NUMBER_OF_RESERVED_WORDS 6
+#define NUMBER_OF_RESERVED_WORDS 8
 
 extern char* reserved_words[];
 
