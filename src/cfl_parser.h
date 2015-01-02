@@ -8,7 +8,9 @@ typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
 char* cfl_parse_whitespace(char* start, char* end);
 char* cfl_parse_parentheses(cfl_node* node, cfl_node_parser parser, char* start, char* end);
 
+char* cfl_parse_variable(cfl_node* node, char* start, char* end);
 char* cfl_parse_bool(cfl_node* node, char* start, char* end);
+
 char* cfl_parse_and(cfl_node* node, char* start, char* end);
 char* cfl_parse_or(cfl_node* node, char* start, char* end);
 char* cfl_parse_not(cfl_node* node, char* start, char* end);

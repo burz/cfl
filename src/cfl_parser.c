@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define UPPER_CASE_A_CHAR 65
+#define UPPER_CASE_Z_CHAR 90
+#define LOWER_CASE_A_CHAR 97
+#define LOWER_CASE_Z_CHAR 122
+#define APOSTROPHE_CHAR 39
+#define ZERO_CHAR 48
+#define NINE_CHAR 57
+
 char* cfl_parse_whitespace(char* start, char* end)
 {
     char* result = start;
@@ -57,18 +65,48 @@ char* cfl_parse_parentheses(
     return start == end_pos ? end_pos + 1 : 0;
 }
 
+char* cfl_parse_variable(cfl_node* node, char* start, char* end)
+{
+    char buffer[MAX_IDENTIFIER_LENGTH];
+    int length = 0;
+
+    if((*start < UPPER_CASE_A_CHAR || *start > UPPER_CASE_Z_CHAR) &&
+       (*start < LOWER_CASE_A_CHAR || *start > LOWER_CASE_Z_CHAR))
+        return 0;
+
+    while((*start >= UPPER_CASE_A_CHAR && *start <= UPPER_CASE_Z_CHAR) ||
+          (*start >= LOWER_CASE_A_CHAR && *start <= LOWER_CASE_Z_CHAR) ||
+          (*start >= ZERO_CHAR && *start <= NINE_CHAR))
+    {
+        buffer[length] = *start;
+
+        ++length;
+        ++start;
+    }
+
+    while(*start == APOSTROPHE_CHAR)
+    {
+        buffer[length] = '\'';
+
+        ++length;
+        ++start;
+    }
+
+    buffer[length] = 0;
+
+    if(!cfl_create_node_variable(node, buffer))
+        return 0;
+
+    return start;
+}
+
 char* cfl_parse_bool(cfl_node* node, char* start, char* end)
 {
     if(end - start > 3 && start[0] == 't' && start[1] == 'r' &&
        start[2] == 'u' && start[3] == 'e')
     {
         if(!cfl_create_node_bool(node, true))
-        {
-            fprintf(stderr, "ERROR: Could not allocate enough "
-                            "space for a boolean node\n");
-
             return 0;
-        }
 
         return start + 4;
     }
@@ -77,12 +115,7 @@ char* cfl_parse_bool(cfl_node* node, char* start, char* end)
             start[3] == 's' && start[4] == 'e')
     {
         if(!cfl_create_node_bool(node, false))
-        {
-            fprintf(stderr, "ERROR: Could not allocate enough "
-                            "space for a boolean node\n");
-
             return 0;
-        }
 
         return start + 5;
     }
@@ -428,6 +461,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 
     if(!result)
         result = cfl_parse_bool(node, start, end);
+
+    if(!result)
+        result = cfl_parse_variable(node, start, end);
 
     return result;
 }

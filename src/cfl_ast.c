@@ -130,6 +130,8 @@ void cfl_print_node_inner(cfl_node* node)
             printf(*((bool*) node->data) ? "true" : "false");
             break;
         case CFL_NODE_VARIABLE:
+            printf("%s", (char*) node->data);
+            break;
         case CFL_NODE_AND:
             printf("(");
             cfl_print_node_inner(node->children[0]);
