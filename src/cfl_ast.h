@@ -6,8 +6,9 @@
 #define MAX_IDENTIFIER_LENGTH 100
 
 typedef enum {
-    CFL_NODE_BOOL,
     CFL_NODE_VARIABLE,
+    CFL_NODE_BOOL,
+    CFL_NODE_FUNCTION,
     CFL_NODE_AND,
     CFL_NODE_OR,
     CFL_NODE_NOT,
@@ -21,8 +22,10 @@ typedef struct cfl_node_t {
     struct cfl_node_t** children;
 } cfl_node;
 
-int cfl_create_node_bool(cfl_node* node, bool value);
 int cfl_create_node_variable(cfl_node* node, const char* string);
+int cfl_create_node_bool(cfl_node* node, bool value);
+int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
+
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_not(cfl_node* node, cfl_node* child);

@@ -4,6 +4,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+int cfl_create_node_variable(cfl_node* node, const char* string)
+{
+    node->type = CFL_NODE_VARIABLE;
+    node->number_of_children = 0;
+    node->data = malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
+
+    if(!node->data)
+        return 0;
+
+    strncpy(node->data, string, MAX_IDENTIFIER_LENGTH);
+
+    ((char*) node->data)[MAX_IDENTIFIER_LENGTH - 1] = 0;
+
+    return 1;
+}
+
 int cfl_create_node_bool(cfl_node* node, bool value)
 {
     node->type = CFL_NODE_BOOL;
@@ -18,18 +34,18 @@ int cfl_create_node_bool(cfl_node* node, bool value)
     return 1;
 }
 
-int cfl_create_node_variable(cfl_node* node, const char* string)
+int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body)
 {
-    node->type = CFL_NODE_VARIABLE;
-    node->number_of_children = 0;
-    node->data = malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
+    node->type = CFL_NODE_FUNCTION;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
 
-    if(!node->data)
+    if(!node->children)
         return 0;
 
-    strncpy(node->data, string, MAX_IDENTIFIER_LENGTH);
-
-    ((char*) node->data)[MAX_IDENTIFIER_LENGTH - 1] = 0;
+    node->children[0] = argument;
+    node->children[1] = body;
 
     return 1;
 }
@@ -131,6 +147,13 @@ void cfl_print_node_inner(cfl_node* node)
             break;
         case CFL_NODE_VARIABLE:
             printf("%s", (char*) node->data);
+            break;
+        case CFL_NODE_FUNCTION:
+            printf("function ");
+            cfl_print_node_inner(node->children[0]);
+            printf(" -> (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
             break;
         case CFL_NODE_AND:
             printf("(");
