@@ -255,6 +255,297 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
     return start;
 }
 
+static int cfl_less_equal_transform(
+        cfl_node* node,
+        cfl_node* left,
+        cfl_node* right)
+{
+    cfl_node* left_copy = malloc(sizeof(cfl_node));
+
+    if(!left_copy)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_copy_node(left_copy, left))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        free(left_copy);
+
+        return 0;
+    }
+
+    cfl_node* right_copy = malloc(sizeof(cfl_node));
+
+    if(!right_copy)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+
+        return 0;
+    }
+
+    if(!cfl_copy_node(right_copy, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    cfl_node* less = malloc(sizeof(cfl_node));
+
+    if(!less)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_less(less, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+        free(less);
+
+        return 0;
+    }
+
+    cfl_node* equal = malloc(sizeof(cfl_node));
+
+    if(!equal)
+    {
+        cfl_delete_node(less);
+        free(less);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_equal(equal, left_copy, right_copy))
+    {
+        cfl_delete_node(less);
+        free(less);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+        free(equal);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_or(node, less, equal))
+    {
+        cfl_delete_node(less);
+        free(less);
+        cfl_delete_node(equal);
+        free(equal);
+
+        return 0;
+    }
+
+    return 1;
+}
+
+char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_molecule,
+                                       2,
+                                       "<=",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_less_equal_transform(node, left, right))
+        return 0;
+
+    return start;
+}
+
+char* cfl_parse_greater(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_molecule,
+                                       1,
+                                       ">",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    cfl_node* less_equal = malloc(sizeof(cfl_node));
+
+    if(!less_equal)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_less_equal_transform(less_equal, left, right))
+        return 0;
+
+    if(!cfl_create_node_not(node, less_equal))
+    {
+        cfl_delete_node(less_equal);
+        free(less_equal);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_molecule,
+                                       2,
+                                       ">=",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    cfl_node* less = malloc(sizeof(cfl_node));
+
+    if(!less)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_less(less, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        free(less);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_not(node, less))
+    {
+        cfl_delete_node(less);
+        free(less);
+
+        return 0;
+    }
+
+    return start;
+}
+
 struct cfl_argument_chain_node {
     cfl_node* argument;
     struct cfl_argument_chain_node* next;

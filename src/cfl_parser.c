@@ -970,6 +970,15 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
         result = cfl_parse_less(node, start, end);
 
     if(!result)
+        result = cfl_parse_less_equal(node, start, end);
+
+    if(!result)
+        result = cfl_parse_greater(node, start, end);
+
+    if(!result)
+        result = cfl_parse_greater_equal(node, start, end);
+
+    if(!result)
         result = cfl_parse_molecule(node, start, end);
 
     return result;

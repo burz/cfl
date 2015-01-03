@@ -34,6 +34,9 @@ char* cfl_parse_divide(cfl_node* node, char* start, char* end);
 char* cfl_parse_mod(cfl_node* node, char* start, char* end);
 char* cfl_parse_equal(cfl_node* node, char* start, char* end);
 char* cfl_parse_less(cfl_node* node, char* start, char* end);
+char* cfl_parse_less_equal(cfl_node* node, char* start, char* end);
+char* cfl_parse_greater(cfl_node* node, char* start, char* end);
+char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end);
 char* cfl_parse_application(cfl_node* node, char* start, char* end);
 
 char* cfl_parse_let(cfl_node* node, char* start, char* end);
