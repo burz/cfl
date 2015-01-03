@@ -31,6 +31,7 @@ char* cfl_parse_add(cfl_node* node, char* start, char* end);
 char* cfl_parse_subtract(cfl_node* node, char* start, char* end);
 char* cfl_parse_multiply(cfl_node* node, char* start, char* end);
 char* cfl_parse_divide(cfl_node* node, char* start, char* end);
+char* cfl_parse_mod(cfl_node* node, char* start, char* end);
 char* cfl_parse_application(cfl_node* node, char* start, char* end);
 
 char* cfl_parse_let(cfl_node* node, char* start, char* end);

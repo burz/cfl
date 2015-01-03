@@ -671,6 +671,210 @@ char* cfl_parse_divide(cfl_node* node, char* start, char* end)
     return start;
 }
 
+char* cfl_parse_mod(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_factor,
+                                       &cfl_parse_term,
+                                       1,
+                                       "%",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    cfl_node* left_copy = malloc(sizeof(cfl_node));
+
+    if(!left_copy)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_copy_node(left_copy, left))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        free(left_copy);
+
+        return 0;
+    }
+
+    cfl_node* right_copy = malloc(sizeof(cfl_node));
+
+    if(!right_copy)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+
+        return 0;
+    }
+
+    if(!cfl_copy_node(right_copy, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    cfl_node* factor = malloc(sizeof(cfl_node));
+
+    if(!factor)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_divide(factor, left_copy, right_copy))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(left_copy);
+        free(left_copy);
+        cfl_delete_node(right_copy);
+        free(right_copy);
+        free(factor);
+
+        return 0;
+    }
+
+    cfl_node* reduction = malloc(sizeof(cfl_node));
+
+    if(!reduction)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(factor);
+        free(factor);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_multiply(reduction, factor, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+        cfl_delete_node(factor);
+        free(factor);
+        free(reduction);
+
+        return 0;
+    }
+
+    cfl_node* negative = malloc(sizeof(cfl_node));
+
+    if(!negative)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(reduction);
+        free(reduction);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_integer(negative, -1))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(reduction);
+        free(reduction);
+        free(negative);
+
+        return 0;
+    }
+
+    cfl_node* negation = malloc(sizeof(cfl_node));
+
+    if(!negation)
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(reduction);
+        free(reduction);
+        cfl_delete_node(negative);
+        free(negative);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_multiply(negation, negative, reduction))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(reduction);
+        free(reduction);
+        cfl_delete_node(negative);
+        free(negative);
+        free(negation);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_add(node, left, negation))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(negation);
+        free(negation);
+
+        return 0;
+    }
+
+    return start;
+}
+
 char* cfl_parse_application(cfl_node* node, char* start, char* end)
 {
     cfl_node* function = malloc(sizeof(cfl_node));
@@ -1349,6 +1553,9 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 
     if(!result)
         result = cfl_parse_divide(node, start, end);
+
+    if(!result)
+        result = cfl_parse_mod(node, start, end);
 
     if(!result)
         result = cfl_parse_molecule(node, start, end);
