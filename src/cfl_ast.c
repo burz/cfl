@@ -235,6 +235,9 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
         case CFL_NODE_BOOL:
             cfl_create_node_bool(target, *((bool*) node->data));
             break;
+        case CFL_NODE_INTEGER:
+            cfl_create_node_integer(target, *((int*) node->data));
+            break;
         default:
             target->type = node->type;
             target->number_of_children = node->number_of_children;
