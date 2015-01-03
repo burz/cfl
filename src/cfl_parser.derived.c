@@ -4,39 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
+static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* right)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
-
-    if(!left)
-        return 0;
-
-    cfl_node* right = malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
-                                       &cfl_parse_molecule,
-                                       &cfl_parse_factor,
-                                       1,
-                                       "-",
-                                       start,
-                                       end);
-
-    if(!start)
-    {
-        free(left);
-        free(right);
-
-        return 0;
-    }
-
     cfl_node* negative = malloc(sizeof(cfl_node));
 
     if(!negative)
@@ -96,6 +65,45 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 
         return 0;
     }
+
+    return 1;
+}
+
+char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_factor,
+                                       1,
+                                       "-",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_subtraction_transform(node, left, right))
+        return 0;
 
     return start;
 }
@@ -241,65 +249,8 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* negative = malloc(sizeof(cfl_node));
-
-    if(!negative)
-    {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(reduction);
-        free(reduction);
-
+    if(!cfl_subtraction_transform(node, left, reduction))
         return 0;
-    }
-
-    if(!cfl_create_node_integer(negative, -1))
-    {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(reduction);
-        free(reduction);
-        free(negative);
-
-        return 0;
-    }
-
-    cfl_node* negation = malloc(sizeof(cfl_node));
-
-    if(!negation)
-    {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(reduction);
-        free(reduction);
-        cfl_delete_node(negative);
-        free(negative);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_multiply(negation, negative, reduction))
-    {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(reduction);
-        free(reduction);
-        cfl_delete_node(negative);
-        free(negative);
-        free(negation);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_add(node, left, negation))
-    {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(negation);
-        free(negation);
-
-        return 0;
-    }
 
     return start;
 }
