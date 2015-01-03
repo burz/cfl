@@ -134,6 +134,60 @@ void cfl_delete_type(cfl_type* node)
     }
 }
 
+int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
+{
+    return 0;
+}
+
+int cfl_add_equation_from_copies(
+        cfl_type_equation_chain* head,
+        cfl_type* left,
+        cfl_type* right)
+{
+    cfl_type* left_copy = malloc(sizeof(cfl_type));
+
+    if(!left_copy)
+        return 0;
+
+    if(!cfl_copy_type(left_copy, left))
+    {
+        free(left_copy);
+
+        return 0;
+    }
+
+    cfl_type* right_copy = malloc(sizeof(cfl_type));
+
+    if(!right_copy)
+    {
+        cfl_delete_type(left_copy);
+        free(left_copy);
+
+        return 0;
+    }
+
+    if(!cfl_copy_type(right_copy, right))
+    {
+        cfl_delete_type(left_copy);
+        free(left_copy);
+        free(right_copy);
+
+        return 0;
+    }
+
+    int result = cfl_add_equation(head, left_copy, right_copy);
+
+    if(!result)
+    {
+        cfl_delete_type(left_copy);
+        free(left_copy);
+        cfl_delete_type(right_copy);
+        free(right_copy);
+    }
+
+    return result;
+}
+
 cfl_type* cfl_generate_type_equation_chain(
         cfl_type_equation_chain* head,
         cfl_node* node)
@@ -143,16 +197,90 @@ cfl_type* cfl_generate_type_equation_chain(
 
 int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
 {
-    return 0;
+    int changes = 1;
+
+    while(changes)
+    {
+        changes = 0;
+
+        cfl_type_equation_chain* focus = head->next;
+
+        while(focus)
+        {
+            if(focus->left->type == CFL_TYPE_ARROW &&
+               focus->right->type == CFL_TYPE_ARROW)
+            {
+                int result = cfl_add_equation_from_copies(head,
+                                                          focus->left->input,
+                                                          focus->right->input);
+
+                if(!result)
+                    return 0;
+                else if(result > 0)
+                    changes = 1;
+
+                result = cfl_add_equation_from_copies(head,
+                                                      focus->left->output,
+                                                      focus->right->output);
+
+                if(!result)
+                    return 0;
+                else if(result > 0)
+                    changes = 1;
+            }
+
+            cfl_type_equation_chain* pos = head->next;
+
+            while(pos)
+            {
+                if(!cfl_compare_type(focus->right, pos->left))
+                {
+                    int result = cfl_add_equation_from_copies(head,
+                                                              focus->left,
+                                                              pos->right);
+
+                    if(!result)
+                        return 0;
+                    else if(result > 0)
+                        changes = 1;
+                }
+
+                pos = pos->next;
+            }
+
+            focus = focus->next;
+        }
+    }
+
+    return 1;
 }
 
-int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* head)
+int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
 {
-    return 0;
+    for( ; chain; chain = chain->next)
+        if((chain->left->type == CFL_TYPE_BOOL &&
+            chain->right->type == CFL_TYPE_ARROW) ||
+           (chain->left->type == CFL_TYPE_ARROW &&
+            chain->right->type == CFL_TYPE_BOOL))
+            return 0;
+
+    return 1;
 }
 
-void cfl_delete_type_equation_chain(cfl_type_equation_chain* head)
+void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain)
 {
+    while(chain)
+    {
+        cfl_type_equation_chain* temp = chain;
+
+        chain = chain->next;
+
+        cfl_delete_type(temp->left);
+        free(temp->left);
+        cfl_delete_type(temp->right);
+        free(temp->right);
+        free(temp);
+    }
 }
 
 cfl_type* cfl_typecheck(cfl_node* node)
@@ -163,25 +291,31 @@ cfl_type* cfl_typecheck(cfl_node* node)
     cfl_type* result = cfl_generate_type_equation_chain(&chain, node);
 
     if(!result)
+    {
+        cfl_delete_type_equation_chain(chain.next);
+
         return 0;
+    }
 
     if(!cfl_close_type_equation_chain(&chain))
     {
-        cfl_delete_type_equation_chain(&chain);
+        cfl_delete_type_equation_chain(chain.next);
         cfl_delete_type(result);
         free(result);
 
         return 0;
     }
 
-    if(!cfl_ensure_type_equation_chain_consistency(&chain))
+    if(!cfl_ensure_type_equation_chain_consistency(chain.next))
     {
-        cfl_delete_type_equation_chain(&chain);
+        cfl_delete_type_equation_chain(chain.next);
         cfl_delete_type(result);
         free(result);
 
         return 0;
     }
+
+    cfl_delete_type_equation_chain(chain.next);
 
     return result;
 }
