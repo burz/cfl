@@ -136,7 +136,111 @@ void cfl_delete_type(cfl_type* node)
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
 {
-    return 0;
+    int found = 0;
+    int found_reverse = 0;
+
+    cfl_type_equation_chain* pos = head->next;
+
+    while(pos)
+    {
+        if(!cfl_compare_type(left, pos->left) &&
+           !cfl_compare_type(right, pos->right))
+            found = 1;
+
+        if(!cfl_compare_type(right, pos->left) &&
+           !cfl_compare_type(left, pos->right))
+            found_reverse = 1;
+
+        if(found && found_reverse)
+            return -1;
+
+        pos = pos->next;
+    }
+
+    if(!found && !found_reverse)
+    {
+        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+
+        if(!chain_node)
+            return 0;
+
+        chain_node->left = left;
+        chain_node->right = right;
+        chain_node->next = head->next;
+
+        head->next = chain_node;
+
+        chain_node = malloc(sizeof(cfl_type_equation_chain));
+
+        if(!chain_node)
+            return 0;
+
+        chain_node->left = malloc(sizeof(cfl_type));
+
+        if(!chain_node->left)
+            return 0;
+
+        if(!cfl_copy_type(chain_node->left, right))
+        {
+            free(chain_node->left);
+            free(chain_node);
+
+            return 0;
+        }
+
+        chain_node->right = malloc(sizeof(cfl_type));
+
+        if(!chain_node->right)
+        {
+            cfl_delete_type(chain_node->left);
+            free(chain_node->left);
+            free(chain_node);
+
+            return 0;
+        }
+
+        if(!cfl_copy_type(chain_node->right, left))
+        {
+            cfl_delete_type(chain_node->left);
+            free(chain_node->left);
+            free(chain_node->right);
+            free(chain_node);
+
+            return 0;
+        }
+
+        chain_node->next = head->next;
+
+        head->next = chain_node;
+    }
+    else if(!found)
+    {
+        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+
+        if(!chain_node)
+            return 0;
+
+        chain_node->left = left;
+        chain_node->right = right;
+        chain_node->next = head->next;
+
+        head->next = chain_node;
+    }
+    else
+    {
+        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+
+        if(!chain_node)
+            return 0;
+
+        chain_node->left = right;
+        chain_node->right = left;
+        chain_node->next = head->next;
+
+        head->next = chain_node;
+    }
+
+    return 1;
 }
 
 int cfl_add_equation_from_copies(
