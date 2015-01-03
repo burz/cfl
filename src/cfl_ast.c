@@ -162,6 +162,38 @@ int cfl_create_node_divide(cfl_node* node, cfl_node* left, cfl_node* right)
     return 1;
 }
 
+int cfl_create_node_equal(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_EQUAL;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
+int cfl_create_node_less(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_LESS;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
 int cfl_create_node_application(
         cfl_node* node,
         cfl_node* function,
@@ -366,6 +398,20 @@ static void cfl_print_node_inner(cfl_node* node)
             printf("(");
             cfl_print_node_inner(node->children[0]);
             printf(") / (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_EQUAL:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") == (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_LESS:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") < (");
             cfl_print_node_inner(node->children[1]);
             printf(")");
             break;

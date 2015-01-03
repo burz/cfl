@@ -173,6 +173,46 @@ int cfl_evaluate(cfl_node* node)
 
         cfl_create_node_integer(node, result);
     }
+    else if(node->type == CFL_NODE_EQUAL)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_INTEGER ||
+           node->children[1]->type != CFL_NODE_INTEGER)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        bool result = *((int*) node->children[0]->data) ==
+                      *((int*) node->children[1]->data);
+
+        cfl_delete_node(node);
+
+        cfl_create_node_bool(node, result);
+    }
+    else if(node->type == CFL_NODE_LESS)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_INTEGER ||
+           node->children[1]->type != CFL_NODE_INTEGER)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        bool result = *((int*) node->children[0]->data) <
+                      *((int*) node->children[1]->data);
+
+        cfl_delete_node(node);
+
+        cfl_create_node_bool(node, result);
+    }
     else if(node->type == CFL_NODE_APPLICATION)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))

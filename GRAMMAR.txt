@@ -16,7 +16,7 @@ e ::=   v
       | (e)
       | e && e | e "||" e | !e
       | e + e | e * e | e / e
-      | e = e | e < e
+      | e == e | e < e
       | e e
       | if e then e else e
       | let rec x x = e in e
@@ -40,7 +40,7 @@ e ::=   v
       | (e)
       | e && e | e "||" e | !e
       | e + e | e - e | e * e | e / e | e % e
-      | e = e | e < e | e <= e | e > e | e >= e
+      | e == e | e < e | e <= e | e > e | e >= e
       | e e
       | if e then e else e
       | let x x ... x = e in e

@@ -575,6 +575,98 @@ char* cfl_parse_divide(cfl_node* node, char* start, char* end)
     return start;
 }
 
+char* cfl_parse_equal(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_molecule,
+                                       2,
+                                       "==",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_equal(node, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_less(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_molecule,
+                                       1,
+                                       "<",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_less(node, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
 char* cfl_parse_application(cfl_node* node, char* start, char* end)
 {
     cfl_node* function = malloc(sizeof(cfl_node));
@@ -870,6 +962,12 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 
     if(!result)
         result = cfl_parse_mod(node, start, end);
+
+    if(!result)
+        result = cfl_parse_equal(node, start, end);
+
+    if(!result)
+        result = cfl_parse_less(node, start, end);
 
     if(!result)
         result = cfl_parse_molecule(node, start, end);
