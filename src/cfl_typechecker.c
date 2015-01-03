@@ -3,16 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-int cfl_create_type_variable(cfl_type* node, char* name)
+int cfl_create_type_variable(cfl_type* node, unsigned int id)
 {
     node->type = CFL_TYPE_VARIABLE;
-    node->name = malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
-
-    if(!name)
-        return 0;
-
-    strcpy(node->name, name);
-
+    node->id = id;
     node->input = 0;
     node->output = 0;
 
@@ -22,7 +16,7 @@ int cfl_create_type_variable(cfl_type* node, char* name)
 int cfl_create_type_bool(cfl_type* node)
 {
     node->type = CFL_TYPE_BOOL;
-    node->name = 0;
+    node->id = 0;
     node->input = 0;
     node->output = 0;
 
@@ -32,7 +26,7 @@ int cfl_create_type_bool(cfl_type* node)
 int cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output)
 {
     node->type = CFL_TYPE_ARROW;
-    node->name = 0;
+    node->id = 0;
     node->input = input;
     node->output = output;
 
@@ -46,7 +40,7 @@ int cfl_compare_type(cfl_type* left, cfl_type* right)
 
     if(left->type == CFL_TYPE_VARIABLE)
     {
-        if(strcmp(left->name, right->name))
+        if(left->id != right->id)
             return 1;
     }
     else if(left->type == CFL_TYPE_ARROW)
@@ -65,7 +59,7 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
     switch(node->type)
     {
         case CFL_TYPE_VARIABLE:
-            return cfl_create_type_variable(target, node->name);
+            return cfl_create_type_variable(target, node->id);
             break;
         case CFL_TYPE_BOOL:
             return cfl_create_type_bool(target);
@@ -122,9 +116,6 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 
 void cfl_delete_type(cfl_type* node)
 {
-    if(node->name)
-        free(node->name);
-
     if(node->input)
     {
         cfl_delete_type(node->input);
@@ -293,7 +284,8 @@ int cfl_add_equation_from_copies(
 }
 
 cfl_type* cfl_generate_type_equation_chain(
-        cfl_type_equation_chain* head,
+        cfl_type_equation_chain* equation_head,
+        cfl_type_hypothesis_chain* hypothesis_head,
         cfl_node* node)
 {
     return 0;
@@ -392,7 +384,12 @@ cfl_type* cfl_typecheck(cfl_node* node)
     cfl_type_equation_chain chain;
     chain.next = 0;
 
-    cfl_type* result = cfl_generate_type_equation_chain(&chain, node);
+    cfl_type_hypothesis_chain hypotheses;
+    hypotheses.next = 0;
+
+    cfl_type* result = cfl_generate_type_equation_chain(&chain,
+                                                        &hypotheses,
+                                                        node);
 
     if(!result)
     {

@@ -11,12 +11,12 @@ typedef enum {
 
 typedef struct cfl_type_t {
     cfl_type_type type;
-    char* name;
+    unsigned int id;
     struct cfl_type_t* input;
     struct cfl_type_t* output;
 } cfl_type;
 
-int cfl_create_type_variable(cfl_type* node, char* name);
+int cfl_create_type_variable(cfl_type* node, unsigned int id);
 int cfl_create_type_bool(cfl_type* node);
 int cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
 
@@ -36,8 +36,17 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 int cfl_add_equation_from_copies(cfl_type_equation_chain* head,
                                  cfl_type* left,
                                  cfl_type* right);
-cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* head,
+
+typedef struct cfl_type_hypothesis_chain_t {
+    char* name;
+    unsigned int id;
+    struct cfl_type_hypothesis_chain_t* next;
+} cfl_type_hypothesis_chain;
+
+cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* equation_head,
+                                           cfl_type_hypothesis_chain* hypothesis_head,
                                            cfl_node* node);
+
 int cfl_close_type_equation_chain(cfl_type_equation_chain* head);
 int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain);
 
