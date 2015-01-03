@@ -306,6 +306,7 @@ static void cfl_print_node_inner(cfl_node* node)
             printf(") in (");
             cfl_print_node_inner(node->children[3]);
             printf(")");
+            break;
         default:
             break;
     }

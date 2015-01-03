@@ -509,20 +509,26 @@ static void cfl_delete_argument_chain(struct cfl_argument_chain_node* start)
 
 static int cfl_construct_function_chain(
         cfl_node* node,
-        struct cfl_argument_chain_node* chain,
-        cfl_node* body)
+        struct cfl_argument_chain_node* head,
+        cfl_node* body,
+        int is_recursive)
 {
-    while(chain)
+    struct cfl_argument_chain_node* pos = head->next;
+
+    while(pos)
     {
+        if(is_recursive && pos->next == 0)
+            break;
+
         cfl_node* function = malloc(sizeof(cfl_node));
 
         if(!function)
         {
-            while(chain)
+            while(pos)
             {
-                struct cfl_argument_chain_node* temp = chain;
+                struct cfl_argument_chain_node* temp = pos;
 
-                chain = chain->next;
+                pos = pos->next;
 
                 cfl_delete_node(temp->argument);
                 free(temp->argument);
@@ -535,13 +541,13 @@ static int cfl_construct_function_chain(
             return 0;
         }
 
-        if(!cfl_create_node_function(function, chain->argument, body))
+        if(!cfl_create_node_function(function, pos->argument, body))
         {
-            while(chain)
+            while(pos)
             {
-                struct cfl_argument_chain_node* temp = chain;
+                struct cfl_argument_chain_node* temp = pos;
 
-                chain = chain->next;
+                pos = pos->next;
 
                 cfl_delete_node(temp->argument);
                 free(temp->argument);
@@ -557,9 +563,11 @@ static int cfl_construct_function_chain(
 
         body = function;
 
-        struct cfl_argument_chain_node* temp = chain;
+        struct cfl_argument_chain_node* temp = pos;
 
-        chain = chain->next;
+        pos = pos->next;
+
+        head->next = pos;
 
         free(temp);
     }
@@ -569,6 +577,42 @@ static int cfl_construct_function_chain(
     free(body);
 
     return 1;
+}
+
+static int cfl_is_free(char* name, cfl_node* body)
+{
+    int i;
+
+    switch(body->type)
+    {
+        case CFL_NODE_VARIABLE:
+            if(!strcmp(name, body->data))
+                return 1;
+            break;
+        case CFL_NODE_FUNCTION:
+            if(strcmp(name, body->children[0]->data))
+                return cfl_is_free(name, body->children[1]);
+            break;
+        case CFL_NODE_LET_REC:
+            if(strcmp(name, body->children[0]->data))
+            {
+                if(strcmp(name, body->children[1]->data))
+                {
+                    return cfl_is_free(name, body->children[2]) ||
+                           cfl_is_free(name, body->children[3]);
+                }
+                else
+                    return cfl_is_free(name, body->children[3]);
+            }
+            break;
+        default:
+            for(i = 0; i < body->number_of_children; ++i)
+                if(cfl_is_free(name, body->children[i]))
+                    return 1;
+            break;
+    }
+
+    return 0;
 }
 
 char* cfl_parse_let(cfl_node* node, char* start, char* end)
@@ -722,7 +766,10 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    if(!cfl_construct_function_chain(expanded_value, argument_chain.next, value))
+    if(!cfl_construct_function_chain(expanded_value,
+                                     &argument_chain,
+                                     value,
+                                     cfl_is_free(name->data, value)))
     {
         cfl_delete_node(name);
         free(name);
@@ -739,6 +786,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
     {
         cfl_delete_node(name);
         free(name);
+        cfl_delete_argument_chain(argument_chain.next);
         cfl_delete_node(expanded_value);
         free(expanded_value);
 
@@ -751,6 +799,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
     {
         cfl_delete_node(name);
         free(name);
+        cfl_delete_argument_chain(argument_chain.next);
         cfl_delete_node(expanded_value);
         free(expanded_value);
         free(body);
@@ -758,41 +807,68 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* function = malloc(sizeof(cfl_node));
-
-    if(!function)
+    if(!argument_chain.next)
     {
-        cfl_delete_node(name);
-        free(name);
-        cfl_delete_node(expanded_value);
-        free(expanded_value);
-        cfl_delete_node(body);
-        free(body);
+        cfl_node* function = malloc(sizeof(cfl_node));
 
-        return 0;
+        if(!function)
+        {
+            cfl_delete_node(name);
+            free(name);
+            cfl_delete_node(expanded_value);
+            free(expanded_value);
+            cfl_delete_node(body);
+            free(body);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_function(function, name, body))
+        {
+            cfl_delete_node(name);
+            free(name);
+            cfl_delete_node(expanded_value);
+            free(expanded_value);
+            cfl_delete_node(body);
+            free(body);
+            free(function);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_application(node, function, expanded_value))
+        {
+            cfl_delete_node(expanded_value);
+            free(expanded_value);
+            cfl_delete_node(function);
+            free(function);
+
+            return 0;
+        }
     }
-
-    if(!cfl_create_node_function(function, name, body))
+    else
     {
-        cfl_delete_node(name);
-        free(name);
-        cfl_delete_node(expanded_value);
-        free(expanded_value);
-        cfl_delete_node(body);
-        free(body);
-        free(function);
+        cfl_node* argument = argument_chain.next->argument;
 
-        return 0;
-    }
+        free(argument_chain.next);
 
-    if(!cfl_create_node_application(node, function, expanded_value))
-    {
-        cfl_delete_node(expanded_value);
-        free(expanded_value);
-        cfl_delete_node(function);
-        free(function);
+        if(!cfl_create_node_let_rec(node,
+                                    name,
+                                    argument,
+                                    expanded_value,
+                                    body))
+        {
+            cfl_delete_node(name);
+            free(name);
+            cfl_delete_node(argument);
+            free(argument);
+            cfl_delete_node(expanded_value);
+            free(expanded_value);
+            cfl_delete_node(body);
+            free(body);
 
-        return 0;
+            return 0;
+        }
     }
 
     return start;
