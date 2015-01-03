@@ -221,7 +221,7 @@ void cfl_delete_node(cfl_node* node)
     }
 }
 
-void cfl_print_node_inner(cfl_node* node)
+static void cfl_print_node_inner(cfl_node* node)
 {
     switch(node->type)
     {

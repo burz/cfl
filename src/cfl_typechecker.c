@@ -112,7 +112,7 @@ void cfl_delete_type(cfl_type* node)
     }
 }
 
-void cfl_print_type_inner(cfl_type* node)
+static void cfl_print_type_inner(cfl_type* node)
 {
     switch(node->type)
     {

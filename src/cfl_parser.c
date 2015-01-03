@@ -493,7 +493,7 @@ struct cfl_argument_chain_node {
     struct cfl_argument_chain_node* next;
 };
 
-void cfl_delete_argument_chain(struct cfl_argument_chain_node* start)
+static void cfl_delete_argument_chain(struct cfl_argument_chain_node* start)
 {
     while(start)
     {
@@ -507,7 +507,7 @@ void cfl_delete_argument_chain(struct cfl_argument_chain_node* start)
     }
 }
 
-int cfl_construct_function_chain(
+static int cfl_construct_function_chain(
         cfl_node* node,
         struct cfl_argument_chain_node* chain,
         cfl_node* body)
