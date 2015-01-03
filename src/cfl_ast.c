@@ -114,6 +114,54 @@ int cfl_create_node_not(cfl_node* node, cfl_node* child)
     return 1;
 }
 
+int cfl_create_node_add(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_ADD;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
+int cfl_create_node_multiply(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_MULTIPLY;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
+int cfl_create_node_divide(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_DIVIDE;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
 int cfl_create_node_application(
         cfl_node* node,
         cfl_node* function,
@@ -295,6 +343,27 @@ static void cfl_print_node_inner(cfl_node* node)
         case CFL_NODE_NOT:
             printf("!(");
             cfl_print_node_inner(node->children[0]);
+            printf(")");
+            break;
+        case CFL_NODE_ADD:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") + (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_MULTIPLY:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") * (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_DIVIDE:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") / (");
+            cfl_print_node_inner(node->children[1]);
             printf(")");
             break;
         case CFL_NODE_APPLICATION:

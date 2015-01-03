@@ -16,6 +16,9 @@ typedef enum {
     CFL_NODE_AND,
     CFL_NODE_OR,
     CFL_NODE_NOT,
+    CFL_NODE_ADD,
+    CFL_NODE_MULTIPLY,
+    CFL_NODE_DIVIDE,
     CFL_NODE_APPLICATION,
     CFL_NODE_IF,
     CFL_NODE_LET_REC
@@ -36,6 +39,9 @@ int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body)
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_not(cfl_node* node, cfl_node* child);
+int cfl_create_node_add(cfl_node* node, cfl_node* left, cfl_node* right);
+int cfl_create_node_multiply(cfl_node* node, cfl_node* left, cfl_node* right);
+int cfl_create_node_divide(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_application(cfl_node* node,
                                 cfl_node* function,
                                 cfl_node* argument);

@@ -106,6 +106,73 @@ int cfl_evaluate(cfl_node* node)
 
         cfl_create_node_bool(node, result);
     }
+    else if(node->type == CFL_NODE_ADD)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_INTEGER ||
+           node->children[1]->type != CFL_NODE_INTEGER)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        int result = *((int*) node->children[0]->data) +
+                     *((int*) node->children[1]->data);
+
+        cfl_delete_node(node);
+
+        cfl_create_node_integer(node, result);
+    }
+    else if(node->type == CFL_NODE_MULTIPLY)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_INTEGER ||
+           node->children[1]->type != CFL_NODE_INTEGER)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        int result = *((int*) node->children[0]->data) *
+                     *((int*) node->children[1]->data);
+
+        cfl_delete_node(node);
+
+        cfl_create_node_integer(node, result);
+    }
+    else if(node->type == CFL_NODE_DIVIDE)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_INTEGER ||
+           node->children[1]->type != CFL_NODE_INTEGER)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        if(*((int*) node->children[1]->data) == 0)
+        {
+            fprintf(stderr, "ERROR: Division by zero\n");
+
+            return 0;
+        }
+
+        int result = *((int*) node->children[0]->data) /
+                     *((int*) node->children[1]->data);
+
+        cfl_delete_node(node);
+
+        cfl_create_node_integer(node, result);
+    }
     else if(node->type == CFL_NODE_APPLICATION)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))

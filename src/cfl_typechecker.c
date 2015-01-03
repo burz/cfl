@@ -564,6 +564,84 @@ cfl_type* cfl_generate_type_equation_chain(
             cfl_create_type_bool(result);
 
             break;
+        case CFL_NODE_ADD:
+        case CFL_NODE_MULTIPLY:
+        case CFL_NODE_DIVIDE:
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[0]);
+
+            if(!child_type0)
+                break;
+
+            child_type1 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[1]);
+
+            if(!child_type1)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+
+                break;
+            }
+
+            cfl_create_type_integer(temp_type0);
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+
+                break;
+            }
+
+            cfl_create_type_integer(temp_type0);
+
+            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+                break;
+
+            cfl_create_type_integer(result);
+
+            break;
         case CFL_NODE_APPLICATION:
             child_type0 = cfl_generate_type_equation_chain(equation_head,
                                                            hypothesis_head,
