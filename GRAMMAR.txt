@@ -1,4 +1,4 @@
-## Grammar for cfl
+## Evaluation grammar for cfl
 
 x ::= ( a | b | ... | z )
       ( a | b | ... | z
