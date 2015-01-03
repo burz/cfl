@@ -1094,6 +1094,8 @@ int cfl_parse_file(cfl_node* node, char* filename)
     {
         fprintf(stderr, "ERROR: Could not parse the entire file %s\n", filename);
 
+        cfl_delete_node(node);
+
         return 0;
     }
 

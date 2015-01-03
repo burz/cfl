@@ -1,5 +1,6 @@
 #include "cfl_typechecker.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -109,6 +110,35 @@ void cfl_delete_type(cfl_type* node)
         cfl_delete_type(node->output);
         free(node->output);
     }
+}
+
+void cfl_print_type_inner(cfl_type* node)
+{
+    switch(node->type)
+    {
+        case CFL_TYPE_VARIABLE:
+            printf("a%u", node->id);
+            break;
+        case CFL_TYPE_BOOL:
+            printf("BOOL");
+            break;
+        case CFL_TYPE_ARROW:
+            printf("(");
+            cfl_print_type_inner(node->input);
+            printf(") -> (");
+            cfl_print_type_inner(node->output);
+            printf(")");
+            break;
+        default:
+            break;
+    }
+}
+
+void cfl_print_type(cfl_type* node)
+{
+    cfl_print_type_inner(node);
+
+    printf("\n");
 }
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)

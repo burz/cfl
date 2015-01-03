@@ -26,6 +26,8 @@ int cfl_copy_type(cfl_type* target, cfl_type* node);
 
 void cfl_delete_type(cfl_type* node);
 
+void cfl_print_type(cfl_type* node);
+
 typedef struct cfl_type_equation_chain_t {
     cfl_type* left;
     cfl_type* right;
