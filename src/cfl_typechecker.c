@@ -874,10 +874,10 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_arrow(temp_type2, temp_type1, child_type0);
 
-            if(!cfl_add_equation(equation_head, temp_type1, temp_type2))
+            if(!cfl_add_equation(equation_head, temp_type0, temp_type2))
             {
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
                 cfl_delete_type(temp_type2);
                 free(temp_type2);
                 cfl_delete_type(result);
