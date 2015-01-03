@@ -3,6 +3,7 @@
 #include "cfl_eval.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char* argv[])
 {
@@ -29,6 +30,7 @@ int main(int argc, char* argv[])
     cfl_print_type(type);
 
     cfl_delete_type(type);
+    free(type);
 
     printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>"
            "\n         RESULT           "
