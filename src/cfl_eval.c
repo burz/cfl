@@ -395,6 +395,9 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
+        cfl_delete_node(temp1);
+        free(temp1);
+
         temp0 = malloc(sizeof(cfl_node));
 
         if(!temp0)
@@ -421,6 +424,9 @@ int cfl_evaluate(cfl_node* node)
 
             return 0;
         }
+
+        cfl_delete_node(temp0);
+        free(temp0);
 
         temp0 = node->children[3];
 
