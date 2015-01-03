@@ -66,6 +66,68 @@ char* cfl_parse_parentheses(
     return start == end_pos ? end_pos + 1 : 0;
 }
 
+char* cfl_parse_binary_operation(
+        cfl_node* left,
+        cfl_node* right,
+        cfl_node_parser left_parser,
+        cfl_node_parser right_parser,
+        int operand_length,
+        char* operand,
+        char* start,
+        char* end)
+{
+    char* op_pos = start;
+
+    while(end - op_pos > operand_length)
+    {
+        int found = 1;
+        int i = 0;
+
+        for( ; i < operand_length; ++i)
+            if(op_pos[i] != operand[i])
+            {
+                found = 0;
+
+                break;
+            }
+
+        if(found)
+            break;
+
+        ++op_pos;
+    }
+
+    if(end - op_pos <= operand_length)
+        return 0;
+
+    start = (*left_parser)(left, start, op_pos);
+
+    if(!start)
+        return 0;
+
+    start = cfl_parse_whitespace(start, op_pos);
+
+    if(start != op_pos)
+    {
+        cfl_delete_node(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_whitespace(op_pos + operand_length, end);
+
+    start = (*right_parser)(right, start, end);
+
+    if(!start)
+    {
+        cfl_delete_node(left);
+
+        return 0;
+    }
+
+    return start;
+}
+
 char* cfl_parse_variable(cfl_node* node, char* start, char* end)
 {
     char buffer[MAX_IDENTIFIER_LENGTH];
@@ -204,67 +266,31 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_and(cfl_node* node, char* start, char* end)
 {
-    char* op_pos = start;
-
-    while(op_pos != end)
-    {
-        if(*op_pos == '&' && op_pos[1] == '&')
-            break;
-
-        ++op_pos;
-    }
-
-    if(op_pos == end)
-        return 0;
-
     cfl_node* left = malloc(sizeof(cfl_node));
 
     if(!left)
-    {
-        fprintf(stderr, "ERROR: Could not allocate enough "
-                        "space for a child node\n");
-
         return 0;
-    }
-
-    start = cfl_parse_molecule(left, start, op_pos);
-
-    if(!start)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_whitespace(start, op_pos);
-
-    if(start != op_pos)
-    {
-        cfl_delete_node(left);
-        free(left);
-
-        return 0;
-    }
 
     cfl_node* right = malloc(sizeof(cfl_node));
 
     if(!right)
     {
-        fprintf(stderr, "ERROR: Could not allocate enough "
-                        "space for a child node\n");
-
-        cfl_delete_node(left);
         free(left);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(op_pos + 2, end);
-    start = cfl_parse_factor(right, start, end);
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_molecule,
+                                       &cfl_parse_factor,
+                                       2,
+                                       "&&",
+                                       start,
+                                       end);
 
     if(!start)
     {
-        cfl_delete_node(left);
         free(left);
         free(right);
 
@@ -286,67 +312,31 @@ char* cfl_parse_and(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_or(cfl_node* node, char* start, char* end)
 {
-    char* op_pos = start;
-
-    while(op_pos != end)
-    {
-        if(*op_pos == '|' && op_pos[1] == '|')
-            break;
-
-        ++op_pos;
-    }
-
-    if(op_pos == end)
-        return 0;
-
     cfl_node* left = malloc(sizeof(cfl_node));
 
     if(!left)
-    {
-        fprintf(stderr, "ERROR: Could not allocate enough "
-                        "space for a child node\n");
-
         return 0;
-    }
-
-    start = cfl_parse_factor(left, start, op_pos);
-
-    if(!start)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_whitespace(start, op_pos);
-
-    if(start != op_pos)
-    {
-        cfl_delete_node(left);
-        free(left);
-
-        return 0;
-    }
 
     cfl_node* right = malloc(sizeof(cfl_node));
 
     if(!right)
     {
-        fprintf(stderr, "ERROR: Could not allocate enough "
-                        "space for a child node\n");
-
-        cfl_delete_node(left);
         free(left);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(op_pos + 2, end);
-    start = cfl_parse_term(right, start, end);
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_factor,
+                                       &cfl_parse_term,
+                                       2,
+                                       "||",
+                                       start,
+                                       end);
 
     if(!start)
     {
-        cfl_delete_node(left);
         free(left);
         free(right);
 
