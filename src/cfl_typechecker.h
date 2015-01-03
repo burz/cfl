@@ -16,9 +16,9 @@ typedef struct cfl_type_t {
     struct cfl_type_t* output;
 } cfl_type;
 
-int cfl_create_type_variable(cfl_type* node, unsigned int id);
-int cfl_create_type_bool(cfl_type* node);
-int cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
+void cfl_create_type_variable(cfl_type* node, unsigned int id);
+void cfl_create_type_bool(cfl_type* node);
+void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
 
 int cfl_compare_type(cfl_type* left, cfl_type* right);
 
@@ -42,6 +42,8 @@ typedef struct cfl_type_hypothesis_chain_t {
     unsigned int id;
     struct cfl_type_hypothesis_chain_t* next;
 } cfl_type_hypothesis_chain;
+
+unsigned int cfl_lookup_hypothesis(cfl_type_hypothesis_chain* chain, char* name);
 
 cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* equation_head,
                                            cfl_type_hypothesis_chain* hypothesis_head,
