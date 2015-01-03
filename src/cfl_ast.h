@@ -11,6 +11,7 @@ extern char* reserved_words[];
 typedef enum {
     CFL_NODE_VARIABLE,
     CFL_NODE_BOOL,
+    CFL_NODE_INTEGER,
     CFL_NODE_FUNCTION,
     CFL_NODE_AND,
     CFL_NODE_OR,
@@ -29,6 +30,7 @@ typedef struct cfl_node_t {
 
 int cfl_create_node_variable(cfl_node* node, char* string);
 int cfl_create_node_bool(cfl_node* node, bool value);
+int cfl_create_node_integer(cfl_node* node, int value);
 int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
 
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);

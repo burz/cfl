@@ -11,6 +11,7 @@
 #define APOSTROPHE_CHAR 39
 #define ZERO_CHAR 48
 #define NINE_CHAR 57
+#define MAX_INTEGER_STRING_LENGTH 11
 
 char* cfl_parse_whitespace(char* start, char* end)
 {
@@ -130,6 +131,9 @@ char* cfl_parse_binary_operation(
 
 char* cfl_parse_variable(cfl_node* node, char* start, char* end)
 {
+    if(start == end)
+        return 0;
+
     char buffer[MAX_IDENTIFIER_LENGTH];
     int length = 0;
 
@@ -193,6 +197,48 @@ char* cfl_parse_bool(cfl_node* node, char* start, char* end)
     }
 
     return 0;
+}
+
+char* cfl_parse_integer(cfl_node* node, char* start, char* end)
+{
+    if(start == end)
+        return 0;
+
+    int negate = 0;
+
+    if(*start == '-')
+    {
+        negate = 1;
+
+        start = cfl_parse_whitespace(start + 1, end);
+    }
+
+    int length = 0;
+    char buffer[MAX_INTEGER_STRING_LENGTH];
+
+    while(start != end && length < MAX_INTEGER_STRING_LENGTH &&
+          *start >= ZERO_CHAR && *start <= NINE_CHAR)
+    {
+        buffer[length] = *start;
+
+        ++start;
+        ++length;
+    }
+
+    if(!length)
+        return 0;
+
+    buffer[length] = 0;
+
+    int value = atoi(buffer);
+
+    if(negate)
+        value = -value;
+
+    if(!cfl_create_node_integer(node, value))
+        return 0;
+
+    return start;
 }
 
 char* cfl_parse_function(cfl_node* node, char* start, char* end)
@@ -1041,6 +1087,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 
     if(!result)
         result = cfl_parse_bool(node, start, end);
+
+    if(!result)
+        result = cfl_parse_integer(node, start, end);
 
     if(!result)
         result = cfl_parse_variable(node, start, end);

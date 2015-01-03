@@ -20,6 +20,14 @@ void cfl_create_type_bool(cfl_type* node)
     node->output = 0;
 }
 
+void cfl_create_type_integer(cfl_type* node)
+{
+    node->type = CFL_TYPE_INTEGER;
+    node->id = 0;
+    node->input = 0;
+    node->output = 0;
+}
+
 void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output)
 {
     node->type = CFL_TYPE_ARROW;
@@ -58,6 +66,9 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
             break;
         case CFL_TYPE_BOOL:
             cfl_create_type_bool(target);
+            break;
+        case CFL_TYPE_INTEGER:
+            cfl_create_type_integer(target);
             break;
         case CFL_TYPE_ARROW:
             input = malloc(sizeof(cfl_type));
@@ -121,6 +132,9 @@ static void cfl_print_type_inner(cfl_type* node)
             break;
         case CFL_TYPE_BOOL:
             printf("BOOL");
+            break;
+        case CFL_TYPE_INTEGER:
+            printf("INTEGER");
             break;
         case CFL_TYPE_ARROW:
             printf("(");
@@ -367,6 +381,15 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
 
             cfl_create_type_bool(result);
+
+            break;
+        case CFL_NODE_INTEGER:
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+                break;
+
+            cfl_create_type_integer(result);
 
             break;
         case CFL_NODE_FUNCTION:
@@ -958,9 +981,14 @@ int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
 {
     for( ; chain; chain = chain->next)
         if((chain->left->type == CFL_TYPE_BOOL &&
-            chain->right->type == CFL_TYPE_ARROW) ||
+            (chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_ARROW)) ||
+           (chain->left->type == CFL_TYPE_INTEGER &&
+            (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_ARROW &&
-            chain->right->type == CFL_TYPE_BOOL))
+            (chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_BOOL)))
             return 0;
 
     return 1;
@@ -973,6 +1001,14 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
         cfl_type* result = malloc(sizeof(cfl_type));
 
         cfl_create_type_bool(result);
+
+        return result;
+    }
+    if(node->type == CFL_TYPE_INTEGER)
+    {
+        cfl_type* result = malloc(sizeof(cfl_type));
+
+        cfl_create_type_integer(result);
 
         return result;
     }
@@ -1018,7 +1054,8 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
         {
             if(!cfl_compare_type(node, pos->left))
             {
-                if(pos->right->type == CFL_TYPE_BOOL)
+                if(pos->right->type == CFL_TYPE_BOOL ||
+                   pos->right->type == CFL_TYPE_INTEGER)
                 {
                     focus = pos->right;
 

@@ -37,6 +37,20 @@ int cfl_create_node_bool(cfl_node* node, bool value)
     return 1;
 }
 
+int cfl_create_node_integer(cfl_node* node, int value)
+{
+    node->type = CFL_NODE_INTEGER;
+    node->number_of_children = 0;
+    node->data = malloc(sizeof(int));
+
+    if(!node->data)
+        return 0;
+
+    *((int*) node->data) = value;
+
+    return 1;
+}
+
 int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body)
 {
     node->type = CFL_NODE_FUNCTION;
@@ -253,6 +267,9 @@ static void cfl_print_node_inner(cfl_node* node)
             break;
         case CFL_NODE_BOOL:
             printf(*((bool*) node->data) ? "true" : "false");
+            break;
+        case CFL_NODE_INTEGER:
+            printf("%d", *((int*) node->data));
             break;
         case CFL_NODE_FUNCTION:
             printf("function ");
