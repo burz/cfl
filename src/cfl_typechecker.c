@@ -821,6 +821,91 @@ int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
     return 1;
 }
 
+cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
+{
+    if(node->type == CFL_TYPE_BOOL)
+    {
+        cfl_type* result = malloc(sizeof(cfl_type));
+
+        cfl_create_type_bool(result);
+
+        return result;
+    }
+    else if(node->type == CFL_TYPE_ARROW)
+    {
+        cfl_type* new_input = cfl_substitute_type(head, node->input);
+
+        if(!new_input)
+            return 0;
+
+        cfl_type* new_output = cfl_substitute_type(head, node->output);
+
+        if(!new_output)
+        {
+            cfl_delete_type(new_input);
+            free(new_input);
+
+            return 0;
+        }
+
+        cfl_type* result = malloc(sizeof(cfl_type));
+
+        if(!result)
+        {
+            cfl_delete_type(new_input);
+            free(new_input);
+            cfl_delete_type(new_output);
+            free(new_output);
+
+            return 0;
+        }
+
+        cfl_create_type_arrow(result, new_input, new_output);
+
+        return result;
+    }
+    else
+    {
+        cfl_type_equation_chain* pos = head->next;
+        cfl_type* focus = node;
+
+        while(pos)
+        {
+            if(!cfl_compare_type(node, pos->left))
+            {
+                if(pos->right->type == CFL_TYPE_BOOL)
+                {
+                    focus = pos->right;
+
+                    break;
+                }
+                else if(pos->right->type == CFL_TYPE_ARROW)
+                    return cfl_substitute_type(head, pos->right);
+                else if(focus->type == CFL_TYPE_VARIABLE &&
+                        pos->right->type == CFL_TYPE_VARIABLE &&
+                        focus->id > pos->right->id)
+                    focus = pos->right;
+            }
+
+            pos = pos->next;
+        }
+
+        cfl_type* result = malloc(sizeof(cfl_type));
+
+        if(!result)
+            return 0;
+
+        if(!cfl_copy_type(result, focus))
+        {
+            free(result);
+
+            return 0;
+        }
+
+        return result;
+    }
+}
+
 void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain)
 {
     while(chain)
@@ -874,7 +959,12 @@ cfl_type* cfl_typecheck(cfl_node* node)
         return 0;
     }
 
+    cfl_type* final_result = cfl_substitute_type(&chain, result);
+
+    cfl_delete_type(result);
+    free(result);
+
     cfl_delete_type_equation_chain(chain.next);
 
-    return result;
+    return final_result;
 }

@@ -54,6 +54,8 @@ cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* equation_hea
 int cfl_close_type_equation_chain(cfl_type_equation_chain* head);
 int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain);
 
+cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node);
+
 void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain);
 
 cfl_type* cfl_typecheck(cfl_node* node);
