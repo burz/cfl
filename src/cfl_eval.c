@@ -24,6 +24,18 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                 if(!cfl_substitute(target->children[1], variable, value))
                     return 0;
             break;
+        case CFL_NODE_LET_REC:
+            if(strcmp(target->children[0]->data, variable))
+            {
+                if(strcmp(target->children[1]->data, variable))
+                {
+                    if(!cfl_substitute(target->children[2], variable, value) ||
+                       !cfl_substitute(target->children[3], variable, value))
+                        return 0;
+                }
+                else if(!cfl_substitute(target->children[3], variable, value))
+                    return 0;
+            }
         default:
             for(i = 0; i < target->number_of_children; ++i)
                 if(!cfl_substitute(target->children[i], variable, value))
@@ -176,6 +188,251 @@ int cfl_evaluate(cfl_node* node)
             free(temp[2]);
             free(temp);
         }
+    }
+    else if(node->type == CFL_NODE_LET_REC)
+    {
+        cfl_node* temp0 = malloc(sizeof(cfl_node));
+
+        if(!temp0)
+            return 0;
+
+        if(!cfl_copy_node(temp0, node->children[0]))
+        {
+            free(temp0);
+
+            return 0;
+        }
+
+        cfl_node* temp1 = malloc(sizeof(cfl_node));
+
+        if(!temp1)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+
+            return 0;
+        }
+
+        if(!cfl_copy_node(temp1, node->children[1]))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            free(temp1);
+
+            return 0;
+        }
+
+        cfl_node* temp2 = malloc(sizeof(cfl_node));
+
+        if(!temp2)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_application(temp2, temp0, temp1))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+            free(temp2);
+
+            return 0;
+        }
+
+        temp0 = malloc(sizeof(cfl_node));
+
+        if(!temp0)
+        {
+            cfl_delete_node(temp2);
+            free(temp2);
+
+            return 0;
+        }
+
+        if(!cfl_copy_node(temp0, node->children[0]))
+        {
+            free(temp0);
+            cfl_delete_node(temp2);
+            free(temp2);
+
+            return 0;
+        }
+
+        temp1 = malloc(sizeof(cfl_node));
+
+        if(!temp1)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp2);
+            free(temp2);
+
+            return 0;
+        }
+
+        if(!cfl_copy_node(temp1, node->children[1]))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            free(temp1);
+            cfl_delete_node(temp2);
+            free(temp2);
+
+            return 0;
+        }
+
+        cfl_node* temp3 = malloc(sizeof(cfl_node));
+
+        if(!temp3)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+            cfl_delete_node(temp2);
+            free(temp2);
+
+            return 0;
+        }
+
+        if(!cfl_copy_node(temp3, node->children[2]))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+            cfl_delete_node(temp2);
+            free(temp2);
+            free(temp3);
+
+            return 0;
+        }
+
+        cfl_node* temp4 = malloc(sizeof(cfl_node));
+
+        if(!temp4)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+            cfl_delete_node(temp2);
+            free(temp2);
+            cfl_delete_node(temp3);
+            free(temp3);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_let_rec(temp4, temp0, temp1, temp3, temp2))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp1);
+            free(temp1);
+            cfl_delete_node(temp2);
+            free(temp2);
+            cfl_delete_node(temp3);
+            free(temp3);
+            free(temp4);
+
+            return 0;
+        }
+
+        temp0 = malloc(sizeof(cfl_node));
+
+        if(!temp0)
+        {
+            cfl_delete_node(temp4);
+            free(temp4);
+
+            return 0;
+        }
+
+        if(!cfl_copy_node(temp0, node->children[1]))
+        {
+            free(temp0);
+            cfl_delete_node(temp4);
+            free(temp4);
+
+            return 0;
+        }
+
+        temp1 = malloc(sizeof(cfl_node));
+
+        if(!temp1)
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            cfl_delete_node(temp4);
+            free(temp4);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_function(temp1, temp0, temp4))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+            free(temp1);
+            cfl_delete_node(temp4);
+            free(temp4);
+
+            return 0;
+        }
+
+        if(!cfl_substitute(node->children[2], node->children[0]->data, temp1))
+        {
+            cfl_delete_node(temp1);
+            free(temp1);
+
+            return 0;
+        }
+
+        temp0 = malloc(sizeof(cfl_node));
+
+        if(!temp0)
+            return 0;
+
+        if(!cfl_create_node_function(temp0, node->children[1], node->children[2]))
+        {
+            free(temp0);
+
+            return 0;
+        }
+
+        if(!cfl_substitute(node->children[3], node->children[0]->data, temp0))
+        {
+            cfl_delete_node(temp0);
+            free(temp0);
+
+            cfl_delete_node(node->children[0]);
+            free(node->children[0]);
+            cfl_delete_node(node->children[3]);
+            free(node->children[3]);
+            free(node->children);
+            node->number_of_children = 0;
+
+            return 0;
+        }
+
+        temp0 = node->children[3];
+
+        cfl_delete_node(node->children[0]);
+        free(node->children[0]);
+        free(node->children);
+
+        *node = *temp0;
+
+        free(temp0);
+
+        return cfl_evaluate(node);
     }
 
     return 1;

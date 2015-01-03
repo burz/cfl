@@ -140,6 +140,29 @@ int cfl_create_node_if(
     return 1;
 }
 
+int cfl_create_node_let_rec(
+        cfl_node* node,
+        cfl_node* name,
+        cfl_node* argument,
+        cfl_node* procedure,
+        cfl_node* body)
+{
+    node->type = CFL_NODE_LET_REC;
+    node->number_of_children = 4;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 4);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = name;
+    node->children[1] = argument;
+    node->children[2] = procedure;
+    node->children[3] = body;
+
+    return 1;
+}
+
 int cfl_copy_node(cfl_node* target, cfl_node* node)
 {
     switch(node->type)
@@ -273,6 +296,16 @@ static void cfl_print_node_inner(cfl_node* node)
             cfl_print_node_inner(node->children[2]);
             printf(")");
             break;
+        case CFL_NODE_LET_REC:
+            printf("let rec ");
+            cfl_print_node_inner(node->children[0]);
+            printf(" ");
+            cfl_print_node_inner(node->children[1]);
+            printf(" = (");
+            cfl_print_node_inner(node->children[2]);
+            printf(") in (");
+            cfl_print_node_inner(node->children[3]);
+            printf(")");
         default:
             break;
     }

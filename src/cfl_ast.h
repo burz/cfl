@@ -16,7 +16,8 @@ typedef enum {
     CFL_NODE_OR,
     CFL_NODE_NOT,
     CFL_NODE_APPLICATION,
-    CFL_NODE_IF
+    CFL_NODE_IF,
+    CFL_NODE_LET_REC
 } cfl_node_type;
 
 typedef struct cfl_node_t {
@@ -40,6 +41,11 @@ int cfl_create_node_if(cfl_node* node,
                        cfl_node* condition,
                        cfl_node* then_node,
                        cfl_node* else_node);
+int cfl_create_node_let_rec(cfl_node* node,
+                            cfl_node* name,
+                            cfl_node* argument,
+                            cfl_node* procedure,
+                            cfl_node* body);
 
 int cfl_copy_node(cfl_node* target, cfl_node* node);
 
