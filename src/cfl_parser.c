@@ -1047,6 +1047,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
     char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
     if(!result)
+        result = cfl_parse_not(node, start, end);
+
+    if(!result)
         result = cfl_parse_bool(node, start, end);
 
     if(!result)
@@ -1057,10 +1060,7 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
 {
-    char* result = cfl_parse_not(node, start, end);
-
-    if(!result)
-        result = cfl_parse_application(node, start, end);
+    char* result = cfl_parse_application(node, start, end);
 
     if(!result)
         result = cfl_parse_atom(node, start, end);
