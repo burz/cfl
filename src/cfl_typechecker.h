@@ -20,8 +20,24 @@ int cfl_create_type_variable(cfl_type* node, char* name);
 int cfl_create_type_bool(cfl_type* node);
 int cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
 
-int cfl_type_compare(cfl_type* left, cfl_type* right);
+int cfl_compare_type(cfl_type* left, cfl_type* right);
+
+int cfl_copy_type(cfl_type* target, cfl_type* node);
 
 void cfl_delete_type(cfl_type* node);
+
+typedef struct cfl_type_equation_chain_t {
+    cfl_type* right;
+    cfl_type* left;
+    struct cfl_type_equation_chain_t* next;
+} cfl_type_equation_chain;
+
+cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* head, cfl_node* node);
+int cfl_close_type_equation_chain(cfl_type_equation_chain* head);
+int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* head);
+
+void cfl_delete_type_equation_chain(cfl_type_equation_chain* head);
+
+cfl_type* cfl_typecheck(cfl_node* node);
 
 #endif
