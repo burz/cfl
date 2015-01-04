@@ -1,5 +1,5 @@
-#ifndef _CFL_TYPECHECKER_H_
-#define _CFL_TYPECHECKER_H_
+#ifndef _CFL_TYPE_H_
+#define _CFL_TYPE_H_
 
 #include "cfl_ast.h"
 

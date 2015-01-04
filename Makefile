@@ -10,7 +10,8 @@ FILES = \
     cfl_parser.o \
     cfl_parser.derived.o \
     cfl_eval.o \
-    cfl_typechecker.o
+    cfl_type.o \
+    cfl_type.check.o
 
 all: cfl
 

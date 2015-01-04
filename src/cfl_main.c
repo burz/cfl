@@ -1,5 +1,5 @@
 #include "cfl_parser.h"
-#include "cfl_typechecker.h"
+#include "cfl_type.h"
 #include "cfl_eval.h"
 
 #include <stdio.h>
