@@ -269,8 +269,7 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
                 list_start = list_start->next;
 
-                cfl_delete_node(temp->node);
-                free(temp->node);
+                cfl_free_node(temp->node);
                 free(temp);
             }
 
@@ -296,8 +295,7 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
                     list_start = list_start->next;
 
-                    cfl_delete_node(temp->node);
-                    free(temp->node);
+                    cfl_free_node(temp->node);
                     free(temp);
                 }
 
@@ -332,8 +330,7 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
                     list_start = list_start->next;
 
-                    cfl_delete_node(temp->node);
-                    free(temp->node);
+                    cfl_free_node(temp->node);
                     free(temp);
                 }
 
@@ -373,8 +370,7 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
             list_start = list_start->next;
 
-            cfl_delete_node(temp->node);
-            free(temp->node);
+            cfl_free_node(temp->node);
             free(temp);
         }
 
@@ -413,8 +409,7 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
     if(end - start < 2 || start[0] != '-' || start[1] != '>')
     {
-        cfl_delete_node(argument);
-        free(argument);
+        cfl_free_node(argument);
 
         return 0;
     }
@@ -425,8 +420,7 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
     if(!body)
     {
-        cfl_delete_node(argument);
-        free(argument);
+        cfl_free_node(argument);
 
         return 0;
     }
@@ -435,8 +429,7 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
     if(!start)
     {
-        cfl_delete_node(argument);
-        free(argument);
+        cfl_free_node(argument);
         free(body);
 
         return 0;
@@ -444,10 +437,8 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_function(node, argument, body))
     {
-        cfl_delete_node(argument);
-        free(argument);
-        cfl_delete_node(body);
-        free(body);
+        cfl_free_node(argument);
+        cfl_free_node(body);
 
         return 0;
     }
@@ -490,10 +481,8 @@ char* cfl_parse_and(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_and(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -536,10 +525,8 @@ char* cfl_parse_or(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_or(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -573,9 +560,7 @@ char* cfl_parse_not(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_not(node, child_node))
     {
-        cfl_delete_node(child_node);
-
-        free(child_node);
+        cfl_free_node(child_node);
 
         return 0;
     }
@@ -618,10 +603,8 @@ char* cfl_parse_add(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_add(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -664,10 +647,8 @@ char* cfl_parse_multiply(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_multiply(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -710,10 +691,8 @@ char* cfl_parse_divide(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_divide(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -756,10 +735,8 @@ char* cfl_parse_equal(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_equal(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -802,10 +779,8 @@ char* cfl_parse_less(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_less(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -839,8 +814,7 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
 
         if(!argument)
         {
-            cfl_delete_node(function);
-            free(function);
+            cfl_free_node(function);
 
             return 0;
         }
@@ -860,20 +834,16 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
 
         if(!new_function)
         {
-            cfl_delete_node(function);
-            free(function);
-            cfl_delete_node(argument);
-            free(argument);
+            cfl_free_node(function);
+            cfl_free_node(argument);
 
             return 0;
         }
 
         if(!cfl_create_node_application(new_function, function, argument))
         {
-            cfl_delete_node(function);
-            free(function);
-            cfl_delete_node(argument);
-            free(argument);
+            cfl_free_node(function);
+            cfl_free_node(argument);
             free(new_function);
 
             return 0;
@@ -886,8 +856,7 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
 
     if(!argument_count)
     {
-        cfl_delete_node(function);
-        free(function);
+        cfl_free_node(function);
 
         return 0;
     }
@@ -955,8 +924,7 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(start != pos)
     {
-        cfl_delete_node(condition);
-        free(condition);
+        cfl_free_node(condition);
 
         return 0;
     }
@@ -982,8 +950,7 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(pos == end || depth != 0)
     {
-        cfl_delete_node(condition);
-        free(condition);
+        cfl_free_node(condition);
 
         return 0;
     }
@@ -994,8 +961,7 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(!then_node)
     {
-        cfl_delete_node(condition);
-        free(condition);
+        cfl_free_node(condition);
 
         return 0;
     }
@@ -1004,8 +970,7 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(!start)
     {
-        cfl_delete_node(condition);
-        free(condition);
+        cfl_free_node(condition);
         free(then_node);
 
         return 0;
@@ -1015,10 +980,8 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(start != pos)
     {
-        cfl_delete_node(condition);
-        free(condition);
-        cfl_delete_node(then_node);
-        free(then_node);
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
 
         return 0;
     }
@@ -1031,10 +994,8 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(!else_node)
     {
-        cfl_delete_node(condition);
-        free(condition);
-        cfl_delete_node(then_node);
-        free(then_node);
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
 
         return 0;
     }
@@ -1043,10 +1004,8 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(!start)
     {
-        cfl_delete_node(condition);
-        free(condition);
-        cfl_delete_node(then_node);
-        free(then_node);
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
         free(else_node);
 
         return 0;
@@ -1054,12 +1013,9 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_if(node, condition, then_node, else_node))
     {
-        cfl_delete_node(condition);
-        free(condition);
-        cfl_delete_node(then_node);
-        free(then_node);
-        cfl_delete_node(else_node);
-        free(else_node);
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
+        cfl_free_node(else_node);
 
         return 0;
     }
@@ -1102,10 +1058,8 @@ char* cfl_parse_push(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_push(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }
@@ -1148,10 +1102,8 @@ char* cfl_parse_concatenate(cfl_node* node, char* start, char* end)
 
     if(!cfl_create_node_concatenate(node, left, right))
     {
-        cfl_delete_node(left);
-        free(left);
-        cfl_delete_node(right);
-        free(right);
+        cfl_free_node(left);
+        cfl_free_node(right);
 
         return 0;
     }

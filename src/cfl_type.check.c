@@ -22,10 +22,8 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 
         if(found && found_reverse)
         {
-            cfl_delete_type(left);
-            free(left);
-            cfl_delete_type(right);
-            free(right);
+            cfl_free_type(left);
+            cfl_free_type(right);
 
             return -1;
         }
@@ -68,8 +66,7 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 
         if(!chain_node->right)
         {
-            cfl_delete_type(chain_node->left);
-            free(chain_node->left);
+            cfl_free_type(chain_node->left);
             free(chain_node);
 
             return 0;
@@ -77,8 +74,7 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 
         if(!cfl_copy_type(chain_node->right, left))
         {
-            cfl_delete_type(chain_node->left);
-            free(chain_node->left);
+            cfl_free_type(chain_node->left);
             free(chain_node->right);
             free(chain_node);
 
@@ -140,16 +136,14 @@ int cfl_add_equation_from_copies(
 
     if(!right_copy)
     {
-        cfl_delete_type(left_copy);
-        free(left_copy);
+        cfl_free_type(left_copy);
 
         return 0;
     }
 
     if(!cfl_copy_type(right_copy, right))
     {
-        cfl_delete_type(left_copy);
-        free(left_copy);
+        cfl_free_type(left_copy);
         free(right_copy);
 
         return 0;
@@ -159,10 +153,8 @@ int cfl_add_equation_from_copies(
 
     if(!result)
     {
-        cfl_delete_type(left_copy);
-        free(left_copy);
-        cfl_delete_type(right_copy);
-        free(right_copy);
+        cfl_free_type(left_copy);
+        cfl_free_type(right_copy);
     }
 
     return result;
@@ -254,8 +246,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!hypothesis_chain_node)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -276,8 +267,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -286,10 +276,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!result)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -315,16 +303,14 @@ cfl_type* cfl_generate_type_equation_chain(
 
                 if(!temp_type1)
                 {
-                    cfl_delete_type(temp_type0);
-                    free(temp_type0);
+                    cfl_free_type(temp_type0);
 
                     return 0;
                 }
 
                 if(!cfl_copy_type(temp_type1, temp_type0))
                 {
-                    cfl_delete_type(temp_type0);
-                    free(temp_type0);
+                    cfl_free_type(temp_type0);
                     free(temp_type1);
 
                     return 0;
@@ -336,22 +322,17 @@ cfl_type* cfl_generate_type_equation_chain(
 
                 if(!child_type0)
                 {
-                    cfl_delete_type(temp_type0);
-                    free(temp_type0);
-                    cfl_delete_type(temp_type1);
-                    free(temp_type1);
+                    cfl_free_type(temp_type0);
+                    cfl_free_type(temp_type1);
 
                     return 0;
                 }
 
                 if(!cfl_add_equation(equation_head, child_type0, temp_type1))
                 {
-                    cfl_delete_type(temp_type0);
-                    free(temp_type0);
-                    cfl_delete_type(temp_type1);
-                    free(temp_type1);
-                    cfl_delete_type(child_type0);
-                    free(child_type0);
+                    cfl_free_type(temp_type0);
+                    cfl_free_type(temp_type1);
+                    cfl_free_type(child_type0);
 
                     return 0;
                 }
@@ -363,8 +344,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!result)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(temp_type0);
 
                 return 0;
             }
@@ -387,8 +367,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -397,10 +376,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -409,12 +386,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type0))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -423,8 +397,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -433,10 +406,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type1, temp_type0))
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -461,8 +432,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -471,10 +441,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type0))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -503,8 +471,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -513,10 +480,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -525,12 +490,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type0))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -539,8 +501,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -549,10 +510,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type1, temp_type0))
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -580,8 +539,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -590,10 +548,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -602,12 +558,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type0))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -616,8 +569,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -626,10 +578,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type1, temp_type0))
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -656,8 +606,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -666,10 +615,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -682,12 +629,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -696,10 +640,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type1))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type1);
 
                 break;
             }
@@ -726,8 +668,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -738,10 +679,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type2)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -750,24 +689,18 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(child_type2);
-                free(child_type2);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(child_type2);
 
                 break;
             }
 
             if(!cfl_copy_type(temp_type0, child_type2))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(child_type2);
-                free(child_type2);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(child_type2);
                 free(temp_type0);
 
                 break;
@@ -775,14 +708,10 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type1, child_type2))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(child_type2);
-                free(child_type2);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(child_type2);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -791,10 +720,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -803,12 +730,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type1))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 break;
             }
@@ -817,8 +741,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -829,10 +752,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, temp_type0, temp_type1))
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 return 0;
             }
@@ -859,8 +780,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -873,10 +793,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!hypothesis_chain_node)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 break;
             }
@@ -895,10 +813,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!hypothesis_chain_node)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 hypothesis_chain_node = hypothesis_head->next;
 
@@ -931,28 +847,20 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!result)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 if(child_type0)
-                {
-                    cfl_delete_type(child_type0);
-                    free(child_type0);
-                }
+                    cfl_free_type(child_type0);
 
                 break;
             }
 
             if(!child_type0)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
-                cfl_delete_type(result);
-                free(result);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
+                cfl_free_type(result);
 
                 return 0;
             }
@@ -961,14 +869,10 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type2)
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(result);
-                free(result);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(result);
 
                 return 0;
             }
@@ -977,12 +881,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, temp_type0, temp_type2))
             {
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type2);
-                free(temp_type2);
-                cfl_delete_type(result);
-                free(result);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type2);
+                cfl_free_type(result);
 
                 return 0;
             }
@@ -1002,8 +903,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -1012,10 +912,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -1026,12 +924,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type0))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -1040,8 +935,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -1052,10 +946,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -1066,20 +958,16 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!result)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type1);
 
                 break;
             }
 
             if(!cfl_copy_type(result, temp_type1))
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type1);
                 free(result);
 
                 break;
@@ -1087,12 +975,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!cfl_add_equation(equation_head, child_type1, temp_type1))
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
-                cfl_delete_type(result);
-                free(result);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type1);
+                cfl_free_type(result);
 
                 return 0;
             }
@@ -1112,8 +997,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!child_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
+                cfl_free_type(child_type0);
 
                 break;
             }
@@ -1122,10 +1006,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
 
                 break;
             }
@@ -1138,12 +1020,9 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type1)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -1154,39 +1033,29 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!temp_type0)
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type1);
 
                 break;
             }
 
             if(!cfl_copy_type(temp_type0, temp_type1))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
                 free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(temp_type1);
 
                 break;
             }
 
             if(!cfl_add_equation(equation_head, child_type0, temp_type1))
             {
-                cfl_delete_type(child_type0);
-                free(child_type0);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
-                cfl_delete_type(temp_type1);
-                free(temp_type1);
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
 
                 break;
             }
@@ -1195,10 +1064,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!result)
             {
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 break;
             }
@@ -1206,22 +1073,17 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!cfl_copy_type(result, temp_type0))
             {
                 free(result);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 return 0;
             }
 
             if(!cfl_add_equation(equation_head, child_type1, temp_type0))
             {
-                cfl_delete_type(result);
-                free(result);
-                cfl_delete_type(child_type1);
-                free(child_type1);
-                cfl_delete_type(temp_type0);
-                free(temp_type0);
+                cfl_free_type(result);
+                cfl_free_type(child_type1);
+                cfl_free_type(temp_type0);
 
                 return 0;
             }
@@ -1365,8 +1227,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 
         if(!result)
         {
-            cfl_delete_type(new_content);
-            free(new_content);
+            cfl_free_type(new_content);
 
             return 0;
         }
@@ -1386,8 +1247,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 
         if(!new_output)
         {
-            cfl_delete_type(new_input);
-            free(new_input);
+            cfl_free_type(new_input);
 
             return 0;
         }
@@ -1396,10 +1256,8 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 
         if(!result)
         {
-            cfl_delete_type(new_input);
-            free(new_input);
-            cfl_delete_type(new_output);
-            free(new_output);
+            cfl_free_type(new_input);
+            cfl_free_type(new_output);
 
             return 0;
         }
@@ -1461,10 +1319,8 @@ void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain)
 
         chain = chain->next;
 
-        cfl_delete_type(temp->left);
-        free(temp->left);
-        cfl_delete_type(temp->right);
-        free(temp->right);
+        cfl_free_type(temp->left);
+        cfl_free_type(temp->right);
         free(temp);
     }
 }
@@ -1491,8 +1347,7 @@ cfl_type* cfl_typecheck(cfl_node* node)
     if(!cfl_close_type_equation_chain(&chain))
     {
         cfl_delete_type_equation_chain(chain.next);
-        cfl_delete_type(result);
-        free(result);
+        cfl_free_type(result);
 
         return 0;
     }
@@ -1500,17 +1355,14 @@ cfl_type* cfl_typecheck(cfl_node* node)
     if(!cfl_ensure_type_equation_chain_consistency(chain.next))
     {
         cfl_delete_type_equation_chain(chain.next);
-        cfl_delete_type(result);
-        free(result);
+        cfl_free_type(result);
 
         return 0;
     }
 
     cfl_type* final_result = cfl_substitute_type(&chain, result);
 
-    cfl_delete_type(result);
-    free(result);
-
+    cfl_free_type(result);
     cfl_delete_type_equation_chain(chain.next);
 
     return final_result;

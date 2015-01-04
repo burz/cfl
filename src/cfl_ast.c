@@ -352,8 +352,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
                             start = start->next;
 
-                            cfl_delete_node(target_pos->node);
-                            free(target_pos->node);
+                            cfl_free_node(target_pos->node);
                             free(target_pos);
                         }
 
@@ -374,8 +373,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
                             start = start->next;
 
-                            cfl_delete_node(target_pos->node);
-                            free(target_pos->node);
+                            cfl_free_node(target_pos->node);
                             free(target_pos);
                         }
 
@@ -394,8 +392,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
                             start = start->next;
 
-                            cfl_delete_node(target_pos->node);
-                            free(target_pos->node);
+                            cfl_free_node(target_pos->node);
                             free(target_pos);
                         }
 
@@ -479,8 +476,7 @@ void cfl_delete_node(cfl_node* node)
 
                 pos = pos->next;
 
-                cfl_delete_node(temp->node);
-                free(temp->node);
+                cfl_free_node(temp->node);
                 free(temp);
             }
         }
@@ -493,14 +489,17 @@ void cfl_delete_node(cfl_node* node)
         int i = 0;
 
         for( ; i < node->number_of_children; ++i)
-        {
-            cfl_delete_node(node->children[i]);
-
-            free(node->children[i]);
-        }
+            cfl_free_node(node->children[i]);
 
         free(node->children);
     }
+}
+
+void cfl_free_node(cfl_node* node)
+{
+    cfl_delete_node(node);
+
+    free(node);
 }
 
 static void cfl_print_node_inner(cfl_node* node)

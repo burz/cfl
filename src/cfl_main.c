@@ -31,8 +31,7 @@ int main(int argc, char* argv[])
 
     cfl_print_type(type);
 
-    cfl_delete_type(type);
-    free(type);
+    cfl_free_type(type);
 
     printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>"
            "\n         RESULT           "

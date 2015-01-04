@@ -29,6 +29,7 @@ int cfl_compare_type(cfl_type* left, cfl_type* right);
 int cfl_copy_type(cfl_type* target, cfl_type* node);
 
 void cfl_delete_type(cfl_type* node);
+void cfl_free_type(cfl_type* node);
 
 void cfl_print_type(cfl_type* node);
 

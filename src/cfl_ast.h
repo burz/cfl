@@ -76,6 +76,7 @@ int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right)
 int cfl_copy_node(cfl_node* target, cfl_node* node);
 
 void cfl_delete_node(cfl_node* node);
+void cfl_free_node(cfl_node* node);
 
 void cfl_print_node(cfl_node* node);
 

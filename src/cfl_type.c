@@ -120,8 +120,7 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 
             if(!cfl_copy_type(output, node->output))
             {
-                cfl_delete_type(input);
-                free(input);
+                cfl_free_type(input);
                 free(output);
 
                 return 0;
@@ -140,16 +139,17 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 void cfl_delete_type(cfl_type* node)
 {
     if(node->input)
-    {
-        cfl_delete_type(node->input);
-        free(node->input);
-    }
+        cfl_free_type(node->input);
 
     if(node->output)
-    {
-        cfl_delete_type(node->output);
-        free(node->output);
-    }
+        cfl_free_type(node->output);
+}
+
+void cfl_free_type(cfl_type* node)
+{
+    cfl_delete_type(node);
+
+    free(node);
 }
 
 static void cfl_print_type_inner(cfl_type* node)
