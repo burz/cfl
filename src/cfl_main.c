@@ -7,9 +7,16 @@
 
 int main(int argc, char* argv[])
 {
+    char* file;
+
+    if(argc > 1)
+        file = argv[1];
+    else
+        file = "lol.cfl";
+
     cfl_node node;
 
-    if(!cfl_parse_file(&node, "lol.cfl"))
+    if(!cfl_parse_file(&node, file))
         return 1;
 
     cfl_print_node(&node);
