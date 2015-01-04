@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define MAX_IDENTIFIER_LENGTH 100
-#define NUMBER_OF_RESERVED_WORDS 8
+#define NUMBER_OF_RESERVED_WORDS 10
 
 extern char* reserved_words[];
 
@@ -26,7 +26,8 @@ typedef enum {
     CFL_NODE_IF,
     CFL_NODE_LET_REC,
     CFL_NODE_PUSH,
-    CFL_NODE_CONCATENATE
+    CFL_NODE_CONCATENATE,
+    CFL_NODE_CASE
 } cfl_node_type;
 
 typedef struct cfl_node_t {
@@ -72,6 +73,12 @@ int cfl_create_node_let_rec(cfl_node* node,
 
 int cfl_create_node_push(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right);
+int cfl_create_node_case(cfl_node* node,
+                         cfl_node* list,
+                         cfl_node* empty,
+                         cfl_node* head,
+                         cfl_node* tail,
+                         cfl_node* nonempty);
 
 int cfl_copy_node(cfl_node* target, cfl_node* node);
 

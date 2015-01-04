@@ -5,7 +5,8 @@
 #include <string.h>
 
 char* reserved_words[] = { "true", "false", "function",
-                           "if", "then", "else", "let", "in" };
+                           "if", "then", "else", "let", "in",
+                           "case", "of" };
 
 int cfl_create_node_variable(cfl_node* node, char* string)
 {
@@ -292,6 +293,31 @@ int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right)
 
     node->children[0] = left;
     node->children[1] = right;
+
+    return 1;
+}
+
+int cfl_create_node_case(
+        cfl_node* node,
+        cfl_node* list,
+        cfl_node* empty,
+        cfl_node* head,
+        cfl_node* tail,
+        cfl_node* nonempty)
+{
+    node->type = CFL_NODE_CASE;
+    node->number_of_children = 5;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 5);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = list;
+    node->children[1] = empty;
+    node->children[2] = head;
+    node->children[3] = tail;
+    node->children[4] = nonempty;
 
     return 1;
 }
@@ -631,6 +657,19 @@ static void cfl_print_node_inner(cfl_node* node)
             cfl_print_node_inner(node->children[0]);
             printf(") ++ (");
             cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_CASE:
+            printf("case (");
+            cfl_print_node_inner(node->children[0]);
+            printf(") of [] -> (");
+            cfl_print_node_inner(node->children[1]);
+            printf(") | (");
+            cfl_print_node_inner(node->children[2]);
+            printf(" : ");
+            cfl_print_node_inner(node->children[3]);
+            printf(") -> (");
+            cfl_print_node_inner(node->children[4]);
             printf(")");
             break;
         default:

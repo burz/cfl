@@ -190,6 +190,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
     unsigned int id0;
     unsigned int id1;
+    unsigned int id2;
     cfl_type_hypothesis_chain* hypothesis_chain_node;
     cfl_type* child_type0;
     cfl_type* child_type1;
@@ -1087,6 +1088,176 @@ cfl_type* cfl_generate_type_equation_chain(
 
                 return 0;
             }
+
+            break;
+        case CFL_NODE_CASE:
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[0]);
+
+            if(!child_type0)
+                break;
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_free_type(child_type0);
+
+                break;
+            }
+
+            id0 = next_id++;
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            {
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
+
+                return 0;
+            }
+
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[1]);
+
+            if(!child_type0)
+                break;
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_free_type(child_type0);
+
+                break;
+            }
+
+            id1 = next_id++;
+
+            cfl_create_type_variable(temp_type0, id1);
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            {
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
+
+                return 0;
+            }
+
+            id2 = next_id++;
+
+            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+
+            if(!hypothesis_chain_node)
+                break;
+
+            hypothesis_chain_node->name = node->children[2]->data;
+            hypothesis_chain_node->id = id2;
+            hypothesis_chain_node->next = hypothesis_head->next;
+
+            hypothesis_head->next = hypothesis_chain_node;
+
+            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+
+            if(!hypothesis_chain_node)
+            {
+                hypothesis_chain_node = hypothesis_head->next;
+
+                hypothesis_head->next = hypothesis_chain_node->next;
+
+                free(hypothesis_chain_node);
+
+                break;
+            }
+
+            hypothesis_chain_node->name = node->children[3]->data;
+            hypothesis_chain_node->id = id0;
+            hypothesis_chain_node->next = hypothesis_head->next;
+
+            hypothesis_head->next = hypothesis_chain_node;
+
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[4]);
+
+            hypothesis_head->next = hypothesis_chain_node->next;
+
+            free(hypothesis_chain_node);
+
+            hypothesis_chain_node = hypothesis_head->next;
+
+            hypothesis_head->next = hypothesis_chain_node->next;
+
+            free(hypothesis_chain_node);
+
+            if(!child_type0)
+                break;
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_free_type(child_type0);
+
+                break;
+            }
+
+            cfl_create_type_variable(temp_type0, id1);
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            {
+                cfl_free_type(child_type0);
+                cfl_free_type(temp_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+                break;
+
+            cfl_create_type_variable(temp_type0, id2);
+
+            temp_type1 = malloc(sizeof(cfl_type));
+
+            if(!temp_type1)
+            {
+                cfl_free_type(temp_type0);
+
+                break;
+            }
+
+            cfl_create_type_list(temp_type1, temp_type0);
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_free_type(temp_type1);
+
+                break;
+            }
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            if(!cfl_add_equation(equation_head, temp_type1, temp_type0))
+            {
+                cfl_free_type(temp_type0);
+                cfl_free_type(temp_type1);
+
+                break;
+            }
+
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+                break;
+
+            cfl_create_type_variable(result, id1);
 
             break;
         default:
