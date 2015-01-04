@@ -105,18 +105,27 @@ char* cfl_parse_binary_operation(
     if(!start)
         return 0;
 
-    start = cfl_parse_whitespace(start, op_pos);
+    char* consumed = cfl_parse_whitespace(start, op_pos);
 
-    if(start != op_pos)
+    if(consumed != op_pos || consumed - start < 1)
     {
         cfl_delete_node(left);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(op_pos + operand_length, end);
+    start = op_pos + operand_length;
 
-    start = (*right_parser)(right, start, end);
+    consumed = cfl_parse_whitespace(start, end);
+
+    if(consumed - start < 1)
+    {
+        cfl_delete_node(left);
+
+        return 0;
+    }
+
+    start = (*right_parser)(right, consumed, end);
 
     if(!start)
     {
@@ -808,7 +817,7 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
 
     while(start != end)
     {
-        char* pos = cfl_parse_whitespace(start, end);
+        char* consumed = cfl_parse_whitespace(start, end);
 
         cfl_node* argument = malloc(sizeof(cfl_node));
 
@@ -819,11 +828,18 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
             return 0;
         }
 
-        pos = cfl_parse_atom(argument, pos, end);
+        char* pos = cfl_parse_atom(argument, consumed, end);
 
         if(!pos)
         {
             free(argument);
+
+            break;
+        }
+
+        if(consumed - start < 1)
+        {
+            cfl_free_node(argument);
 
             break;
         }
