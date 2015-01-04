@@ -1,10 +1,11 @@
 ## Evaluation grammar for cfl
 
-x ::= ( a | b | ... | z )
+x ::= ( a | b | ... | z
+      | A | B | ... | Z )
       ( a | b | ... | z
       | A | B | ... | Z
       | 0 | 1 | ... | 9
-      | _ | ' )*
+      | _ )* (')*
 
 v ::=   x
       | true | false
@@ -15,7 +16,7 @@ v ::=   x
 e ::=   v
       | (e)
       | e && e | e "||" e | !e
-      | e + e | e * e | e / e
+      | e "+" e | e "*" e | e / e
       | e == e | e < e
       | e e
       | if e then e else e
@@ -25,11 +26,12 @@ e ::=   v
 
 ## Parseable grammar for cfl
 
-x ::= ( a | b | ... | z )
+x ::= ( a | b | ... | z
+      | A | B | ... | Z )
       ( a | b | ... | z
       | A | B | ... | Z
       | 0 | 1 | ... | 9
-      | _ | ' )*
+      | _ )* (')*
 
 v ::=   x
       | true | false
@@ -40,7 +42,7 @@ v ::=   x
 e ::=   v
       | (e)
       | e && e | e "||" e | !e
-      | e + e | e - e | e * e | e / e | e % e
+      | e "+" e | e - e | e "*" e | e / e | e % e
       | e == e | e < e | e <= e | e > e | e >= e
       | e e
       | if e then e else e
