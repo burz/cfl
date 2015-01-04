@@ -48,7 +48,19 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 
 int cfl_evaluate(cfl_node* node)
 {
-    if(node->type == CFL_NODE_AND)
+    if(node->type == CFL_NODE_LIST)
+    {
+        cfl_list_node* pos = node->data;
+
+        while(pos)
+        {
+            if(!cfl_evaluate(pos->node))
+                return 0;
+
+            pos = pos->next;
+        }
+    }
+    else if(node->type == CFL_NODE_AND)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
@@ -546,6 +558,85 @@ int cfl_evaluate(cfl_node* node)
         free(temp0);
 
         return cfl_evaluate(node);
+    }
+    else if(node->type == CFL_NODE_PUSH)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[1]->type != CFL_NODE_LIST)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        cfl_node* list_node = node->children[1];
+
+        if(!list_node->data)
+        {
+            list_node->data = malloc(sizeof(cfl_list_node));
+
+            if(!list_node->data)
+                return 0;
+
+            ((cfl_list_node*) list_node->data)->next = 0;
+        }
+        else
+        {
+            cfl_list_node* new_node = malloc(sizeof(cfl_list_node));
+
+            if(!new_node)
+                return 0;
+
+            new_node->next = list_node->data;
+
+            list_node->data = new_node;
+        }
+
+        ((cfl_list_node*) list_node->data)->node = node->children[0];
+
+        free(node->children);
+
+        *node = *list_node;
+
+        free(list_node);
+    }
+    else if(node->type == CFL_NODE_CONCATENATE)
+    {
+        if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
+            return 0;
+
+        if(node->children[0]->type != CFL_NODE_LIST ||
+           node->children[1]->type != CFL_NODE_LIST)
+        {
+            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
+
+            return 0;
+        }
+
+        cfl_node* list_node = node->children[0];
+
+        if(!list_node->data)
+        {
+            list_node->data = node->children[1]->data;
+        }
+        else
+        {
+            cfl_list_node* pos = list_node->data;
+
+            while(pos->next != 0)
+                pos = pos->next;
+
+            pos->next = node->children[1]->data;
+        }
+
+        free(node->children[1]);
+        free(node->children);
+
+        *node = *list_node;
+
+        free(list_node);
     }
 
     return 1;

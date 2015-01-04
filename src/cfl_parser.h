@@ -43,6 +43,9 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end);
 char* cfl_parse_let(cfl_node* node, char* start, char* end);
 char* cfl_parse_if(cfl_node* node, char* start, char* end);
 
+char* cfl_parse_push(cfl_node* node, char* start, char* end);
+char* cfl_parse_concatenate(cfl_node* node, char* start, char* end);
+
 char* cfl_parse_atom(cfl_node* node, char* start, char* end);
 char* cfl_parse_molecule(cfl_node* node, char* start, char* end);
 char* cfl_parse_factor(cfl_node* node, char* start, char* end);

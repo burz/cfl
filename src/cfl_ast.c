@@ -264,6 +264,38 @@ int cfl_create_node_let_rec(
     return 1;
 }
 
+int cfl_create_node_push(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_PUSH;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
+int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right)
+{
+    node->type = CFL_NODE_CONCATENATE;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+        return 0;
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return 1;
+}
+
 int cfl_copy_node(cfl_node* target, cfl_node* node)
 {
     switch(node->type)
@@ -586,6 +618,20 @@ static void cfl_print_node_inner(cfl_node* node)
             cfl_print_node_inner(node->children[2]);
             printf(") in (");
             cfl_print_node_inner(node->children[3]);
+            printf(")");
+            break;
+        case CFL_NODE_PUSH:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") : (");
+            cfl_print_node_inner(node->children[1]);
+            printf(")");
+            break;
+        case CFL_NODE_CONCATENATE:
+            printf("(");
+            cfl_print_node_inner(node->children[0]);
+            printf(") ++ (");
+            cfl_print_node_inner(node->children[1]);
             printf(")");
             break;
         default:

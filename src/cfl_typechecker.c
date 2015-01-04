@@ -1175,6 +1175,245 @@ cfl_type* cfl_generate_type_equation_chain(
             }
 
             break;
+        case CFL_NODE_PUSH:
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[0]);
+
+            if(!child_type0)
+                break;
+
+            child_type1 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[1]);
+
+            if(!child_type1)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+
+                break;
+            }
+
+            id0 = next_id++;
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+
+                break;
+            }
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            temp_type1 = malloc(sizeof(cfl_type));
+
+            if(!temp_type1)
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            cfl_create_type_list(temp_type1, temp_type0);
+
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+
+                break;
+            }
+
+            if(!cfl_copy_type(result, temp_type1))
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+                free(result);
+
+                break;
+            }
+
+            if(!cfl_add_equation(equation_head, child_type1, temp_type1))
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+                cfl_delete_type(result);
+                free(result);
+
+                return 0;
+            }
+
+            break;
+        case CFL_NODE_CONCATENATE:
+            child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[0]);
+
+            if(!child_type0)
+                break;
+
+            child_type1 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[1]);
+
+            if(!child_type1)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+
+                break;
+            }
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+
+                break;
+            }
+
+            id0 = next_id++;
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            temp_type1 = malloc(sizeof(cfl_type));
+
+            if(!temp_type1)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            cfl_create_type_list(temp_type1, temp_type0);
+
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+
+                break;
+            }
+
+            if(!cfl_copy_type(temp_type0, temp_type1))
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                free(temp_type0);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+
+                break;
+            }
+
+            if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+            {
+                cfl_delete_type(child_type0);
+                free(child_type0);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+                cfl_delete_type(temp_type1);
+                free(temp_type1);
+
+                break;
+            }
+
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+            {
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                break;
+            }
+
+            if(!cfl_copy_type(result, temp_type0))
+            {
+                free(result);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                return 0;
+            }
+
+            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            {
+                cfl_delete_type(result);
+                free(result);
+                cfl_delete_type(child_type1);
+                free(child_type1);
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                return 0;
+            }
+
+            break;
         default:
             break;
     }

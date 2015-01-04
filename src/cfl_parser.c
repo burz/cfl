@@ -1067,6 +1067,98 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
     return start;
 }
 
+char* cfl_parse_push(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_term,
+                                       &cfl_parse_term,
+                                       1,
+                                       ":",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_push(node, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
+char* cfl_parse_concatenate(cfl_node* node, char* start, char* end)
+{
+    cfl_node* left = malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
+
+    cfl_node* right = malloc(sizeof(cfl_node));
+
+    if(!right)
+    {
+        free(left);
+
+        return 0;
+    }
+
+    start = cfl_parse_binary_operation(left,
+                                       right,
+                                       &cfl_parse_term,
+                                       &cfl_parse_term,
+                                       2,
+                                       "++",
+                                       start,
+                                       end);
+
+    if(!start)
+    {
+        free(left);
+        free(right);
+
+        return 0;
+    }
+
+    if(!cfl_create_node_concatenate(node, left, right))
+    {
+        cfl_delete_node(left);
+        free(left);
+        cfl_delete_node(right);
+        free(right);
+
+        return 0;
+    }
+
+    return start;
+}
+
 char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
@@ -1135,7 +1227,13 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_term(cfl_node* node, char* start, char* end)
 {
-    char* result = cfl_parse_or(node, start, end);
+    char* result = cfl_parse_concatenate(node, start, end);
+
+    if(!result)
+        result = cfl_parse_push(node, start, end);
+
+    if(!result)
+        result = cfl_parse_or(node, start, end);
 
     if(!result)
         result = cfl_parse_add(node, start, end);
