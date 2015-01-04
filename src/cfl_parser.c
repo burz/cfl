@@ -18,7 +18,8 @@ char* cfl_parse_whitespace(char* start, char* end)
 
     while(start != end)
     {
-        if(*start == ' ' || *start == '\n' || *start == '\t' || *start == '\r')
+        if(*start == ' ' || *start == '\n' || *start == '\t' ||
+           *start == '\r' || *start == '\v' || *start == '\f')
             result = ++start;
         else
             return result;
@@ -1136,11 +1137,37 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     start = cfl_parse_whitespace(start + 4, end);
 
     char* of_pos = start;
+    int depth = 1;
 
-    while(end - of_pos > 1 && (of_pos[0] != 'o' || of_pos[1] != 'f'))
-        ++of_pos;
+    while(end - of_pos > 1 &&
+          !(depth == 1 && of_pos[0] == 'o' && of_pos[1] == 'f'))
+    {
+        if(end - of_pos > 3 && of_pos[0] == 'c' && of_pos[1] == 'a' &&
+           of_pos[2] == 's' && of_pos[3] == 'e')
+        {
+            depth += 2;
 
-    if(end - of_pos < 2)
+            of_pos += 4;
+        }
+        else if(end - of_pos > 7 && of_pos[0] == 'f' && of_pos[1] == 'u' &&
+                of_pos[2] == 'n' && of_pos[3] == 'c' && of_pos[4] == 't' &&
+                of_pos[5] == 'i' && of_pos[6] == 'o' && of_pos[7] == 'n')
+        {
+            ++depth;
+
+            of_pos += 8;
+        }
+        else if(end - of_pos > 2 && of_pos[0] == '-' && of_pos[1] == '>')
+        {
+            --depth;
+
+            of_pos += 2;
+        }
+        else
+            ++of_pos;
+    }
+
+    if(end - of_pos < 2 || depth != 1)
         return 0;
 
     start = cfl_parse_whitespace(start, of_pos);
@@ -1189,11 +1216,37 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     start = cfl_parse_whitespace(start + 2, end);
 
     char* line_pos = start;
+    depth = 1;
 
-    while(end - line_pos > 2 && !(line_pos[0] == '|' && line_pos[1] != '|'))
-        ++line_pos;
+    while(end - line_pos > 2 &&
+          !(depth == 1 && line_pos[0] == '|' && line_pos[1] != '|'))
+    {
+        if(end - line_pos > 3 && line_pos[0] == 'c' && line_pos[1] == 'a' &&
+           line_pos[2] == 's' && line_pos[3] == 'e')
+        {
+            depth += 2;
 
-    if(end - line_pos < 3)
+            line_pos += 4;
+        }
+        else if(end - line_pos > 7 && line_pos[0] == 'f' && line_pos[1] == 'u' &&
+                line_pos[2] == 'n' && line_pos[3] == 'c' && line_pos[4] == 't' &&
+                line_pos[5] == 'i' && line_pos[6] == 'o' && line_pos[7] == 'n')
+        {
+            ++depth;
+
+            line_pos += 8;
+        }
+        else if(end - line_pos > 2 && line_pos[0] == '-' && line_pos[1] == '>')
+        {
+            --depth;
+
+            line_pos += 2;
+        }
+        else
+            ++line_pos;
+    }
+
+    if(end - line_pos < 3 || depth != 1)
     {
         cfl_free_node(list);
 
