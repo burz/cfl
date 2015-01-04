@@ -240,6 +240,152 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
     return start;
 }
 
+char* cfl_parse_list(cfl_node* node, char* start, char* end)
+{
+    if(start == end || *(start++) != '[')
+        return 0;
+
+    cfl_list_node* list_start = 0;
+    cfl_list_node* list_pos = 0;
+
+    int encountered_comma = 0;
+
+    while(start != end)
+    {
+        start = cfl_parse_whitespace(start, end);
+
+        cfl_node* item = malloc(sizeof(cfl_node));
+
+        if(!item)
+        {
+            if(!list_pos)
+                return 0;
+
+            list_pos->next = 0;
+
+            while(list_start)
+            {
+                cfl_list_node* temp = list_start;
+
+                list_start = list_start->next;
+
+                cfl_delete_node(temp->node);
+                free(temp->node);
+                free(temp);
+            }
+
+            return 0;
+        }
+
+        char* pos = cfl_parse_expression(item, start, end);
+
+        if(!pos)
+        {
+            free(item);
+
+            if(encountered_comma)
+            {
+                if(!list_pos)
+                    return 0;
+
+                list_pos->next = 0;
+
+                while(list_start)
+                {
+                    cfl_list_node* temp = list_start;
+
+                    list_start = list_start->next;
+
+                    cfl_delete_node(temp->node);
+                    free(temp->node);
+                    free(temp);
+                }
+
+                return 0;
+            }
+
+            break;
+        }
+
+        start = pos;
+
+        if(!list_pos)
+        {
+            list_start = malloc(sizeof(cfl_list_node));
+
+            if(!list_start)
+                return 0;
+
+            list_start->node = item;
+
+            list_pos = list_start;
+        }
+        else
+        {
+            list_pos->next = malloc(sizeof(cfl_list_node));
+
+            if(!list_pos->next)
+            {
+                while(list_start)
+                {
+                    cfl_list_node* temp = list_start;
+
+                    list_start = list_start->next;
+
+                    cfl_delete_node(temp->node);
+                    free(temp->node);
+                    free(temp);
+                }
+
+                return 0;
+            }
+
+            list_pos = list_pos->next;
+
+            list_pos->node = item;
+        }
+
+        pos = cfl_parse_whitespace(start, end);
+
+        if(pos != end && *(pos++) == ',')
+        {
+            start = pos;
+
+            encountered_comma = 1;
+        }
+        else
+            break;
+    }
+
+    if(list_pos)
+        list_pos->next = 0;
+
+    start = cfl_parse_whitespace(start, end);
+
+    if(start == end || *(start++) != ']')
+    {
+        if(!list_pos)
+            return 0;
+
+        while(list_start)
+        {
+            cfl_list_node* temp = list_start;
+
+            list_start = list_start->next;
+
+            cfl_delete_node(temp->node);
+            free(temp->node);
+            free(temp);
+        }
+
+        return 0;
+    }
+
+    cfl_create_node_list(node, list_start);
+
+    return start;
+}
+
 char* cfl_parse_function(cfl_node* node, char* start, char* end)
 {
     if(end - start < 8 || start[0] != 'f' || start[1] != 'u' ||
@@ -936,6 +1082,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 
     if(!result)
         result = cfl_parse_variable(node, start, end);
+
+    if(!result)
+        result = cfl_parse_list(node, start, end);
 
     return result;
 }

@@ -10,7 +10,7 @@ v ::=   x
       | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
       | function x -> e
-      | [] | [v, v, ..., v]
+      | [v, v, ..., v]
 
 e ::=   v
       | (e)
@@ -20,7 +20,8 @@ e ::=   v
       | e e
       | if e then e else e
       | let rec x x = e in e
-      | e : e | case e of [] -> e "|" (x : x) -> e
+      | e : e | e ++ e
+      | case e of [] -> e "|" (x : x) -> e
 
 ## Parseable grammar for cfl
 
@@ -34,7 +35,7 @@ v ::=   x
       | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
       | function x -> e
-      | [] | [v, v, ..., v]
+      | [v, v, ..., v]
 
 e ::=   v
       | (e)
@@ -44,4 +45,5 @@ e ::=   v
       | e e
       | if e then e else e
       | let x x ... x = e in e
-      | e : e | case e of [] -> e "|" (x : x) -> e
+      | e : e | e ++ e
+      | case e of [] -> e "|" (x : x) -> e

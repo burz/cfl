@@ -28,6 +28,14 @@ void cfl_create_type_integer(cfl_type* node)
     node->output = 0;
 }
 
+void cfl_create_type_list(cfl_type* node, cfl_type* content)
+{
+    node->type = CFL_TYPE_LIST;
+    node->id = 0;
+    node->input = content;
+    node->output = 0;
+}
+
 void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output)
 {
     node->type = CFL_TYPE_ARROW;
@@ -46,6 +54,8 @@ int cfl_compare_type(cfl_type* left, cfl_type* right)
         if(left->id != right->id)
             return 1;
     }
+    else if(left->type == CFL_TYPE_LIST)
+        return cfl_compare_type(left->input, right->input);
     else if(left->type == CFL_TYPE_ARROW)
         if(cfl_compare_type(left->input, right->input) ||
            cfl_compare_type(left->output, right->output))
@@ -69,6 +79,22 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
             break;
         case CFL_TYPE_INTEGER:
             cfl_create_type_integer(target);
+            break;
+        case CFL_TYPE_LIST:
+            input = malloc(sizeof(cfl_type));
+
+            if(!input)
+                return 0;
+
+            if(!cfl_copy_type(input, node->input))
+            {
+                free(input);
+
+                return 0;
+            }
+
+            cfl_create_type_list(target, input);
+
             break;
         case CFL_TYPE_ARROW:
             input = malloc(sizeof(cfl_type));
@@ -118,6 +144,10 @@ void cfl_delete_type(cfl_type* node)
     {
         cfl_delete_type(node->input);
         free(node->input);
+    }
+
+    if(node->output)
+    {
         cfl_delete_type(node->output);
         free(node->output);
     }
@@ -135,6 +165,11 @@ static void cfl_print_type_inner(cfl_type* node)
             break;
         case CFL_TYPE_INTEGER:
             printf("INTEGER");
+            break;
+        case CFL_TYPE_LIST:
+            printf("[");
+            cfl_print_type_inner(node->input);
+            printf("]");
             break;
         case CFL_TYPE_ARROW:
             printf("(");
@@ -447,6 +482,81 @@ cfl_type* cfl_generate_type_equation_chain(
             }
 
             cfl_create_type_arrow(result, child_type0, child_type1);
+
+            break;
+        case CFL_NODE_LIST:
+            temp_type0 = malloc(sizeof(cfl_type));
+
+            if(!temp_type0)
+                break;
+
+            id0 = next_id++;
+
+            cfl_create_type_variable(temp_type0, id0);
+
+            cfl_list_node* pos = node->data;
+
+            while(pos)
+            {
+                temp_type1 = malloc(sizeof(cfl_type));
+
+                if(!temp_type1)
+                {
+                    cfl_delete_type(temp_type0);
+                    free(temp_type0);
+
+                    return 0;
+                }
+
+                if(!cfl_copy_type(temp_type1, temp_type0))
+                {
+                    cfl_delete_type(temp_type0);
+                    free(temp_type0);
+                    free(temp_type1);
+
+                    return 0;
+                }
+
+                child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                               hypothesis_head,
+                                                               pos->node);
+
+                if(!child_type0)
+                {
+                    cfl_delete_type(temp_type0);
+                    free(temp_type0);
+                    cfl_delete_type(temp_type1);
+                    free(temp_type1);
+
+                    return 0;
+                }
+
+                if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+                {
+                    cfl_delete_type(temp_type0);
+                    free(temp_type0);
+                    cfl_delete_type(temp_type1);
+                    free(temp_type1);
+                    cfl_delete_type(child_type0);
+                    free(child_type0);
+
+                    return 0;
+                }
+
+                pos = pos->next;
+            }
+
+            result = malloc(sizeof(cfl_type));
+
+            if(!result)
+            {
+                cfl_delete_type(temp_type0);
+                free(temp_type0);
+
+                return 0;
+            }
+
+            cfl_create_type_list(result, temp_type0);
 
             break;
         case CFL_NODE_AND:
@@ -1105,6 +1215,18 @@ int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
                 else if(result > 0)
                     changes = 1;
             }
+            else if(focus->left->type == CFL_TYPE_LIST &&
+                    focus->right->type == CFL_TYPE_LIST)
+            {
+                int result = cfl_add_equation_from_copies(head,
+                                                          focus->left->input,
+                                                          focus->right->input);
+
+                if(!result)
+                    return 0;
+                else if(result > 0)
+                    changes = 1;
+            }
 
             cfl_type_equation_chain* pos = head->next;
 
@@ -1137,13 +1259,20 @@ int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
     for( ; chain; chain = chain->next)
         if((chain->left->type == CFL_TYPE_BOOL &&
             (chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_INTEGER &&
             (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_LIST ||
+             chain->right->type == CFL_TYPE_ARROW)) ||
+           (chain->left->type == CFL_TYPE_LIST &&
+            (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_INTEGER ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_ARROW &&
-            (chain->right->type == CFL_TYPE_INTEGER ||
-             chain->right->type == CFL_TYPE_BOOL)))
+            (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_LIST)))
             return 0;
 
     return 1;
@@ -1155,15 +1284,42 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
     {
         cfl_type* result = malloc(sizeof(cfl_type));
 
+        if(!result)
+            return 0;
+
         cfl_create_type_bool(result);
 
         return result;
     }
-    if(node->type == CFL_TYPE_INTEGER)
+    else if(node->type == CFL_TYPE_INTEGER)
     {
         cfl_type* result = malloc(sizeof(cfl_type));
 
+        if(!result)
+            return 0;
+
         cfl_create_type_integer(result);
+
+        return result;
+    }
+    else if(node->type == CFL_TYPE_LIST)
+    {
+        cfl_type* new_content = cfl_substitute_type(head, node->input);
+
+        if(!new_content)
+            return 0;
+
+        cfl_type* result = malloc(sizeof(cfl_type));
+
+        if(!result)
+        {
+            cfl_delete_type(new_content);
+            free(new_content);
+
+            return 0;
+        }
+
+        cfl_create_type_list(result, new_content);
 
         return result;
     }
@@ -1216,6 +1372,8 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 
                     break;
                 }
+                else if(pos->right->type == CFL_TYPE_LIST)
+                    return cfl_substitute_type(head, pos->right);
                 else if(pos->right->type == CFL_TYPE_ARROW)
                     return cfl_substitute_type(head, pos->right);
                 else if(focus->type == CFL_TYPE_VARIABLE &&
