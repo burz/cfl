@@ -7,6 +7,8 @@ typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
 
 void cfl_print_expected_error(char* expecting, char* after, char* start, char* end);
 
+int cfl_is_whitespace(char c);
+
 char* cfl_parse_whitespace(char* start, char* end);
 char* cfl_parse_parentheses(cfl_node* node,
                             cfl_node_parser parser,
