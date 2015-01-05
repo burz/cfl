@@ -89,22 +89,10 @@ char* cfl_parse_binary_operation(
 
     while(end - op_pos > operand_length + 1)
     {
-        if(cfl_is_whitespace(op_pos[-1]))
-        {
-            int found = 1;
-            int i = 0;
-
-            for( ; i < operand_length; ++i)
-                if(op_pos[i] != operand[i])
-                {
-                    found = 0;
-
-                    break;
-                }
-
-            if(found && cfl_is_whitespace(op_pos[operand_length]))
-                break;
-        }
+        if(cfl_is_whitespace(op_pos[-1]) &&
+           !strncmp(op_pos, operand, operand_length) &&
+           cfl_is_whitespace(op_pos[operand_length]))
+            break;
 
         ++op_pos;
     }
@@ -189,17 +177,14 @@ char* cfl_parse_variable(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_bool(cfl_node* node, char* start, char* end)
 {
-    if(end - start > 3 && start[0] == 't' && start[1] == 'r' &&
-       start[2] == 'u' && start[3] == 'e')
+    if(end - start > 3 && !strncmp(start, "true", 4))
     {
         if(!cfl_create_node_bool(node, true))
             return 0;
 
         return start + 4;
     }
-    else if(end - start > 4 && start[0] == 'f' &&
-            start[1] == 'a' && start[2] == 'l' &&
-            start[3] == 's' && start[4] == 'e')
+    else if(end - start > 4 && !strncmp(start, "false", 5))
     {
         if(!cfl_create_node_bool(node, false))
             return 0;
@@ -411,9 +396,7 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_function(cfl_node* node, char* start, char* end)
 {
-    if(end - start < 8 || start[0] != 'f' || start[1] != 'u' ||
-       start[2] != 'n' || start[3] != 'c' || start[4] != 't' ||
-       start[5] != 'i' || start[6] != 'o' || start[7] != 'n')
+    if(end - start < 8 || strncmp(start, "function", 8))
         return 0;
 
     start = cfl_parse_whitespace(start + 8, end);
@@ -436,7 +419,7 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(pos, end);
 
-    if(end - start < 2 || start[0] != '-' || start[1] != '>')
+    if(end - start < 2 || strncmp(start, "->", 2))
     {
         cfl_parse_error_expected("\"->\"", "\"function\"", start, end);
 
@@ -903,7 +886,7 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_if(cfl_node* node, char* start, char* end)
 {
-    if(end - start < 2 || start[0] != 'i' || start[1] != 'f')
+    if(end - start < 2 || strncmp(start, "if", 2))
         return 0;
 
     start += 2;
@@ -918,14 +901,12 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     while(then_pos != end)
     {
-        if(end - then_pos > 1 && then_pos[0] == 'i' && then_pos[1] == 'f')
+        if(end - then_pos > 1 && !strncmp(then_pos, "if", 2))
             ++depth;
-        else if(end - then_pos > 3 && then_pos[0] == 'e' && then_pos[1] == 'l' &&
-                then_pos[2] == 's' && then_pos[3] == 'e')
+        else if(end - then_pos > 3 && !strncmp(then_pos, "else", 4))
             --depth;
         else if(end - then_pos > 3 && depth == 1 &&
-                then_pos[0] == 't' && then_pos[1] == 'h' &&
-                then_pos[2] == 'e' && then_pos[3] == 'n')
+                !strncmp(then_pos, "then", 4))
             break;
 
         ++then_pos;
@@ -969,10 +950,9 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     while(else_pos != end)
     {
-        if(end - else_pos > 1 && else_pos[0] == 'i' && else_pos[1] == 'f')
+        if(end - else_pos > 1 && !strncmp(else_pos, "if", 2))
             ++depth;
-        else if(end - else_pos > 3 && else_pos[0] == 'e' && else_pos[1] == 'l' &&
-                else_pos[2] == 's' && else_pos[3] == 'e')
+        else if(end - else_pos > 3 && !strncmp(else_pos, "else", 4))
         {
             --depth;
 
@@ -1154,8 +1134,7 @@ char* cfl_parse_concatenate(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_case(cfl_node* node, char* start, char* end)
 {
-    if(end - start < 4 || start[0] != 'c' || start[1] != 'a' ||
-       start[2] != 's' || start[3] != 'e')
+    if(end - start < 4 || strncmp(start, "case", 4))
         return 0;
 
     start = cfl_parse_whitespace(start + 4, end);
@@ -1164,24 +1143,21 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     int depth = 1;
 
     while(end - of_pos > 1 &&
-          !(depth == 1 && of_pos[0] == 'o' && of_pos[1] == 'f'))
+          !(depth == 1 && !strncmp(of_pos, "of", 2)))
     {
-        if(end - of_pos > 3 && of_pos[0] == 'c' && of_pos[1] == 'a' &&
-           of_pos[2] == 's' && of_pos[3] == 'e')
+        if(end - of_pos > 3 && !strncmp(of_pos, "case", 4))
         {
             depth += 2;
 
             of_pos += 4;
         }
-        else if(end - of_pos > 7 && of_pos[0] == 'f' && of_pos[1] == 'u' &&
-                of_pos[2] == 'n' && of_pos[3] == 'c' && of_pos[4] == 't' &&
-                of_pos[5] == 'i' && of_pos[6] == 'o' && of_pos[7] == 'n')
+        else if(end - of_pos > 7 && !strncmp(of_pos, "function", 8))
         {
             ++depth;
 
             of_pos += 8;
         }
-        else if(end - of_pos > 2 && of_pos[0] == '-' && of_pos[1] == '>')
+        else if(end - of_pos > 2 && !strncmp(of_pos, "->", 2))
         {
             --depth;
 
@@ -1227,7 +1203,7 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(of_pos + 2, end);
 
-    if(end - start < 2 || start[0] != '[' || start[1] != ']')
+    if(end - start < 2 || strncmp(start, "[]", 2))
     {
         cfl_parse_error_expected("\"[]\"", "\"of\"", start, end);
 
@@ -1238,7 +1214,7 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(start + 2, end);
 
-    if(end - start < 2 || start[0] != '-' || start[1] != '>')
+    if(end - start < 2 || strncmp(start, "->", 2))
     {
         cfl_parse_error_expected("\"->\"", "\"[]\"", start, end);
 
@@ -1255,22 +1231,19 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     while(end - line_pos > 2 &&
           !(depth == 1 && line_pos[0] == '|' && line_pos[1] != '|'))
     {
-        if(end - line_pos > 3 && line_pos[0] == 'c' && line_pos[1] == 'a' &&
-           line_pos[2] == 's' && line_pos[3] == 'e')
+        if(end - line_pos > 3 && !strncmp(line_pos, "case", 4))
         {
             depth += 2;
 
             line_pos += 4;
         }
-        else if(end - line_pos > 7 && line_pos[0] == 'f' && line_pos[1] == 'u' &&
-                line_pos[2] == 'n' && line_pos[3] == 'c' && line_pos[4] == 't' &&
-                line_pos[5] == 'i' && line_pos[6] == 'o' && line_pos[7] == 'n')
+        else if(end - line_pos > 7 && !strncmp(line_pos, "function", 8))
         {
             ++depth;
 
             line_pos += 8;
         }
-        else if(end - line_pos > 2 && line_pos[0] == '-' && line_pos[1] == '>')
+        else if(end - line_pos > 2 && !strncmp(line_pos, "->", 2))
         {
             --depth;
 
@@ -1432,7 +1405,7 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(par_pos + 1, end);
 
-    if(end - start < 2 || start[0] != '-' || start[1] != '>')
+    if(end - start < 2 || strncmp(start, "->", 2))
     {
         cfl_parse_error_expected("\"->\"", "\")\"", start, end);
 
