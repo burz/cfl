@@ -73,8 +73,8 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_binary_operation(left,
                                        right,
-                                       &cfl_parse_molecule,
                                        &cfl_parse_factor,
+                                       &cfl_parse_term,
                                        1,
                                        "-",
                                        start,

@@ -83,28 +83,31 @@ char* cfl_parse_binary_operation(
         char* start,
         char* end)
 {
-    char* op_pos = start;
+    char* op_pos = start + 1;
 
-    while(end - op_pos > operand_length)
+    while(end - op_pos > operand_length + 1)
     {
-        int found = 1;
-        int i = 0;
+        if(cfl_is_whitespace(op_pos[-1]))
+        {
+            int found = 1;
+            int i = 0;
 
-        for( ; i < operand_length; ++i)
-            if(op_pos[i] != operand[i])
-            {
-                found = 0;
+            for( ; i < operand_length; ++i)
+                if(op_pos[i] != operand[i])
+                {
+                    found = 0;
 
+                    break;
+                }
+
+            if(found && cfl_is_whitespace(op_pos[operand_length]))
                 break;
-            }
-
-        if(found)
-            break;
+        }
 
         ++op_pos;
     }
 
-    if(end - op_pos <= operand_length)
+    if(end - op_pos <= operand_length + 1)
         return 0;
 
     start = (*left_parser)(left, start, op_pos);
@@ -112,27 +115,18 @@ char* cfl_parse_binary_operation(
     if(!start)
         return 0;
 
-    char* consumed = cfl_parse_whitespace(start, op_pos);
+    start = cfl_parse_whitespace(start, op_pos);
 
-    if(consumed != op_pos || consumed - start < 1)
+    if(start != op_pos)
     {
         cfl_delete_node(left);
 
         return 0;
     }
 
-    start = op_pos + operand_length;
+    start = cfl_parse_whitespace(op_pos + operand_length, end);
 
-    consumed = cfl_parse_whitespace(start, end);
-
-    if(consumed - start < 1)
-    {
-        cfl_delete_node(left);
-
-        return 0;
-    }
-
-    start = (*right_parser)(right, consumed, end);
+    start = (*right_parser)(right, start, end);
 
     if(!start)
     {
@@ -223,9 +217,12 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
 
     if(*start == '-')
     {
-        negate = 1;
+        ++start;
 
-        start = cfl_parse_whitespace(start + 1, end);
+        if(cfl_is_whitespace(*start))
+            return 0;
+
+        negate = 1;
     }
 
     char* pos = start;
@@ -366,22 +363,24 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
             list_pos->node = item;
         }
 
-        pos = cfl_parse_whitespace(start, end);
+        start = cfl_parse_whitespace(start, end);
 
-        if(pos != end && *(pos++) == ',')
+        if(start != end && *start == ',')
         {
-            start = pos;
+            ++start;
 
             encountered_comma = 1;
         }
         else
+        {
+            encountered_comma = 0;
+
             break;
+        }
     }
 
     if(list_pos)
         list_pos->next = 0;
-
-    start = cfl_parse_whitespace(start, end);
 
     if(start == end || *(start++) != ']')
     {
@@ -615,8 +614,8 @@ char* cfl_parse_add(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_binary_operation(left,
                                        right,
-                                       &cfl_parse_molecule,
                                        &cfl_parse_factor,
+                                       &cfl_parse_term,
                                        1,
                                        "+",
                                        start,
@@ -839,6 +838,9 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
     {
         char* consumed = cfl_parse_whitespace(start, end);
 
+        if(consumed - start < 1)
+            break;
+
         cfl_node* argument = cfl_parser_malloc(sizeof(cfl_node));
 
         if(!argument)
@@ -853,13 +855,6 @@ char* cfl_parse_application(cfl_node* node, char* start, char* end)
         if(!pos)
         {
             free(argument);
-
-            break;
-        }
-
-        if(consumed - start < 1)
-        {
-            cfl_free_node(argument);
 
             break;
         }
