@@ -1270,14 +1270,16 @@ cfl_type* cfl_generate_type_equation_chain(
 int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
 {
     int changes = 1;
+    cfl_type_equation_chain* last_head = 0;
 
     while(changes)
     {
         changes = 0;
 
+        cfl_type_equation_chain* this_head = head->next;
         cfl_type_equation_chain* focus = head->next;
 
-        while(focus)
+        while(focus && (!last_head || focus != last_head))
         {
             if(focus->left->type == CFL_TYPE_ARROW &&
                focus->right->type == CFL_TYPE_ARROW)
@@ -1313,7 +1315,7 @@ int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
                     changes = 1;
             }
 
-            cfl_type_equation_chain* pos = head->next;
+            cfl_type_equation_chain* pos = focus->next;
 
             while(pos)
             {
@@ -1334,6 +1336,8 @@ int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
 
             focus = focus->next;
         }
+
+        last_head = this_head;
     }
 
     return 1;
