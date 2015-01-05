@@ -10,6 +10,8 @@
 #define NINE_CHAR 57
 #define MAX_INTEGER_STRING_LENGTH 11
 
+extern void* cfl_parser_malloc(size_t size);
+
 int cfl_is_whitespace(char c)
 {
     if(c == ' ' || c == '\n' || c == '\t' ||

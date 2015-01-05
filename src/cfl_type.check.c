@@ -1,6 +1,15 @@
 #include "cfl_type.h"
 
+#include <stdio.h>
 #include <string.h>
+
+extern int cfl_type_error;
+extern void* cfl_type_malloc(size_t size);
+
+static void cfl_type_error_failure(void)
+{
+    fprintf(stderr, "TYPE ERROR: Could not type expression\n");
+}
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
 {
@@ -1509,6 +1518,8 @@ void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain)
 
 cfl_type* cfl_typecheck(cfl_node* node)
 {
+    cfl_type_error = 0;
+
     cfl_type_equation_chain chain;
     chain.next = 0;
 
@@ -1536,6 +1547,9 @@ cfl_type* cfl_typecheck(cfl_node* node)
 
     if(!cfl_ensure_type_equation_chain_consistency(chain.next))
     {
+        if(!cfl_type_error)
+            cfl_type_error_failure();
+
         cfl_delete_type_equation_chain(chain.next);
         cfl_free_type(result);
 

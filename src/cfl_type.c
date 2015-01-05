@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+int cfl_type_error;
+
 void* cfl_type_malloc(size_t size)
 {
     void* result = malloc(size);
@@ -10,6 +12,8 @@ void* cfl_type_malloc(size_t size)
     {
         fprintf(stderr, "MEMORY ERROR: Ran out of memory "
                         "while typechecking");
+
+        cfl_type_error = 1;
     }
 
     return result;

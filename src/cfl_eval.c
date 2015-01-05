@@ -78,13 +78,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         if(!*((bool*) node->children[0]->data))
         {
             cfl_delete_node(node);
@@ -97,13 +90,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[1]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         cfl_delete_node(node);
 
         cfl_create_node_bool(node, *((bool*) node->children[1]->data));
@@ -112,13 +98,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         if(*((bool*) node->children[0]->data))
         {
@@ -132,13 +111,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[1]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         cfl_delete_node(node);
 
         cfl_create_node_bool(node, *((bool*) node->children[1]->data));
@@ -147,13 +119,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         bool result = !*((bool*) node->children[0]->data);
 
@@ -165,14 +130,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_INTEGER ||
-           node->children[1]->type != CFL_NODE_INTEGER)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         int result = *((int*) node->children[0]->data) +
                      *((int*) node->children[1]->data);
@@ -186,14 +143,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_INTEGER ||
-           node->children[1]->type != CFL_NODE_INTEGER)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         int result = *((int*) node->children[0]->data) *
                      *((int*) node->children[1]->data);
 
@@ -206,17 +155,9 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_INTEGER ||
-           node->children[1]->type != CFL_NODE_INTEGER)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         if(*((int*) node->children[1]->data) == 0)
         {
-            fprintf(stderr, "ERROR: Division by zero\n");
+            fprintf(stderr, "EVALUATION ERROR: Division by zero\n");
 
             return 0;
         }
@@ -233,14 +174,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_INTEGER ||
-           node->children[1]->type != CFL_NODE_INTEGER)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         bool result = *((int*) node->children[0]->data) ==
                       *((int*) node->children[1]->data);
 
@@ -253,14 +186,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_INTEGER ||
-           node->children[1]->type != CFL_NODE_INTEGER)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         bool result = *((int*) node->children[0]->data) <
                       *((int*) node->children[1]->data);
 
@@ -272,13 +197,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_FUNCTION)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         if(!cfl_substitute(node->children[0]->children[1],
                            node->children[0]->children[0]->data,
@@ -304,13 +222,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_BOOL)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         if(*((bool*) node->children[0]->data))
         {
@@ -559,13 +470,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[1]->type != CFL_NODE_LIST)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         cfl_node* list_node = node->children[1];
 
         if(!list_node->data)
@@ -602,14 +506,6 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return 0;
 
-        if(node->children[0]->type != CFL_NODE_LIST ||
-           node->children[1]->type != CFL_NODE_LIST)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
-
         cfl_node* list_node = node->children[0];
 
         if(!list_node->data)
@@ -637,13 +533,6 @@ int cfl_evaluate(cfl_node* node)
     {
         if(!cfl_evaluate(node->children[0]))
             return 0;
-
-        if(node->children[0]->type != CFL_NODE_LIST)
-        {
-            fprintf(stderr, "ERROR: Encountered a type mismatch during evaluation\n");
-
-            return 0;
-        }
 
         if(node->children[0]->data)
         {

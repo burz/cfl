@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+extern void* cfl_parser_malloc(size_t size);
+
 static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* right)
 {
     cfl_node* negative = cfl_parser_malloc(sizeof(cfl_node));

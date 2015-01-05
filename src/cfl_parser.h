@@ -3,11 +3,10 @@
 
 #include "cfl_ast.h"
 
-void* cfl_parser_malloc(size_t size);
-
 typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
 
 void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
+void cfl_parse_error_unparseable_file(char* filename);
 
 int cfl_is_whitespace(char c);
 

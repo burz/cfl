@@ -12,8 +12,6 @@ extern char* reserved_words[];
 void cfl_reset_ast_error_flag(void);
 int cfl_get_ast_error_flag(void);
 
-void* cfl_ast_malloc(size_t size);
-
 typedef enum {
     CFL_NODE_VARIABLE,
     CFL_NODE_BOOL,

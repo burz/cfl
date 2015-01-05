@@ -46,6 +46,12 @@ void cfl_parse_error_expected(char* expected, char* after, char* start, char* en
     cfl_parse_error = 1;
 }
 
+void cfl_parse_error_unparseable_file(char* filename)
+{
+        fprintf(stderr, "ERROR: Could not parse anything "
+                        "in file %s\n", filename);
+}
+
 static int cfl_error_occured_while_parsing(void)
 {
     return cfl_parse_error || cfl_get_ast_error_flag();
@@ -164,7 +170,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(!f)
     {
-        fprintf(stderr, "ERROR: Could not open %s\n", filename);
+        fprintf(stderr, "FILE ERROR: Could not open %s\n", filename);
 
         return 0;
     }
@@ -179,8 +185,8 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(!program)
     {
-        fprintf(stderr, "ERROR: Could not allocate enough space "
-                        "to read in %s\n", filename);
+        fprintf(stderr, "MEMORY ERROR: Could not allocate "
+                        "enough space to read in %s\n", filename);
 
         fclose(f);
 
@@ -193,7 +199,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(size < 1)
     {
-        fprintf(stderr, "ERROR: The file %s was empty\n", filename);
+        fprintf(stderr, "PARSE ERROR: The file %s was empty\n", filename);
 
         free(program);
 
@@ -212,7 +218,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(!pos)
     {
-        fprintf(stderr, "ERROR: Could not parse a term in file %s\n", filename);
+        cfl_parse_error_unparseable_file(filename);
 
         free(program);
 
@@ -225,7 +231,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(pos != end)
     {
-        fprintf(stderr, "ERROR: Could not parse the entire file %s\n", filename);
+        cfl_parse_error_unparseable_file(filename);
 
         cfl_delete_node(node);
 

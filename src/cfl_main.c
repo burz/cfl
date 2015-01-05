@@ -31,8 +31,6 @@ int main(int argc, char* argv[])
     {
         cfl_delete_node(&node);
 
-        printf("ERROR: Failed to typecheck\n");
-
         return 1;
     }
 
