@@ -1,7 +1,19 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+
+void* cfl_type_malloc(size_t size)
+{
+    void* result = malloc(size);
+
+    if(!result)
+    {
+        fprintf(stderr, "MEMORY ERROR: Ran out of memory "
+                        "while typechecking");
+    }
+
+    return result;
+}
 
 void cfl_create_type_variable(cfl_type* node, unsigned int id)
 {
@@ -80,7 +92,7 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
             cfl_create_type_integer(target);
             break;
         case CFL_TYPE_LIST:
-            input = malloc(sizeof(cfl_type));
+            input = cfl_type_malloc(sizeof(cfl_type));
 
             if(!input)
                 return 0;
@@ -96,12 +108,12 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 
             break;
         case CFL_TYPE_ARROW:
-            input = malloc(sizeof(cfl_type));
+            input = cfl_type_malloc(sizeof(cfl_type));
 
             if(!input)
                 return 0;
 
-            output = malloc(sizeof(cfl_type));
+            output = cfl_type_malloc(sizeof(cfl_type));
 
             if(!output)
             {

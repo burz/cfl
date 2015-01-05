@@ -1,8 +1,20 @@
 #include "cfl_eval.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+
+void* cfl_eval_malloc(size_t size)
+{
+    void* result = malloc(size);
+
+    if(!result)
+    {
+        fprintf(stderr, "MEMORY ERROR: Ran out of memory "
+                        "during evaluation\n");
+    }
+
+    return result;
+}
 
 int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 {
@@ -333,7 +345,7 @@ int cfl_evaluate(cfl_node* node)
     }
     else if(node->type == CFL_NODE_LET_REC)
     {
-        cfl_node* temp0 = malloc(sizeof(cfl_node));
+        cfl_node* temp0 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp0)
             return 0;
@@ -345,7 +357,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        cfl_node* temp1 = malloc(sizeof(cfl_node));
+        cfl_node* temp1 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp1)
         {
@@ -362,7 +374,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        cfl_node* temp2 = malloc(sizeof(cfl_node));
+        cfl_node* temp2 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp2)
         {
@@ -381,7 +393,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        temp0 = malloc(sizeof(cfl_node));
+        temp0 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp0)
         {
@@ -398,7 +410,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        temp1 = malloc(sizeof(cfl_node));
+        temp1 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp1)
         {
@@ -417,7 +429,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        cfl_node* temp3 = malloc(sizeof(cfl_node));
+        cfl_node* temp3 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp3)
         {
@@ -438,7 +450,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        cfl_node* temp4 = malloc(sizeof(cfl_node));
+        cfl_node* temp4 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp4)
         {
@@ -461,7 +473,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        temp0 = malloc(sizeof(cfl_node));
+        temp0 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp0)
         {
@@ -478,7 +490,7 @@ int cfl_evaluate(cfl_node* node)
             return 0;
         }
 
-        temp1 = malloc(sizeof(cfl_node));
+        temp1 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp1)
         {
@@ -506,7 +518,7 @@ int cfl_evaluate(cfl_node* node)
 
         cfl_free_node(temp1);
 
-        temp0 = malloc(sizeof(cfl_node));
+        temp0 = cfl_eval_malloc(sizeof(cfl_node));
 
         if(!temp0)
             return 0;
@@ -558,7 +570,7 @@ int cfl_evaluate(cfl_node* node)
 
         if(!list_node->data)
         {
-            list_node->data = malloc(sizeof(cfl_list_node));
+            list_node->data = cfl_eval_malloc(sizeof(cfl_list_node));
 
             if(!list_node->data)
                 return 0;
@@ -567,7 +579,7 @@ int cfl_evaluate(cfl_node* node)
         }
         else
         {
-            cfl_list_node* new_node = malloc(sizeof(cfl_list_node));
+            cfl_list_node* new_node = cfl_eval_malloc(sizeof(cfl_list_node));
 
             if(!new_node)
                 return 0;
@@ -640,7 +652,7 @@ int cfl_evaluate(cfl_node* node)
             cfl_list_node* tail_list =
                 ((cfl_list_node*) node->children[0]->data)->next;
 
-            cfl_node* tail = malloc(sizeof(cfl_node));
+            cfl_node* tail = cfl_eval_malloc(sizeof(cfl_node));
 
             if(!tail)
                 return 0;

@@ -1,18 +1,44 @@
 #include "cfl_ast.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 char* reserved_words[] = { "true", "false", "function",
                            "if", "then", "else", "let", "in",
                            "case", "of" };
 
+static int cfl_ast_error;
+
+void cfl_reset_ast_error_flag(void)
+{
+    cfl_ast_error = 0;
+}
+
+int cfl_get_ast_error_flag(void)
+{
+    return cfl_ast_error;
+}
+
+void* cfl_ast_malloc(size_t size)
+{
+    void* result = malloc(size);
+
+    if(!result)
+    {
+        fprintf(stderr, "MEMORY ERROR: Ran out of memory while "
+                        "creating an AST node\n");
+
+        cfl_ast_error = 1;
+    }
+
+    return result;
+}
+
 int cfl_create_node_variable(cfl_node* node, char* string)
 {
     node->type = CFL_NODE_VARIABLE;
     node->number_of_children = 0;
-    node->data = malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
+    node->data = cfl_ast_malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
 
     if(!node->data)
         return 0;
@@ -28,7 +54,7 @@ int cfl_create_node_bool(cfl_node* node, bool value)
 {
     node->type = CFL_NODE_BOOL;
     node->number_of_children = 0;
-    node->data = malloc(sizeof(bool));
+    node->data = cfl_ast_malloc(sizeof(bool));
 
     if(!node->data)
         return 0;
@@ -42,7 +68,7 @@ int cfl_create_node_integer(cfl_node* node, int value)
 {
     node->type = CFL_NODE_INTEGER;
     node->number_of_children = 0;
-    node->data = malloc(sizeof(int));
+    node->data = cfl_ast_malloc(sizeof(int));
 
     if(!node->data)
         return 0;
@@ -57,7 +83,7 @@ int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body)
     node->type = CFL_NODE_FUNCTION;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -80,7 +106,7 @@ int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_AND;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -96,7 +122,7 @@ int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_OR;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -112,7 +138,7 @@ int cfl_create_node_not(cfl_node* node, cfl_node* child)
     node->type = CFL_NODE_NOT;
     node->number_of_children = 1;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*));
+    node->children = cfl_ast_malloc(sizeof(cfl_node*));
 
     if(!node->children)
         return 0;
@@ -127,7 +153,7 @@ int cfl_create_node_add(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_ADD;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -143,7 +169,7 @@ int cfl_create_node_multiply(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_MULTIPLY;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -159,7 +185,7 @@ int cfl_create_node_divide(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_DIVIDE;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -175,7 +201,7 @@ int cfl_create_node_equal(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_EQUAL;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -191,7 +217,7 @@ int cfl_create_node_less(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_LESS;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -210,7 +236,7 @@ int cfl_create_node_application(
     node->type = CFL_NODE_APPLICATION;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -230,7 +256,7 @@ int cfl_create_node_if(
     node->type = CFL_NODE_IF;
     node->number_of_children = 3;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 3);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 3);
 
     if(!node->children)
         return 0;
@@ -252,7 +278,7 @@ int cfl_create_node_let_rec(
     node->type = CFL_NODE_LET_REC;
     node->number_of_children = 4;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 4);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 4);
 
     if(!node->children)
         return 0;
@@ -270,7 +296,7 @@ int cfl_create_node_push(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_PUSH;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -286,7 +312,7 @@ int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right)
     node->type = CFL_NODE_CONCATENATE;
     node->number_of_children = 2;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 2);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
 
     if(!node->children)
         return 0;
@@ -308,7 +334,7 @@ int cfl_create_node_case(
     node->type = CFL_NODE_CASE;
     node->number_of_children = 5;
     node->data = 0;
-    node->children = malloc(sizeof(cfl_node*) * 5);
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 5);
 
     if(!node->children)
         return 0;
@@ -340,14 +366,15 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
                 cfl_create_node_list(target, 0);
             else
             {
-                cfl_list_node* start = malloc(sizeof(cfl_list_node));
+                cfl_list_node* start =
+                    cfl_ast_malloc(sizeof(cfl_list_node));
 
                 if(!start)
                     return 0;
 
                 cfl_list_node* node_pos = node->data;
 
-                start->node = malloc(sizeof(cfl_node));
+                start->node = cfl_ast_malloc(sizeof(cfl_node));
 
                 if(!start->node)
                 {
@@ -368,7 +395,8 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
                 while(node_pos)
                 {
-                    target_pos->next = malloc(sizeof(cfl_list_node));
+                    target_pos->next =
+                        cfl_ast_malloc(sizeof(cfl_list_node));
 
                     if(!target_pos->next)
                     {
@@ -387,7 +415,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
                     target_pos = target_pos->next;
 
-                    target_pos->node = malloc(sizeof(cfl_node));
+                    target_pos->node = cfl_ast_malloc(sizeof(cfl_node));
 
                     if(!target_pos->node)
                     {
@@ -441,8 +469,8 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
             target->type = node->type;
             target->number_of_children = node->number_of_children;
             target->data = 0;
-            target->children = malloc(sizeof(cfl_node*) *
-                                      target->number_of_children);
+            target->children = cfl_ast_malloc(sizeof(cfl_node*) *
+                                              target->number_of_children);
 
             if(!target->children)
                 return 0;
@@ -451,7 +479,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
             for( ; i < target->number_of_children; ++i)
             {
-                cfl_node* child = malloc(sizeof(cfl_node));
+                cfl_node* child = cfl_ast_malloc(sizeof(cfl_node));
 
                 if(!child)
                 {

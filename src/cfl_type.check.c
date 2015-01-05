@@ -1,6 +1,5 @@
 #include "cfl_type.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
@@ -33,7 +32,8 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 
     if(!found && !found_reverse)
     {
-        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+        cfl_type_equation_chain* chain_node =
+            cfl_type_malloc(sizeof(cfl_type_equation_chain));
 
         if(!chain_node)
             return 0;
@@ -44,12 +44,12 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 
         head->next = chain_node;
 
-        chain_node = malloc(sizeof(cfl_type_equation_chain));
+        chain_node = cfl_type_malloc(sizeof(cfl_type_equation_chain));
 
         if(!chain_node)
             return 0;
 
-        chain_node->left = malloc(sizeof(cfl_type));
+        chain_node->left = cfl_type_malloc(sizeof(cfl_type));
 
         if(!chain_node->left)
             return 0;
@@ -62,7 +62,7 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
             return 0;
         }
 
-        chain_node->right = malloc(sizeof(cfl_type));
+        chain_node->right = cfl_type_malloc(sizeof(cfl_type));
 
         if(!chain_node->right)
         {
@@ -87,7 +87,8 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
     }
     else if(!found)
     {
-        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+        cfl_type_equation_chain* chain_node =
+            cfl_type_malloc(sizeof(cfl_type_equation_chain));
 
         if(!chain_node)
             return 0;
@@ -100,7 +101,8 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
     }
     else
     {
-        cfl_type_equation_chain* chain_node = malloc(sizeof(cfl_type_equation_chain));
+        cfl_type_equation_chain* chain_node =
+            cfl_type_malloc(sizeof(cfl_type_equation_chain));
 
         if(!chain_node)
             return 0;
@@ -120,7 +122,7 @@ int cfl_add_equation_from_copies(
         cfl_type* left,
         cfl_type* right)
 {
-    cfl_type* left_copy = malloc(sizeof(cfl_type));
+    cfl_type* left_copy = cfl_type_malloc(sizeof(cfl_type));
 
     if(!left_copy)
         return 0;
@@ -132,7 +134,7 @@ int cfl_add_equation_from_copies(
         return 0;
     }
 
-    cfl_type* right_copy = malloc(sizeof(cfl_type));
+    cfl_type* right_copy = cfl_type_malloc(sizeof(cfl_type));
 
     if(!right_copy)
     {
@@ -207,7 +209,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!id0)
                 break;
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -216,7 +218,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_BOOL:
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -225,7 +227,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_INTEGER:
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -236,14 +238,15 @@ cfl_type* cfl_generate_type_equation_chain(
         case CFL_NODE_FUNCTION:
             id0 = next_id++;
 
-            child_type0 = malloc(sizeof(cfl_type));
+            child_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!child_type0)
                 break;
 
             cfl_create_type_variable(child_type0, id0);
 
-            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
             if(!hypothesis_chain_node)
             {
@@ -273,7 +276,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
             {
@@ -287,7 +290,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_LIST:
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
                 break;
@@ -300,7 +303,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             while(pos)
             {
-                temp_type1 = malloc(sizeof(cfl_type));
+                temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
                 if(!temp_type1)
                 {
@@ -341,7 +344,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 pos = pos->next;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
             {
@@ -373,7 +376,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -394,7 +397,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -413,7 +416,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -429,7 +432,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!child_type0)
                 break;
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -448,7 +451,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -477,7 +480,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -498,7 +501,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -517,7 +520,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -545,7 +548,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -566,7 +569,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -585,7 +588,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -612,7 +615,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -626,7 +629,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -647,7 +650,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -686,7 +689,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -717,7 +720,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -738,7 +741,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -759,7 +762,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 return 0;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -768,7 +771,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_LET_REC:
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
                 break;
@@ -777,7 +780,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -790,7 +793,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type1, id1);
 
-            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
             if(!hypothesis_chain_node)
             {
@@ -810,7 +814,8 @@ cfl_type* cfl_generate_type_equation_chain(
                                                       hypothesis_head,
                                                       node->children[3]);
 
-            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
             if(!hypothesis_chain_node)
             {
@@ -866,7 +871,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 return 0;
             }
 
-            temp_type2 = malloc(sizeof(cfl_type));
+            temp_type2 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type2)
             {
@@ -909,7 +914,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -932,7 +937,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -943,7 +948,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -955,7 +960,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_list(temp_type1, temp_type0);
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
             {
@@ -1003,7 +1008,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1017,7 +1022,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -1030,7 +1035,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_list(temp_type1, temp_type0);
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1061,7 +1066,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
             {
@@ -1098,7 +1103,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!child_type0)
                 break;
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1126,7 +1131,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!child_type0)
                 break;
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1149,7 +1154,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             id2 = next_id++;
 
-            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
             if(!hypothesis_chain_node)
                 break;
@@ -1160,7 +1166,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
             hypothesis_head->next = hypothesis_chain_node;
 
-            hypothesis_chain_node = malloc(sizeof(cfl_type_hypothesis_chain));
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
             if(!hypothesis_chain_node)
             {
@@ -1196,7 +1203,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!child_type0)
                 break;
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1215,14 +1222,14 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
                 break;
 
             cfl_create_type_variable(temp_type0, id2);
 
-            temp_type1 = malloc(sizeof(cfl_type));
+            temp_type1 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type1)
             {
@@ -1233,7 +1240,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_list(temp_type1, temp_type0);
 
-            temp_type0 = malloc(sizeof(cfl_type));
+            temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
             if(!temp_type0)
             {
@@ -1252,7 +1259,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            result = malloc(sizeof(cfl_type));
+            result = cfl_type_malloc(sizeof(cfl_type));
 
             if(!result)
                 break;
@@ -1371,7 +1378,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 {
     if(node->type == CFL_TYPE_BOOL)
     {
-        cfl_type* result = malloc(sizeof(cfl_type));
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
 
         if(!result)
             return 0;
@@ -1382,7 +1389,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
     }
     else if(node->type == CFL_TYPE_INTEGER)
     {
-        cfl_type* result = malloc(sizeof(cfl_type));
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
 
         if(!result)
             return 0;
@@ -1398,7 +1405,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
         if(!new_content)
             return 0;
 
-        cfl_type* result = malloc(sizeof(cfl_type));
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
 
         if(!result)
         {
@@ -1427,7 +1434,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
             return 0;
         }
 
-        cfl_type* result = malloc(sizeof(cfl_type));
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
 
         if(!result)
         {
@@ -1470,7 +1477,7 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
             pos = pos->next;
         }
 
-        cfl_type* result = malloc(sizeof(cfl_type));
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
 
         if(!result)
             return 0;

@@ -3,8 +3,6 @@
 
 #include "cfl_ast.h"
 
-#include <stdlib.h>
-
 void* cfl_parser_malloc(size_t size);
 
 typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);

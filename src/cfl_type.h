@@ -3,6 +3,8 @@
 
 #include "cfl_ast.h"
 
+void* cfl_type_malloc(size_t size);
+
 typedef enum {
     CFL_TYPE_VARIABLE,
     CFL_TYPE_BOOL,

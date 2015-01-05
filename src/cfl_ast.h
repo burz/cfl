@@ -2,11 +2,17 @@
 #define _CFL_AST_H_
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define MAX_IDENTIFIER_LENGTH 100
 #define NUMBER_OF_RESERVED_WORDS 10
 
 extern char* reserved_words[];
+
+void cfl_reset_ast_error_flag(void);
+int cfl_get_ast_error_flag(void);
+
+void* cfl_ast_malloc(size_t size);
 
 typedef enum {
     CFL_NODE_VARIABLE,
