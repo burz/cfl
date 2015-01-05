@@ -1,10 +1,25 @@
 #include "cfl_parser.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-void cfl_print_expected_error(char* expected, char* after, char* start, char* end)
+static int cfl_parse_error;
+
+void* cfl_parser_malloc(size_t size)
+{
+    void* result = malloc(size);
+
+    if(!result)
+    {
+        fprintf(stderr, "MEMORY ERROR: Ran out of memory while parsing");
+
+        cfl_parse_error = 1;
+    }
+
+    return result;
+}
+
+void cfl_parse_error_expected(char* expected, char* after, char* start, char* end)
 {
     char buffer[100];
     int length = 0;
@@ -13,6 +28,7 @@ void cfl_print_expected_error(char* expected, char* after, char* start, char* en
     {
         buffer[length] = *start;
 
+        ++start;
         ++length;
     }
 
@@ -26,25 +42,27 @@ void cfl_print_expected_error(char* expected, char* after, char* start, char* en
         fprintf(stderr, "PARSING ERROR: Expected %s after %s "
                         "but encountered \"%s\"\n", expected, after, buffer);
     }
+
+    cfl_parse_error = 1;
 }
 
 char* cfl_parse_atom(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_not(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_bool(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_integer(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_variable(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_list(node, start, end);
 
     return result;
@@ -54,7 +72,7 @@ char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_application(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_atom(node, start, end);
 
     return result;
@@ -64,31 +82,31 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_and(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_multiply(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_divide(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_mod(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_equal(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_less(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_less_equal(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_greater(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_greater_equal(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_molecule(node, start, end);
 
     return result;
@@ -98,19 +116,19 @@ char* cfl_parse_term(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_concatenate(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_push(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_or(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_add(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_subtract(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_factor(node, start, end);
 
     return result;
@@ -120,16 +138,16 @@ char* cfl_parse_expression(cfl_node* node, char* start, char* end)
 {
     char* result = cfl_parse_if(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_let(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_function(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_case(node, start, end);
 
-    if(!result)
+    if(!result && !cfl_parse_error)
         result = cfl_parse_term(node, start, end);
 
     return result;
@@ -178,6 +196,8 @@ int cfl_parse_file(cfl_node* node, char* filename)
     }
 
     program[size] = 0;
+
+    cfl_parse_error = 0;
 
     char* end = program + size;
     char* pos = cfl_parse_whitespace(program, end);

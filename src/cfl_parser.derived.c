@@ -1,11 +1,10 @@
 #include "cfl_parser.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* right)
 {
-    cfl_node* negative = malloc(sizeof(cfl_node));
+    cfl_node* negative = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!negative)
     {
@@ -24,7 +23,7 @@ static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* r
         return 0;
     }
 
-    cfl_node* negation = malloc(sizeof(cfl_node));
+    cfl_node* negation = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!negation)
     {
@@ -58,12 +57,12 @@ static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* r
 
 char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
+    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left)
         return 0;
 
-    cfl_node* right = malloc(sizeof(cfl_node));
+    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right)
     {
@@ -97,12 +96,12 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_mod(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
+    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left)
         return 0;
 
-    cfl_node* right = malloc(sizeof(cfl_node));
+    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right)
     {
@@ -128,7 +127,7 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* left_copy = malloc(sizeof(cfl_node));
+    cfl_node* left_copy = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left_copy)
     {
@@ -147,7 +146,7 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* right_copy = malloc(sizeof(cfl_node));
+    cfl_node* right_copy = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right_copy)
     {
@@ -168,7 +167,7 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* factor = malloc(sizeof(cfl_node));
+    cfl_node* factor = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!factor)
     {
@@ -191,7 +190,7 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* reduction = malloc(sizeof(cfl_node));
+    cfl_node* reduction = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!reduction)
     {
@@ -223,7 +222,7 @@ static int cfl_less_equal_transform(
         cfl_node* left,
         cfl_node* right)
 {
-    cfl_node* left_copy = malloc(sizeof(cfl_node));
+    cfl_node* left_copy = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left_copy)
     {
@@ -242,7 +241,7 @@ static int cfl_less_equal_transform(
         return 0;
     }
 
-    cfl_node* right_copy = malloc(sizeof(cfl_node));
+    cfl_node* right_copy = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right_copy)
     {
@@ -263,7 +262,7 @@ static int cfl_less_equal_transform(
         return 0;
     }
 
-    cfl_node* less = malloc(sizeof(cfl_node));
+    cfl_node* less = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!less)
     {
@@ -286,7 +285,7 @@ static int cfl_less_equal_transform(
         return 0;
     }
 
-    cfl_node* equal = malloc(sizeof(cfl_node));
+    cfl_node* equal = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!equal)
     {
@@ -320,12 +319,12 @@ static int cfl_less_equal_transform(
 
 char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
+    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left)
         return 0;
 
-    cfl_node* right = malloc(sizeof(cfl_node));
+    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right)
     {
@@ -359,12 +358,12 @@ char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_greater(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
+    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left)
         return 0;
 
-    cfl_node* right = malloc(sizeof(cfl_node));
+    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right)
     {
@@ -390,7 +389,7 @@ char* cfl_parse_greater(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* less_equal = malloc(sizeof(cfl_node));
+    cfl_node* less_equal = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!less_equal)
     {
@@ -415,12 +414,12 @@ char* cfl_parse_greater(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = malloc(sizeof(cfl_node));
+    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!left)
         return 0;
 
-    cfl_node* right = malloc(sizeof(cfl_node));
+    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!right)
     {
@@ -446,7 +445,7 @@ char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* less = malloc(sizeof(cfl_node));
+    cfl_node* less = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!less)
     {
@@ -506,7 +505,7 @@ static int cfl_construct_function_chain(
         if(is_recursive && pos->next == 0)
             break;
 
-        cfl_node* function = malloc(sizeof(cfl_node));
+        cfl_node* function = cfl_parser_malloc(sizeof(cfl_node));
 
         if(!function)
         {
@@ -605,7 +604,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(start + 3, end);
 
-    cfl_node* name = malloc(sizeof(cfl_node));
+    cfl_node* name = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!name)
         return 0;
@@ -614,7 +613,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(!pos)
     {
-        cfl_print_expected_error("variable", "\"let\"", start, end);
+        cfl_parse_error_expected("variable", "\"let\"", start, end);
 
         free(name);
 
@@ -630,7 +629,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
     {
         start = cfl_parse_whitespace(start, end);
 
-        cfl_node* argument = malloc(sizeof(cfl_node));
+        cfl_node* argument = cfl_parser_malloc(sizeof(cfl_node));
 
         if(!argument)
         {
@@ -649,11 +648,11 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
             break;
         }
 
-        start = pos;
+        start = argument_pos;
 
         struct cfl_argument_chain_node* temp = argument_chain.next;
 
-        argument_chain.next = malloc(sizeof(struct cfl_argument_chain_node));
+        argument_chain.next = cfl_parser_malloc(sizeof(struct cfl_argument_chain_node));
 
         if(!argument_chain.next)
         {
@@ -670,7 +669,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(end - start < 1 || *start != '=')
     {
-        cfl_print_expected_error("\"=\"", "\"let\"", start, end);
+        cfl_parse_error_expected("\"=\"", "\"let\"", start, end);
 
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
@@ -689,7 +688,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
            in_pos[1] == 'e' && in_pos[2] == 't')
             ++depth;
         else if(end - in_pos > 1 && in_pos[0] == 'i' && in_pos[1] == 'n')
-            if(--depth == 0)
+            if(depth-- == 1 && cfl_is_whitespace(in_pos[2]))
                 break;
 
         ++in_pos;
@@ -697,7 +696,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(in_pos == end)
     {
-        cfl_print_expected_error("\"in\"", "\"let\"", start, end);
+        cfl_parse_error_expected("\"in\"", "\"let\"", start, end);
 
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
@@ -705,7 +704,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* value = malloc(sizeof(cfl_node));
+    cfl_node* value = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!value)
     {
@@ -719,7 +718,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(!pos)
     {
-        cfl_print_expected_error("expression", "\"=\"", start, end);
+        cfl_parse_error_expected("expression", "\"=\"", start, end);
 
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
@@ -732,7 +731,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(pos != in_pos)
     {
-        cfl_print_expected_error("expression", "\"=\"", start, end);
+        cfl_parse_error_expected("expression", "\"=\"", start, end);
 
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
@@ -741,7 +740,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    cfl_node* expanded_value = malloc(sizeof(cfl_node));
+    cfl_node* expanded_value = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!expanded_value)
     {
@@ -765,7 +764,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(in_pos + 2, end);
 
-    cfl_node* body = malloc(sizeof(cfl_node));
+    cfl_node* body = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!body)
     {
@@ -780,7 +779,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(!pos)
     {
-        cfl_print_expected_error("expression", "\"in\"", start, end);
+        cfl_parse_error_expected("expression", "\"in\"", start, end);
 
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
@@ -792,7 +791,7 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(!argument_chain.next)
     {
-        cfl_node* function = malloc(sizeof(cfl_node));
+        cfl_node* function = cfl_parser_malloc(sizeof(cfl_node));
 
         if(!function)
         {
