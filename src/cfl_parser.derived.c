@@ -610,14 +610,18 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
     if(!name)
         return 0;
 
-    start = cfl_parse_variable(name, start, end);
+    char* pos = cfl_parse_variable(name, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("variable", "\"let\"", start, end);
+
         free(name);
 
         return 0;
     }
+
+    start = pos;
 
     struct cfl_argument_chain_node argument_chain;
     argument_chain.next = 0;
@@ -636,9 +640,9 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
             return 0;
         }
 
-        char* pos = cfl_parse_variable(argument, start, end);
+        char* argument_pos = cfl_parse_variable(argument, start, end);
 
-        if(!pos)
+        if(!argument_pos)
         {
             free(argument);
 
@@ -666,13 +670,15 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(end - start < 1 || *start != '=')
     {
+        cfl_print_expected_error("\"=\"", "\"let\"", start, end);
+
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(++start, end);
+    start = cfl_parse_whitespace(start + 1, end);
 
     char* in_pos = start;
     int depth = 1;
@@ -691,6 +697,8 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     if(in_pos == end)
     {
+        cfl_print_expected_error("\"in\"", "\"let\"", start, end);
+
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
 
@@ -707,10 +715,12 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(value, start, in_pos);
+    pos = cfl_parse_expression(value, start, in_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"=\"", start, end);
+
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
         free(value);
@@ -718,10 +728,12 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, in_pos);
+    pos = cfl_parse_whitespace(pos, in_pos);
 
-    if(start != in_pos)
+    if(pos != in_pos)
     {
+        cfl_print_expected_error("expression", "\"=\"", start, end);
+
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
         cfl_free_node(value);
@@ -764,10 +776,12 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(body, start, end);
+    pos = cfl_parse_expression(body, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"in\"", start, end);
+
         cfl_free_node(name);
         cfl_delete_argument_chain(argument_chain.next);
         cfl_free_node(expanded_value);
@@ -828,5 +842,5 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
         }
     }
 
-    return start;
+    return pos;
 }

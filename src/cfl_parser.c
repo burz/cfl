@@ -12,14 +12,46 @@
 #define NINE_CHAR 57
 #define MAX_INTEGER_STRING_LENGTH 11
 
+static int is_whitespace(char c)
+{
+    if(c == ' ' || c == '\n' || c == '\t' ||
+       c == '\r' || c == '\v' || c == '\f')
+        return 1;
+
+    return 0;
+}
+
+void cfl_print_expected_error(char* expected, char* after, char* start, char* end)
+{
+    char buffer[100];
+    int length = 0;
+
+    while(start != end && !is_whitespace(*start))
+    {
+        buffer[length] = *start;
+
+        ++length;
+    }
+
+    if(!length)
+        fprintf(stderr, "PARSING ERROR: Expected %s after %s "
+                        "but reached end of input context\n", expected, after);
+    else
+    {
+        buffer[length] = 0;
+
+        fprintf(stderr, "PARSING ERROR: Expected %s after %s "
+                        "but encountered \"%s\"\n", expected, after, buffer);
+    }
+}
+
 char* cfl_parse_whitespace(char* start, char* end)
 {
     char* result = start;
 
     while(start != end)
     {
-        if(*start == ' ' || *start == '\n' || *start == '\t' ||
-           *start == '\r' || *start == '\v' || *start == '\f')
+        if(is_whitespace(*start))
             result = ++start;
         else
             return result;
@@ -222,20 +254,26 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
         start = cfl_parse_whitespace(start + 1, end);
     }
 
+    char* pos = start;
     int length = 0;
     char buffer[MAX_INTEGER_STRING_LENGTH];
 
-    while(start != end && length < MAX_INTEGER_STRING_LENGTH &&
-          *start >= ZERO_CHAR && *start <= NINE_CHAR)
+    while(pos != end && length < MAX_INTEGER_STRING_LENGTH &&
+          *pos >= ZERO_CHAR && *pos <= NINE_CHAR)
     {
-        buffer[length] = *start;
+        buffer[length] = *pos;
 
-        ++start;
+        ++pos;
         ++length;
     }
 
     if(!length)
+    {
+        if(negate)
+            cfl_print_expected_error("integer", "\"-\"", start, end);
+
         return 0;
+    }
 
     buffer[length] = 0;
 
@@ -247,7 +285,7 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
     if(!cfl_create_node_integer(node, value))
         return 0;
 
-    return start;
+    return pos;
 }
 
 char* cfl_parse_list(cfl_node* node, char* start, char* end)
@@ -294,6 +332,8 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
             if(encountered_comma)
             {
+                cfl_print_expected_error("expression", "\",\"", start, end);
+
                 if(!list_pos)
                     return 0;
 
@@ -371,6 +411,8 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
     if(start == end || *(start++) != ']')
     {
+        cfl_print_expected_error("\"]\"", "\"[\"", start, end);
+
         if(!list_pos)
             return 0;
 
@@ -406,19 +448,23 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
     if(!argument)
         return 0;
 
-    start = cfl_parse_variable(argument, start, end);
+    char* pos = cfl_parse_variable(argument, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("variable", "\"function\"", start, end);
+
         free(argument);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, end);
+    start = cfl_parse_whitespace(pos, end);
 
     if(end - start < 2 || start[0] != '-' || start[1] != '>')
     {
+        cfl_print_expected_error("\"->\"", "\"function\"", start, end);
+
         cfl_free_node(argument);
 
         return 0;
@@ -435,10 +481,12 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(body, start, end);
+    pos = cfl_parse_expression(body, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"->\"", start, end);
+
         cfl_free_node(argument);
         free(body);
 
@@ -453,7 +501,7 @@ char* cfl_parse_function(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    return start;
+    return pos;
 }
 
 char* cfl_parse_and(cfl_node* node, char* start, char* end)
@@ -559,10 +607,12 @@ char* cfl_parse_not(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_atom(child_node, start, end);
+    char* pos = cfl_parse_atom(child_node, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("atom", "\"!\"", start, end);
+
         free(child_node);
 
         return 0;
@@ -575,7 +625,7 @@ char* cfl_parse_not(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    return start;
+    return pos;
 }
 
 char* cfl_parse_add(cfl_node* node, char* start, char* end)
@@ -897,26 +947,30 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_whitespace(start, end);
 
-    char* pos = start;
+    char* then_pos = start;
     int depth = 1;
 
-    while(pos != end)
+    while(then_pos != end)
     {
-        if(end - pos > 1 && pos[0] == 'i' && pos[1] == 'f')
+        if(end - then_pos > 1 && then_pos[0] == 'i' && then_pos[1] == 'f')
             ++depth;
-        else if(end - pos > 3 && pos[0] == 'e' && pos[1] == 'l' &&
-                pos[2] == 's' && pos[3] == 'e')
+        else if(end - then_pos > 3 && then_pos[0] == 'e' && then_pos[1] == 'l' &&
+                then_pos[2] == 's' && then_pos[3] == 'e')
             --depth;
-        else if(end - pos > 3 && depth == 1 &&
-                pos[0] == 't' && pos[1] == 'h' &&
-                pos[2] == 'e' && pos[3] == 'n')
+        else if(end - then_pos > 3 && depth == 1 &&
+                then_pos[0] == 't' && then_pos[1] == 'h' &&
+                then_pos[2] == 'e' && then_pos[3] == 'n')
             break;
 
-        ++pos;
+        ++then_pos;
     }
 
-    if(pos == end || depth != 1)
+    if(then_pos == end || depth != 1)
+    {
+        cfl_print_expected_error("\"then\"", "\"if\"", start, end);
+
         return 0;
+    }
 
     cfl_node* condition = malloc(sizeof(cfl_node));
 
@@ -928,33 +982,36 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(condition, start, pos);
+    char* pos = cfl_parse_expression(condition, start, then_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"if\"", start, end);
+
         free(condition);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, pos);
+    start = cfl_parse_whitespace(pos, then_pos);
 
-    if(start != pos)
+    if(start != then_pos)
     {
         cfl_free_node(condition);
 
         return 0;
     }
 
-    pos += 4;
-    start = pos;
+    start = then_pos + 4;
 
-    while(pos != end)
+    char* else_pos = start;
+
+    while(else_pos != end)
     {
-        if(end - pos > 1 && pos[0] == 'i' && pos[1] == 'f')
+        if(end - else_pos > 1 && else_pos[0] == 'i' && else_pos[1] == 'f')
             ++depth;
-        else if(end - pos > 3 && pos[0] == 'e' && pos[1] == 'l' &&
-                pos[2] == 's' && pos[3] == 'e')
+        else if(end - else_pos > 3 && else_pos[0] == 'e' && else_pos[1] == 'l' &&
+                else_pos[2] == 's' && else_pos[3] == 'e')
         {
             --depth;
 
@@ -962,17 +1019,19 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
                 break;
         }
 
-        ++pos;
+        ++else_pos;
     }
 
-    if(pos == end || depth != 0)
+    if(else_pos == end || depth != 0)
     {
+        cfl_print_expected_error("\"else\"", "\"then\"", start, end);
+
         cfl_free_node(condition);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, pos);
+    start = cfl_parse_whitespace(start, else_pos);
 
     cfl_node* then_node = malloc(sizeof(cfl_node));
 
@@ -983,19 +1042,21 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(then_node, start, pos);
+    pos = cfl_parse_expression(then_node, start, else_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"then\"", start, else_pos);
+
         cfl_free_node(condition);
         free(then_node);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, pos);
+    start = cfl_parse_whitespace(pos, else_pos);
 
-    if(start != pos)
+    if(start != else_pos)
     {
         cfl_free_node(condition);
         cfl_free_node(then_node);
@@ -1017,10 +1078,12 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(else_node, start, end);
+    pos = cfl_parse_expression(else_node, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"else\"", start, end);
+
         cfl_free_node(condition);
         cfl_free_node(then_node);
         free(else_node);
@@ -1037,7 +1100,7 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    return start;
+    return pos;
 }
 
 char* cfl_parse_push(cfl_node* node, char* start, char* end)
@@ -1168,7 +1231,11 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     }
 
     if(end - of_pos < 2 || depth != 1)
+    {
+        cfl_print_expected_error("\"of\"", "\"case\"", start, end);
+
         return 0;
+    }
 
     start = cfl_parse_whitespace(start, of_pos);
 
@@ -1177,16 +1244,18 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     if(!list)
         return 0;
 
-    start = cfl_parse_expression(list, start, of_pos);
+    char* pos = cfl_parse_expression(list, start, of_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"case\"", start, end);
+
         free(list);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, of_pos);
+    start = cfl_parse_whitespace(pos, of_pos);
 
     if(start != of_pos)
     {
@@ -1199,6 +1268,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - start < 2 || start[0] != '[' || start[1] != ']')
     {
+        cfl_print_expected_error("\"[]\"", "\"of\"", start, end);
+
         cfl_free_node(list);
 
         return 0;
@@ -1208,6 +1279,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - start < 2 || start[0] != '-' || start[1] != '>')
     {
+        cfl_print_expected_error("\"->\"", "\"[]\"", start, end);
+
         cfl_free_node(list);
 
         return 0;
@@ -1248,6 +1321,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - line_pos < 3 || depth != 1)
     {
+        cfl_print_expected_error("\"|\"", "\"case\"", start, end);
+
         cfl_free_node(list);
 
         return 0;
@@ -1272,17 +1347,19 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_whitespace(line_pos + 1, end);
+    pos = cfl_parse_whitespace(line_pos + 1, end);
 
-    if(end - start < 1 || *start != '(')
+    if(end - pos < 1 || *pos != '(')
     {
+        cfl_print_expected_error("\"(\"", "\"|\"", pos, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
 
         return 0;
     }
 
-    start = cfl_parse_whitespace(start + 1, end);
+    start = cfl_parse_whitespace(pos + 1, end);
 
     char* semi_pos = start;
 
@@ -1291,6 +1368,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - semi_pos < 2)
     {
+        cfl_print_expected_error("\":\"", "\"(\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
 
@@ -1307,10 +1386,12 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_variable(head, start, semi_pos);
+    pos = cfl_parse_variable(head, start, semi_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("variable", "\"(\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         free(head);
@@ -1318,10 +1399,12 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_whitespace(start, semi_pos);
+    start = cfl_parse_whitespace(pos, semi_pos);
 
     if(start != semi_pos)
     {
+        cfl_print_expected_error("variable", "\"(\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         cfl_free_node(head);
@@ -1338,6 +1421,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - par_pos < 2)
     {
+        cfl_print_expected_error("\")\"", "\"(\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         cfl_free_node(head);
@@ -1356,10 +1441,26 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_variable(tail, start, par_pos);
+    pos = cfl_parse_variable(tail, start, par_pos);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("variable", "\":\"", start, end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        free(tail);
+
+        return 0;
+    }
+
+    pos = cfl_parse_whitespace(pos, par_pos);
+
+    if(pos != par_pos)
+    {
+        cfl_print_expected_error("variable", "\":\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         cfl_free_node(head);
@@ -1372,6 +1473,8 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     if(end - start < 2 || start[0] != '-' || start[1] != '>')
     {
+        cfl_print_expected_error("\"->\"", "\")\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         cfl_free_node(head);
@@ -1394,10 +1497,12 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    start = cfl_parse_expression(nonempty, start, end);
+    pos = cfl_parse_expression(nonempty, start, end);
 
-    if(!start)
+    if(!pos)
     {
+        cfl_print_expected_error("expression", "\"->\"", start, end);
+
         cfl_free_node(list);
         cfl_free_node(empty);
         cfl_free_node(head);
@@ -1418,7 +1523,7 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    return start;
+    return pos;
 }
 
 char* cfl_parse_atom(cfl_node* node, char* start, char* end)
