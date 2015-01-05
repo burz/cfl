@@ -36,6 +36,7 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                 else if(!cfl_substitute(target->children[3], variable, value))
                     return 0;
             }
+            break;
         default:
             for(i = 0; i < target->number_of_children; ++i)
                 if(!cfl_substitute(target->children[i], variable, value))
