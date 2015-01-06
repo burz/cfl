@@ -100,9 +100,11 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[1]))
             return 0;
 
+        bool result = *((bool*) node->children[1]->data);
+
         cfl_delete_node(node);
 
-        cfl_create_node_bool(node, *((bool*) node->children[1]->data));
+        cfl_create_node_bool(node, result);
     }
     else if(node->type == CFL_NODE_OR)
     {
@@ -121,9 +123,11 @@ int cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[1]))
             return 0;
 
+        bool result = *((bool*) node->children[1]->data);
+
         cfl_delete_node(node);
 
-        cfl_create_node_bool(node, *((bool*) node->children[1]->data));
+        cfl_create_node_bool(node, result);
     }
     else if(node->type == CFL_NODE_NOT)
     {
