@@ -46,6 +46,10 @@ int main(int argc, char* argv[])
             }
 
             cfl_print_type(type);
+
+            cfl_free_type(type);
+
+            cfl_delete_node(&node);
         }
         else
         {
