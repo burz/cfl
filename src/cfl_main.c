@@ -7,7 +7,7 @@
 
 static char usage[] = "USAGE: cfl filename\n"
                       "           -ast filename\n"
-                      "           -typecheck filename";
+                      "           -type filename";
 
 int main(int argc, char* argv[])
 {
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
             cfl_delete_node(&node);
         }
-        else if(argc > 2 && !strcmp(argv[1], "-typecheck"))
+        else if(argc > 2 && !strcmp(argv[1], "-type"))
         {
             if(!cfl_parse_file(&node, argv[2]))
                 return 1;
