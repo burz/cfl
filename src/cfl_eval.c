@@ -49,6 +49,16 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                     return 0;
             }
             break;
+        case CFL_NODE_CASE:
+            if(!cfl_substitute(target->children[0], variable, value) ||
+               !cfl_substitute(target->children[1], variable, value))
+                return 0;
+
+            if(strcmp(target->children[2]->data, variable) &&
+               strcmp(target->children[3]->data, variable))
+                    if(!cfl_substitute(target->children[4], variable, value))
+                        return 0;
+            break;
         default:
             for(i = 0; i < target->number_of_children; ++i)
                 if(!cfl_substitute(target->children[i], variable, value))
