@@ -216,7 +216,12 @@ cfl_type* cfl_generate_type_equation_chain(
             id0 = cfl_lookup_hypothesis(hypothesis_head->next, node->data);
 
             if(!id0)
+            {
+                fprintf(stderr, "TYPE ERROR: The variable \"%s\" "
+                        "is unbound\n", (char*) node->data);
+
                 break;
+            }
 
             result = cfl_type_malloc(sizeof(cfl_type));
 
