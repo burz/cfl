@@ -214,7 +214,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
     char* end = program + size;
     char* pos = cfl_parse_whitespace(program, end);
 
-    pos = cfl_parse_expression(node, pos, end);
+    pos = cfl_parse_program(node, pos, end);
 
     if(!pos)
     {
@@ -225,18 +225,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
         return 0;
     }
 
-    pos = cfl_parse_whitespace(pos, end);
-
     free(program);
-
-    if(pos != end)
-    {
-        cfl_parse_error_unparseable_file(filename);
-
-        cfl_delete_node(node);
-
-        return 0;
-    }
 
     return 1;
 }
