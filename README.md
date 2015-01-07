@@ -24,6 +24,32 @@ To output the return type of a file run
 ./cfl -type filename
 ```
 
+## Example
+
+The mergesort algorithm can be written in cfl as
+```
+compare x y = if x > y then -1 else if x == y then 0 else 1;
+
+combine x y = case x of
+      []       -> y
+    | (z : zs) -> case y of
+          []       -> x
+        | (w : ws) -> let r = compare z w in if r <= 0
+            then w : z : combine zs ws
+            else z : w : combine zs ws; 
+
+mergesort x = let mergesort' x l r = case x of
+      []       -> combine (mergesort l) (mergesort r)
+    | (z : zs) -> case zs of
+          []       -> x
+        | (w : ws) -> mergesort' ws (z : l) (w : r)
+in mergesort' x [] []; 
+
+main = mergesort [4, 23, -34, 3]
+```
+Note that every cfl program must end with a `main` and global defintions are followed by
+a semicolon.
+
 ## Expressions
 
 ### Boolean Operations
