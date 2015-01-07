@@ -971,6 +971,9 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
 
     if(start != end)
     {
+        fprintf(stderr, "PARSE ERROR: Could not parse a full program. "
+                        "Perhaps a \";\" is missing\n");
+
         cfl_delete_definition_chain(definitions.next);
 
         return 0;
