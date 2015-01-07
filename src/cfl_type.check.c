@@ -218,7 +218,8 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!id0)
             {
                 fprintf(stderr, "TYPE ERROR: The variable \"%s\" "
-                        "is unbound\n", (char*) node->data);
+                        "must be defined before it is used\n",
+                        (char*) node->data);
 
                 break;
             }
