@@ -999,13 +999,21 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
 
     cfl_definition_chain* def = definitions.next->next;
 
+    cfl_free_node(definitions.next->name);
     free(definitions.next);
 
     while(def)
     {
         if(!cfl_is_free(def->name->data, body))
         {
+            cfl_definition_chain* temp = def;
+
             def = def->next;
+
+            cfl_free_node(temp->name);
+            cfl_delete_argument_chain(temp->arguments.next);
+            cfl_free_node(temp->value);
+            free(temp);
 
             continue;
         }
