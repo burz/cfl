@@ -1,4 +1,4 @@
-Feval - evaluation using f-algebras
+cfl
 ===================================
 
 Author: Anthony Burzillo
