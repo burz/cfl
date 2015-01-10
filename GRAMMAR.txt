@@ -88,7 +88,10 @@ e ::=   function c -> e
       | n ++ e | n : e
       | r
 
-s ::=   data t = t ... t
+y ::=   Bool | Int
+      | t
+
+s ::=   type t = y ... y
       | c = e
       | x c ... c = e
 
