@@ -1,56 +1,99 @@
 ## Evaluation grammar for cfl
 
-x ::= ( a | b | ... | z
-      | A | B | ... | Z )
+x ::= ( a | b | ... | z )
       ( a | b | ... | z
       | A | B | ... | Z
       | 0 | 1 | ... | 9
       | _ )* (')*
 
+t ::= ( A | B | ... | Z )
+      ( a | b | ... | z
+      | A | B | ... | Z
+      | 0 | 1 | ... | 9
+      | _ )* (')*
+
+c ::=   "(" c ")"
+      | _
+      | x
+      | t x ... x
+
 v ::=   x
       | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
-      | function x -> e
+      | function c -> e
       | [v, v, ..., v]
+      | t e ... e
 
 e ::=   v
-      | (e)
+      | "(" e ")"
       | e && e | e "||" e | !e
       | e "+" e | e "*" e | e / e
       | e == e | e < e
       | e e
       | if e then e else e
-      | let rec x x = e in e
+      | let rec x c = e in e
       | e : e | e ++ e
-      | case e of [] -> e "|" (x : x) -> e
+      | case e of [] -> e "|" (c : x) -> e
 
 ## Parseable grammar for cfl
 
-x ::= ( a | b | ... | z
-      | A | B | ... | Z )
+x ::= ( a | b | ... | z )
       ( a | b | ... | z
       | A | B | ... | Z
       | 0 | 1 | ... | 9
       | _ )* (')*
 
-v ::=   x
+t ::= ( A | B | ... | Z )
+      ( a | b | ... | z
+      | A | B | ... | Z
+      | 0 | 1 | ... | 9
+      | _ )* (')*
+
+c ::=   "(" c ")"
+      | _
+      | x
+      | t x ... x
+
+a ::=   x
       | true | false
       | 0 | 1 | -1 | 2 | -2 | ...
-      | function x -> e
-      | [v, v, ..., v]
+      | !a
+      | "(" e ")"
+      | [e, e, ..., e]
 
-e ::=   v
-      | (e)
-      | e && e | e "||" e | !e
-      | e "+" e | e - e | e "*" e | e / e | e % e
-      | e == e | e < e | e <= e | e > e | e >= e
-      | e e
+m ::=   a a
+      | a
+
+f ::=   m * f | m / f | m % f
+      | m
+
+r ::=   f + r | f - r
+      | f
+
+c ::=   r == r | r < r | r <= r | r > r | r >= r |
+      | r
+
+b ::=   c "||" b
+      | c
+
+n ::=   b "&&" n
+      | b
+
+e ::=   function c -> e
       | if e then e else e
-      | let x x ... x = e in e
-      | e : e | e ++ e
+      | let c = e in e
+      | let x c ... c = e in e
       | case e of [] -> e "|" (x : x) -> e
+      | t a ... a
+      | n ++ e | n : e
+      | r
 
-d ::=   e
-      | e ; d
+s ::=   data t = t ... t
+      | c = e
+      | x c ... c = e
 
-p ::= d ; main = e
+d ::=   s
+      | s ; d
+
+p ::=   d ; main = e
+      | main = e
