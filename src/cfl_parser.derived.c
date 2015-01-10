@@ -60,22 +60,11 @@ static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* r
 
 char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* left;
+    cfl_node* right;
 
-    if(!left)
-        return 0;
-
-    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
+    start = cfl_parse_binary_operation(&left,
+                                       &right,
                                        &cfl_parse_factor,
                                        &cfl_parse_term,
                                        1,
@@ -84,12 +73,7 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
                                        end);
 
     if(!start)
-    {
-        free(left);
-        free(right);
-
         return 0;
-    }
 
     if(!cfl_subtraction_transform(node, left, right))
         return 0;
@@ -99,22 +83,11 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_mod(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* left;
+    cfl_node* right;
 
-    if(!left)
-        return 0;
-
-    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
+    start = cfl_parse_binary_operation(&left,
+                                       &right,
                                        &cfl_parse_factor,
                                        &cfl_parse_term,
                                        1,
@@ -123,12 +96,7 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
                                        end);
 
     if(!start)
-    {
-        free(left);
-        free(right);
-
         return 0;
-    }
 
     cfl_node* left_copy = cfl_parser_malloc(sizeof(cfl_node));
 
@@ -322,22 +290,11 @@ static int cfl_less_equal_transform(
 
 char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* left;
+    cfl_node* right;
 
-    if(!left)
-        return 0;
-
-    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
+    start = cfl_parse_binary_operation(&left,
+                                       &right,
                                        &cfl_parse_molecule,
                                        &cfl_parse_molecule,
                                        2,
@@ -346,12 +303,7 @@ char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
                                        end);
 
     if(!start)
-    {
-        free(left);
-        free(right);
-
         return 0;
-    }
 
     if(!cfl_less_equal_transform(node, left, right))
         return 0;
@@ -361,22 +313,11 @@ char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_greater(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* left;
+    cfl_node* right;
 
-    if(!left)
-        return 0;
-
-    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
+    start = cfl_parse_binary_operation(&left,
+                                       &right,
                                        &cfl_parse_molecule,
                                        &cfl_parse_molecule,
                                        1,
@@ -385,12 +326,7 @@ char* cfl_parse_greater(cfl_node* node, char* start, char* end)
                                        end);
 
     if(!start)
-    {
-        free(left);
-        free(right);
-
         return 0;
-    }
 
     cfl_node* less_equal = cfl_parser_malloc(sizeof(cfl_node));
 
@@ -417,22 +353,11 @@ char* cfl_parse_greater(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
 {
-    cfl_node* left = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* left;
+    cfl_node* right;
 
-    if(!left)
-        return 0;
-
-    cfl_node* right = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!right)
-    {
-        free(left);
-
-        return 0;
-    }
-
-    start = cfl_parse_binary_operation(left,
-                                       right,
+    start = cfl_parse_binary_operation(&left,
+                                       &right,
                                        &cfl_parse_molecule,
                                        &cfl_parse_molecule,
                                        2,
@@ -441,12 +366,7 @@ char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
                                        end);
 
     if(!start)
-    {
-        free(left);
-        free(right);
-
         return 0;
-    }
 
     cfl_node* less = cfl_parser_malloc(sizeof(cfl_node));
 
