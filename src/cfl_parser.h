@@ -57,6 +57,7 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end);
 char* cfl_parse_molecule(cfl_node* node, char* start, char* end);
 char* cfl_parse_factor(cfl_node* node, char* start, char* end);
 char* cfl_parse_term(cfl_node* node, char* start, char* end);
+char* cfl_parse_list_expression(cfl_node* node, char* start, char* end);
 char* cfl_parse_expression(cfl_node* node, char* start, char* end);
 
 char* cfl_parse_program(cfl_node* node, char* start, char* end);

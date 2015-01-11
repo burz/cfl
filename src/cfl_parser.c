@@ -128,13 +128,7 @@ char* cfl_parse_factor(cfl_node* node, char* start, char* end)
 
 char* cfl_parse_term(cfl_node* node, char* start, char* end)
 {
-    char* result = cfl_parse_concatenate(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_push(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_or(node, start, end);
+    char* result = cfl_parse_or(node, start, end);
 
     if(!result && !cfl_error_occured_while_parsing())
         result = cfl_parse_add(node, start, end);
@@ -144,6 +138,16 @@ char* cfl_parse_term(cfl_node* node, char* start, char* end)
 
     if(!result && !cfl_error_occured_while_parsing())
         result = cfl_parse_factor(node, start, end);
+
+    return result;
+}
+
+char* cfl_parse_list_expression(cfl_node* node, char* start, char* end)
+{
+    char* result = cfl_parse_push(node, start, end);
+
+    if(!result && !cfl_error_occured_while_parsing())
+        result = cfl_parse_term(node, start, end);
 
     return result;
 }
@@ -162,7 +166,10 @@ char* cfl_parse_expression(cfl_node* node, char* start, char* end)
         result = cfl_parse_case(node, start, end);
 
     if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_term(node, start, end);
+        result = cfl_parse_concatenate(node, start, end);
+
+    if(!result && !cfl_error_occured_while_parsing())
+        result = cfl_parse_list_expression(node, start, end);
 
     return result;
 }

@@ -14,16 +14,23 @@ char* cfl_parse_binary_operation(
         char* start,
         char* end)
 {
-    *left = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!left)
-        return 0;
-
     char* op_pos = start + 1;
+    int depth = 1;
+
+    if(*start == '(')
+        ++depth;
 
     while(end - op_pos > operand_length + 1)
     {
-        if(cfl_is_whitespace(op_pos[-1]) &&
+        if(depth < 1)
+            return 0;
+        else if(*op_pos == ',' && depth == 1)
+            return 0;
+        if(*op_pos == '(' || *op_pos == '[')
+            ++depth;
+        else if(*op_pos == ')' || *op_pos == ']')
+            --depth;
+        else if(depth == 1 && cfl_is_whitespace(op_pos[-1]) &&
            !strncmp(op_pos, operand, operand_length) &&
            cfl_is_whitespace(op_pos[operand_length]))
             break;
@@ -31,12 +38,13 @@ char* cfl_parse_binary_operation(
         ++op_pos;
     }
 
-    if(end - op_pos <= operand_length + 1)
-    {
-        free(*left);
-
+    if(end - op_pos <= operand_length + 1 || depth != 1)
         return 0;
-    }
+
+    *left = cfl_parser_malloc(sizeof(cfl_node));
+
+    if(!left)
+        return 0;
 
     start = (*left_parser)(*left, start, op_pos);
 
@@ -315,7 +323,7 @@ char* cfl_parse_push(cfl_node* node, char* start, char* end)
     start = cfl_parse_binary_operation(&left,
                                        &right,
                                        &cfl_parse_term,
-                                       &cfl_parse_term,
+                                       &cfl_parse_list_expression,
                                        1,
                                        ":",
                                        start,
@@ -342,8 +350,8 @@ char* cfl_parse_concatenate(cfl_node* node, char* start, char* end)
 
     start = cfl_parse_binary_operation(&left,
                                        &right,
-                                       &cfl_parse_term,
-                                       &cfl_parse_term,
+                                       &cfl_parse_list_expression,
+                                       &cfl_parse_list_expression,
                                        2,
                                        "++",
                                        start,

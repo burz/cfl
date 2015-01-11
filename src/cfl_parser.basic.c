@@ -79,7 +79,7 @@ char* cfl_parse_parentheses(
         return 0;
     }
 
-    return start;
+    return start + 1;
 }
 
 char* cfl_parse_variable(cfl_node* node, char* start, char* end)
