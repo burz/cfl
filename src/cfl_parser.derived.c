@@ -596,6 +596,7 @@ static char* cfl_parse_def(
     {
         cfl_parse_error_expected("expression", "\"=\"", start, end);
 
+        cfl_delete_node(name);
         cfl_delete_argument_chain(head->next);
 
         return 0;
@@ -1008,7 +1009,6 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
             if(!cfl_create_node_application(expanded_body, function, expanded_value))
             {
                 cfl_delete_definition_chain(def->next);
-                cfl_delete_node(def->name);
                 free(def);
                 cfl_free_node(expanded_value);
                 free(expanded_body);

@@ -325,7 +325,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(node->number_of_children)
             {
-                children = malloc(sizeof(cfl_type*) * node->number_of_children);
+                children = cfl_type_malloc(sizeof(cfl_type*) * node->number_of_children);
 
                 for(i = 0; i < node->number_of_children; ++i)
                 {
@@ -358,7 +358,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
                     free(hypothesis_chain_node);
 
-                    temp_type0 = malloc(sizeof(cfl_type));
+                    temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 
                     if(!temp_type0)
                     {
@@ -387,7 +387,7 @@ cfl_type* cfl_generate_type_equation_chain(
                         break;
                     }
 
-                    children[i] = malloc(sizeof(cfl_type));
+                    children[i] = cfl_type_malloc(sizeof(cfl_type));
 
                     if(!children[i])
                     {
