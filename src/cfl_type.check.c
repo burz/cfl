@@ -199,6 +199,8 @@ cfl_type* cfl_generate_type_equation_chain(
 
     cfl_type* result = 0;
 
+    int i;
+    int j;
     unsigned int id0;
     unsigned int id1;
     unsigned int id2;
@@ -209,6 +211,7 @@ cfl_type* cfl_generate_type_equation_chain(
     cfl_type* temp_type0;
     cfl_type* temp_type1;
     cfl_type* temp_type2;
+    cfl_type** children;
 
     switch(node->type)
     {
@@ -248,60 +251,6 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
 
             cfl_create_type_integer(result);
-
-            break;
-        case CFL_NODE_FUNCTION:
-            id0 = next_id++;
-
-            child_type0 = cfl_type_malloc(sizeof(cfl_type));
-
-            if(!child_type0)
-                break;
-
-            cfl_create_type_variable(child_type0, id0);
-
-            hypothesis_chain_node =
-                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
-
-            if(!hypothesis_chain_node)
-            {
-                cfl_free_type(child_type0);
-
-                break;
-            }
-
-            hypothesis_chain_node->name = node->children[0]->data;
-            hypothesis_chain_node->id = id0;
-            hypothesis_chain_node->next = hypothesis_head->next;
-
-            hypothesis_head->next = hypothesis_chain_node;
-
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
-                                                           hypothesis_head,
-                                                           node->children[1]);
-
-            hypothesis_head->next = hypothesis_chain_node->next;
-
-            free(hypothesis_chain_node);
-
-            if(!child_type1)
-            {
-                cfl_free_type(child_type0);
-
-                break;
-            }
-
-            result = cfl_type_malloc(sizeof(cfl_type));
-
-            if(!result)
-            {
-                cfl_free_type(child_type0);
-                cfl_free_type(child_type1);
-
-                break;
-            }
-
-            cfl_create_type_arrow(result, child_type0, child_type1);
 
             break;
         case CFL_NODE_LIST:
@@ -369,6 +318,158 @@ cfl_type* cfl_generate_type_equation_chain(
             }
 
             cfl_create_type_list(result, temp_type0);
+
+            break;
+        case CFL_NODE_TUPLE:
+            children = 0;
+
+            if(node->number_of_children)
+            {
+                children = malloc(sizeof(cfl_type*) * node->number_of_children);
+
+                for(i = 0; i < node->number_of_children; ++i)
+                {
+                    id0 = next_id++;
+
+                    hypothesis_chain_node =
+                        cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
+
+                    if(!hypothesis_chain_node)
+                    {
+                        for(j = 0; j < i; ++j)
+                            cfl_free_type(children[j]);
+
+                        free(children);
+
+                        break;
+                    }
+
+                    hypothesis_chain_node->name = node->children[0]->data;
+                    hypothesis_chain_node->id = id0;
+                    hypothesis_chain_node->next = hypothesis_head->next;
+
+                    hypothesis_head->next = hypothesis_chain_node;
+
+                    child_type0 = cfl_generate_type_equation_chain(equation_head,
+                                                                   hypothesis_head,
+                                                                   node->children[i]);
+
+                    hypothesis_head->next = hypothesis_chain_node->next;
+
+                    free(hypothesis_chain_node);
+
+                    temp_type0 = malloc(sizeof(cfl_type));
+
+                    if(!temp_type0)
+                    {
+                        cfl_free_type(child_type0);
+
+                        for(j = 0; j < i; ++j)
+                            cfl_free_type(children[j]);
+
+                        free(children);
+
+                        break;
+                    }
+
+                    cfl_create_type_variable(temp_type0, id0);
+
+                    if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+                    {
+                        cfl_free_type(child_type0);
+                        free(temp_type0);
+
+                        for(j = 0; j < i; ++j)
+                            cfl_free_type(children[j]);
+
+                        free(children);
+
+                        break;
+                    }
+
+                    children[i] = malloc(sizeof(cfl_type));
+
+                    if(!children[i])
+                    {
+                        for(j = 0; j < i; ++j)
+                            cfl_free_type(children[j]);
+
+                        free(children);
+
+                        break;
+                    }
+
+                    cfl_create_type_variable(children[i], id0);
+                }
+            }
+
+            result = cfl_type_malloc(sizeof(cfl_type));
+
+            if(!result)
+            {
+                for(i = 0; i < node->number_of_children; ++i)
+                    cfl_free_type(children[i]);
+
+                free(children);
+
+                break;
+            }
+
+            cfl_create_type_tuple(result, node->number_of_children, children);
+
+            break;
+        case CFL_NODE_FUNCTION:
+            id0 = next_id++;
+
+            child_type0 = cfl_type_malloc(sizeof(cfl_type));
+
+            if(!child_type0)
+                break;
+
+            cfl_create_type_variable(child_type0, id0);
+
+            hypothesis_chain_node =
+                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
+
+            if(!hypothesis_chain_node)
+            {
+                cfl_free_type(child_type0);
+
+                break;
+            }
+
+            hypothesis_chain_node->name = node->children[0]->data;
+            hypothesis_chain_node->id = id0;
+            hypothesis_chain_node->next = hypothesis_head->next;
+
+            hypothesis_head->next = hypothesis_chain_node;
+
+            child_type1 = cfl_generate_type_equation_chain(equation_head,
+                                                           hypothesis_head,
+                                                           node->children[1]);
+
+            hypothesis_head->next = hypothesis_chain_node->next;
+
+            free(hypothesis_chain_node);
+
+            if(!child_type1)
+            {
+                cfl_free_type(child_type0);
+
+                break;
+            }
+
+            result = cfl_type_malloc(sizeof(cfl_type));
+
+            if(!result)
+            {
+                cfl_free_type(child_type0);
+                cfl_free_type(child_type1);
+
+                break;
+            }
+
+            cfl_create_type_arrow(result, child_type0, child_type1);
 
             break;
         case CFL_NODE_AND:
@@ -1336,6 +1437,30 @@ int cfl_close_type_equation_chain(cfl_type_equation_chain* head)
                 else if(result > 0)
                     changes = 1;
             }
+            else if(focus->left->type == CFL_TYPE_TUPLE &&
+                    focus->right->type == CFL_TYPE_TUPLE)
+            {
+                if(focus->left->id != focus->right->id)
+                {
+                    fprintf(stderr, "TYPE ERROR: The sizes of the tuples "
+                                    "do not match.");
+
+                    return 0;
+                }
+
+                int i = 0;
+                for( ; i < focus->left->id; ++i)
+                {
+                    int result = !cfl_add_equation_from_copies(head,
+                        ((cfl_type**) focus->left->input)[i],
+                        ((cfl_type**) focus->right->input)[i]);
+
+                    if(!result)
+                        return 0;
+                    else if(result > 0)
+                        changes = 1;
+                }
+            }
 
             cfl_type_equation_chain* pos = focus->next;
 
@@ -1371,19 +1496,28 @@ int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
         if((chain->left->type == CFL_TYPE_BOOL &&
             (chain->right->type == CFL_TYPE_INTEGER ||
              chain->right->type == CFL_TYPE_LIST ||
+             chain->right->type == CFL_TYPE_TUPLE ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_INTEGER &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_LIST ||
+             chain->right->type == CFL_TYPE_TUPLE ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_LIST &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_TUPLE ||
+             chain->right->type == CFL_TYPE_ARROW)) ||
+           (chain->left->type == CFL_TYPE_TUPLE &&
+            (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_ARROW &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_INTEGER ||
-             chain->right->type == CFL_TYPE_LIST)))
+             chain->right->type == CFL_TYPE_LIST ||
+             chain->right->type == CFL_TYPE_TUPLE)))
             return 0;
 
     return 1;
@@ -1430,6 +1564,53 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
         }
 
         cfl_create_type_list(result, new_content);
+
+        return result;
+    }
+    else if(node->type == CFL_TYPE_TUPLE)
+    {
+        cfl_type** new_content = 0;
+
+        if(node->id)
+        {
+            new_content = cfl_type_malloc(sizeof(cfl_type*) * node->id);
+
+            if(!new_content)
+                return 0;
+
+            int i = 0;
+            for( ; i < node->id; ++i)
+            {
+                new_content[i] = cfl_substitute_type(head, ((cfl_type**) node->input)[i]);
+
+                if(!new_content[i])
+                {
+                    int j = 0;
+                    for( ; j < i; ++i)
+                        cfl_free_type(new_content[j]);
+
+                    free(new_content);
+                }
+            }
+        }
+
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+        if(!result)
+        {
+            if(new_content)
+            {
+                int i = 0;
+                for( ; i < node->id; ++i)
+                    cfl_free_type(new_content[i]);
+
+                free(new_content);
+            }
+
+            return 0;
+        }
+
+        cfl_create_type_tuple(result, node->id, new_content);
 
         return result;
     }

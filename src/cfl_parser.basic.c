@@ -72,7 +72,14 @@ char* cfl_parse_parentheses(
 
     start = cfl_parse_whitespace(start, end_pos);
 
-    return start == end_pos ? end_pos + 1 : 0;
+    if(start != end_pos)
+    {
+        cfl_delete_node(node);
+
+        return 0;
+    }
+
+    return start;
 }
 
 char* cfl_parse_variable(cfl_node* node, char* start, char* end)
@@ -193,14 +200,12 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
     return pos;
 }
 
-char* cfl_parse_list(cfl_node* node, char* start, char* end)
+static char* cfl_parse_comma_separated(
+        cfl_list_node** list_start,
+        char* start,
+        char* end)
 {
-    if(start == end || *(start++) != '[')
-        return 0;
-
-    cfl_list_node* list_start = 0;
-    cfl_list_node* list_pos = 0;
-
+    cfl_list_node* list_pos = *list_start;
     int encountered_comma = 0;
 
     while(start != end)
@@ -216,11 +221,11 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
             list_pos->next = 0;
 
-            while(list_start)
+            while(*list_start)
             {
-                cfl_list_node* temp = list_start;
+                cfl_list_node* temp = *list_start;
 
-                list_start = list_start->next;
+                *list_start = (*list_start)->next;
 
                 cfl_free_node(temp->node);
                 free(temp);
@@ -244,11 +249,11 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
                 list_pos->next = 0;
 
-                while(list_start)
+                while(*list_start)
                 {
-                    cfl_list_node* temp = list_start;
+                    cfl_list_node* temp = *list_start;
 
-                    list_start = list_start->next;
+                    *list_start = (*list_start)->next;
 
                     cfl_free_node(temp->node);
                     free(temp);
@@ -264,14 +269,14 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
         if(!list_pos)
         {
-            list_start = cfl_parser_malloc(sizeof(cfl_list_node));
+            *list_start = cfl_parser_malloc(sizeof(cfl_list_node));
 
-            if(!list_start)
+            if(!*list_start)
                 return 0;
 
-            list_start->node = item;
+            (*list_start)->node = item;
 
-            list_pos = list_start;
+            list_pos = *list_start;
         }
         else
         {
@@ -279,11 +284,11 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
             if(!list_pos->next)
             {
-                while(list_start)
+                while(*list_start)
                 {
-                    cfl_list_node* temp = list_start;
+                    cfl_list_node* temp = *list_start;
 
-                    list_start = list_start->next;
+                    *list_start = (*list_start)->next;
 
                     cfl_free_node(temp->node);
                     free(temp);
@@ -316,12 +321,28 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
     if(list_pos)
         list_pos->next = 0;
 
-    if(start == end || *(start++) != ']')
+    return start;
+}
+
+char* cfl_parse_list(cfl_node* node, char* start, char* end)
+{
+    if(start == end || *(start++) != '[')
+        return 0;
+
+    cfl_list_node* list_start = 0;
+
+    char* pos = cfl_parse_comma_separated(&list_start, start, end);
+
+    if(!pos)
     {
         cfl_parse_error_expected("\"]\"", "\"[\"", start, end);
 
-        if(!list_pos)
-            return 0;
+        return 0;
+    }
+
+    if(pos == end || *(pos++) != ']')
+    {
+        cfl_parse_error_expected("\"]\"", "\"[\"", start, end);
 
         while(list_start)
         {
@@ -338,7 +359,84 @@ char* cfl_parse_list(cfl_node* node, char* start, char* end)
 
     cfl_create_node_list(node, list_start);
 
-    return start;
+    return pos;
+}
+
+char* cfl_parse_tuple(cfl_node* node, char* start, char* end)
+{
+    if(start == end || *(start++) != '(')
+        return 0;
+
+    cfl_list_node* list_start = 0;
+
+    char* pos = cfl_parse_comma_separated(&list_start, start, end);
+
+    if(!pos)
+    {
+        cfl_parse_error_expected("\")\"", "\"(\"", start, end);
+
+        return 0;
+    }
+
+    if(pos == end || *(pos++) != ')')
+    {
+        cfl_parse_error_expected("\")\"", "\"(\"", start, end);
+
+        while(list_start)
+        {
+            cfl_list_node* temp = list_start;
+
+            list_start = list_start->next;
+
+            cfl_free_node(temp->node);
+            free(temp);
+        }
+
+        return 0;
+    }
+
+    cfl_list_node* list_pos = list_start;
+    unsigned int length = 0;
+
+    while(list_pos)
+    {
+        ++length;
+
+        list_pos = list_pos->next;
+    }
+
+    cfl_node** children = cfl_parser_malloc(sizeof(cfl_node) * length);
+
+    if(!children)
+    {
+        while(list_start)
+        {
+            cfl_list_node* temp = list_start;
+
+            list_start = list_start->next;
+
+            cfl_free_node(temp->node);
+            free(temp);
+        }
+
+        return 0;
+    }
+
+    int i = 0;
+    for( ; i < length; ++i)
+    {
+        children[i] = list_start->node;
+
+        list_pos = list_start;
+
+        list_start = list_start->next;
+
+        free(list_pos);
+    }
+
+    cfl_create_node_tuple(node, length, children);
+
+    return pos;
 }
 
 char* cfl_parse_function(cfl_node* node, char* start, char* end)

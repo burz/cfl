@@ -8,20 +8,24 @@ typedef enum {
     CFL_TYPE_BOOL,
     CFL_TYPE_INTEGER,
     CFL_TYPE_LIST,
+    CFL_TYPE_TUPLE,
     CFL_TYPE_ARROW
 } cfl_type_type;
 
 typedef struct cfl_type_t {
     cfl_type_type type;
     unsigned int id;
-    struct cfl_type_t* input;
-    struct cfl_type_t* output;
+    void* input;
+    void* output;
 } cfl_type;
 
 void cfl_create_type_variable(cfl_type* node, unsigned int id);
 void cfl_create_type_bool(cfl_type* node);
 void cfl_create_type_integer(cfl_type* node);
 void cfl_create_type_list(cfl_type* node, cfl_type* content);
+void cfl_create_type_tuple(cfl_type* node,
+                           unsigned int number_of_children,
+                           cfl_type** children);
 void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
 
 int cfl_compare_type(cfl_type* left, cfl_type* right);

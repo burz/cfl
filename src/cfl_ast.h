@@ -18,6 +18,7 @@ typedef enum {
     CFL_NODE_INTEGER,
     CFL_NODE_FUNCTION,
     CFL_NODE_LIST,
+    CFL_NODE_TUPLE,
     CFL_NODE_AND,
     CFL_NODE_OR,
     CFL_NODE_NOT,
@@ -52,6 +53,9 @@ typedef struct cfl_list_node_t {
 } cfl_list_node;
 
 void cfl_create_node_list(cfl_node* node, cfl_list_node* list);
+void cfl_create_node_tuple(cfl_node* node,
+                           unsigned int number_of_children,
+                           cfl_node** children);
 
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);
 int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);

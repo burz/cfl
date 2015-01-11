@@ -101,6 +101,17 @@ void cfl_create_node_list(cfl_node* node, cfl_list_node* list)
     node->data = list;
 }
 
+void cfl_create_node_tuple(
+        cfl_node* node,
+        unsigned int number_of_children,
+        cfl_node** children)
+{
+    node->type = CFL_NODE_TUPLE;
+    node->number_of_children = number_of_children;
+    node->data = 0;
+    node->children = children;
+}
+
 int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right)
 {
     node->type = CFL_NODE_AND;
@@ -363,151 +374,157 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
             break;
         case CFL_NODE_LIST:
             if(node->data == 0)
-                cfl_create_node_list(target, 0);
-            else
             {
-                cfl_list_node* start =
+                cfl_create_node_list(target, 0);
+
+                break;
+            }
+
+            cfl_list_node* start =
+                cfl_ast_malloc(sizeof(cfl_list_node));
+
+            if(!start)
+                return 0;
+
+            cfl_list_node* node_pos = node->data;
+
+            start->node = cfl_ast_malloc(sizeof(cfl_node));
+
+            if(!start->node)
+            {
+                free(start);
+
+                return 0;
+            }
+
+            if(!cfl_copy_node(start->node, node_pos->node))
+            {
+                free(start->node);
+                free(start);
+            }
+
+            node_pos = node_pos->next;
+
+            cfl_list_node* target_pos = start;
+
+            while(node_pos)
+            {
+                target_pos->next =
                     cfl_ast_malloc(sizeof(cfl_list_node));
 
-                if(!start)
-                    return 0;
-
-                cfl_list_node* node_pos = node->data;
-
-                start->node = cfl_ast_malloc(sizeof(cfl_node));
-
-                if(!start->node)
+                if(!target_pos->next)
                 {
+                    while(start)
+                    {
+                        target_pos = start;
+
+                        start = start->next;
+
+                        cfl_free_node(target_pos->node);
+                        free(target_pos);
+                    }
+
+                    return 0;
+                }
+
+                target_pos = target_pos->next;
+
+                target_pos->node = cfl_ast_malloc(sizeof(cfl_node));
+
+                if(!target_pos->node)
+                {
+                    target_pos->next = 0;
+
+                    while(start->next != 0)
+                    {
+                        target_pos = start;
+
+                        start = start->next;
+
+                        cfl_free_node(target_pos->node);
+                        free(target_pos);
+                    }
+
                     free(start);
 
                     return 0;
                 }
 
-                if(!cfl_copy_node(start->node, node_pos->node))
+                if(!cfl_copy_node(target_pos->node, node_pos->node))
                 {
+                    target_pos->next = 0;
+
+                    while(start->next != 0)
+                    {
+                        target_pos = start;
+
+                        start = start->next;
+
+                        cfl_free_node(target_pos->node);
+                        free(target_pos);
+                    }
+
                     free(start->node);
                     free(start);
+
+                    return 0;
                 }
 
                 node_pos = node_pos->next;
-
-                cfl_list_node* target_pos = start;
-
-                while(node_pos)
-                {
-                    target_pos->next =
-                        cfl_ast_malloc(sizeof(cfl_list_node));
-
-                    if(!target_pos->next)
-                    {
-                        while(start)
-                        {
-                            target_pos = start;
-
-                            start = start->next;
-
-                            cfl_free_node(target_pos->node);
-                            free(target_pos);
-                        }
-
-                        return 0;
-                    }
-
-                    target_pos = target_pos->next;
-
-                    target_pos->node = cfl_ast_malloc(sizeof(cfl_node));
-
-                    if(!target_pos->node)
-                    {
-                        target_pos->next = 0;
-
-                        while(start->next != 0)
-                        {
-                            target_pos = start;
-
-                            start = start->next;
-
-                            cfl_free_node(target_pos->node);
-                            free(target_pos);
-                        }
-
-                        free(start);
-
-                        return 0;
-                    }
-
-                    if(!cfl_copy_node(target_pos->node, node_pos->node))
-                    {
-                        target_pos->next = 0;
-
-                        while(start->next != 0)
-                        {
-                            target_pos = start;
-
-                            start = start->next;
-
-                            cfl_free_node(target_pos->node);
-                            free(target_pos);
-                        }
-
-                        free(start->node);
-                        free(start);
-
-                        return 0;
-                    }
-
-                    node_pos = node_pos->next;
-                }
-
-                target_pos->next = 0;
-
-                cfl_create_node_list(target, start);
             }
+
+            target_pos->next = 0;
+
+            cfl_create_node_list(target, start);
 
             break;
         default:
             target->type = node->type;
             target->number_of_children = node->number_of_children;
             target->data = 0;
-            target->children = cfl_ast_malloc(sizeof(cfl_node*) *
-                                              target->number_of_children);
 
-            if(!target->children)
-                return 0;
-
-            int i = 0;
-
-            for( ; i < target->number_of_children; ++i)
+            if(node->number_of_children)
             {
-                cfl_node* child = cfl_ast_malloc(sizeof(cfl_node));
+                target->children = cfl_ast_malloc(sizeof(cfl_node*) *
+                                                  target->number_of_children);
 
-                if(!child)
-                {
-                    int j = 0;
-
-                    for( ; j < i; ++j)
-                        free(target->children[j]);
-
-                    free(target->children);
-
+                if(!target->children)
                     return 0;
-                }
 
-                if(!cfl_copy_node(child, node->children[i]))
+                int i = 0;
+
+                for( ; i < target->number_of_children; ++i)
                 {
-                    free(child);
+                    cfl_node* child = cfl_ast_malloc(sizeof(cfl_node));
 
-                    int j = 0;
+                    if(!child)
+                    {
+                        int j = 0;
 
-                    for( ; j < i; ++j)
-                        free(target->children[j]);
+                        for( ; j < i; ++j)
+                            free(target->children[j]);
 
-                    free(target->children);
+                        free(target->children);
 
-                    return 0;
+                        return 0;
+                    }
+
+                    if(!cfl_copy_node(child, node->children[i]))
+                    {
+                        free(child);
+
+                        int j = 0;
+
+                        for( ; j < i; ++j)
+                            free(target->children[j]);
+
+                        free(target->children);
+
+                        return 0;
+                    }
+
+                    target->children[i] = child;
                 }
-
-                target->children[i] = child;
             }
 
             break;
@@ -559,6 +576,7 @@ void cfl_free_node(cfl_node* node)
 static void cfl_print_node_inner(cfl_node* node)
 {
     cfl_list_node* pos;
+    int i;
 
     switch(node->type)
     {
@@ -698,6 +716,17 @@ static void cfl_print_node_inner(cfl_node* node)
             cfl_print_node_inner(node->children[3]);
             printf(") -> (");
             cfl_print_node_inner(node->children[4]);
+            printf(")");
+            break;
+        case CFL_NODE_TUPLE:
+            printf("(");
+            for(i = 0; i < node->number_of_children; ++i)
+            {
+                cfl_print_node_inner(node->children[i]);
+
+                if(i < node->number_of_children - 1)
+                    printf(", ");
+            }
             printf(")");
             break;
         default:

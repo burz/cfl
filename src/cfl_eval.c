@@ -83,6 +83,13 @@ int cfl_evaluate(cfl_node* node)
             pos = pos->next;
         }
     }
+    else if(node->type == CFL_NODE_TUPLE)
+    {
+        int i = 0;
+        for( ; i < node->number_of_children; ++i)
+            if(!cfl_evaluate(node->children[i]))
+                return 0;
+    }
     else if(node->type == CFL_NODE_AND)
     {
         if(!cfl_evaluate(node->children[0]))

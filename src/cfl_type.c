@@ -51,6 +51,17 @@ void cfl_create_type_list(cfl_type* node, cfl_type* content)
     node->output = 0;
 }
 
+void cfl_create_type_tuple(
+        cfl_type* node,
+        unsigned int number_of_children,
+        cfl_type** children)
+{
+    node->type = CFL_TYPE_TUPLE;
+    node->id = number_of_children;
+    node->input = children;
+    node->output = 0;
+}
+
 void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output)
 {
     node->type = CFL_TYPE_ARROW;
@@ -72,17 +83,30 @@ int cfl_compare_type(cfl_type* left, cfl_type* right)
     else if(left->type == CFL_TYPE_LIST)
         return cfl_compare_type(left->input, right->input);
     else if(left->type == CFL_TYPE_ARROW)
+    {
         if(cfl_compare_type(left->input, right->input) ||
            cfl_compare_type(left->output, right->output))
             return 1;
+    }
+    else if(left->type == CFL_TYPE_TUPLE)
+    {
+        if(left->id != right->id)
+            return 1;
+
+        int i = 0;
+        for( ; i < left->id; ++i)
+            if(cfl_compare_type(((cfl_type**) left->input)[i],
+                                ((cfl_type**) right->input)[i]))
+                return 1;
+    }
 
     return 0;
 }
 
 int cfl_copy_type(cfl_type* target, cfl_type* node)
 {
-    cfl_type* input;
-    cfl_type* output;
+    void* input;
+    void* output;
 
     switch(node->type)
     {
@@ -109,6 +133,41 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
             }
 
             cfl_create_type_list(target, input);
+
+            break;
+        case CFL_TYPE_TUPLE:
+            if(node->id)
+            {
+                input = cfl_type_malloc(sizeof(cfl_type*) * node->id);
+
+                int i = 0;
+                for( ; i < node->id; ++i)
+                {
+                    ((cfl_type**) input)[i] = cfl_type_malloc(sizeof(cfl_type));
+
+                    if(!((cfl_type**) input)[i])
+                    {
+                        int j = 0;
+                        for( ; j < i; ++j)
+                            cfl_free_type(((cfl_type**) input)[j]);
+
+                        free(input);
+                    }
+
+                    if(!cfl_copy_type(((cfl_type**) input)[i],
+                                      ((cfl_type**) node->input)[i]))
+                    {
+                        int j = 0;
+                        for( ; j < i; ++j)
+                            cfl_free_type(((cfl_type**) input)[j]);
+
+                        free(((cfl_type**) input)[i]);
+                        free(input);
+                    }
+                }
+            }
+
+            cfl_create_type_tuple(target, node->id, input);
 
             break;
         case CFL_TYPE_ARROW:
@@ -155,7 +214,21 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 void cfl_delete_type(cfl_type* node)
 {
     if(node->input)
-        cfl_free_type(node->input);
+    {
+        if(node->type == CFL_TYPE_TUPLE)
+        {
+            if(node->id)
+            {
+                int i = 0;
+                for( ; i < node->id; ++i)
+                    cfl_free_type(((cfl_type**) node->input)[i]);
+
+                free(node->input);
+            }
+        }
+        else
+            cfl_free_type(node->input);
+    }
 
     if(node->output)
         cfl_free_type(node->output);
@@ -170,6 +243,8 @@ void cfl_free_type(cfl_type* node)
 
 static void cfl_print_type_inner(cfl_type* node)
 {
+    int i;
+
     switch(node->type)
     {
         case CFL_TYPE_VARIABLE:
@@ -189,10 +264,20 @@ static void cfl_print_type_inner(cfl_type* node)
         case CFL_TYPE_ARROW:
             printf("(");
             cfl_print_type_inner(node->input);
-            printf(") -> (");
+            printf(" -> ");
             cfl_print_type_inner(node->output);
             printf(")");
             break;
+        case CFL_TYPE_TUPLE:
+            printf("(");
+            for(i = 0; i < node->id; ++i)
+            {
+                cfl_print_type_inner(((cfl_type**) node->input)[i]);
+
+                if(i < node->id - 1)
+                    printf(", ");
+            }
+            printf(")");
         default:
             break;
     }
