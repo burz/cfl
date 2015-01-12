@@ -16,9 +16,12 @@ char* cfl_parse_binary_operation(
 {
     char* op_pos = start + 1;
     int depth = 1;
+    bool apostraphe = 0;
 
-    if(*start == '(')
+    if(*start == '(' || *start == '[')
         ++depth;
+    else if(*start == '\'')
+        apostraphe = 1;
 
     while(end - op_pos > operand_length + 1)
     {
@@ -30,15 +33,18 @@ char* cfl_parse_binary_operation(
             ++depth;
         else if(*op_pos == ')' || *op_pos == ']')
             --depth;
-        else if(depth == 1 && cfl_is_whitespace(op_pos[-1]) &&
-           !strncmp(op_pos, operand, operand_length) &&
-           cfl_is_whitespace(op_pos[operand_length]))
+        else if(*op_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(depth == 1 && !apostraphe &&
+                cfl_is_whitespace(op_pos[-1]) &&
+                !strncmp(op_pos, operand, operand_length) &&
+                cfl_is_whitespace(op_pos[operand_length]))
             break;
 
         ++op_pos;
     }
 
-    if(end - op_pos <= operand_length + 1 || depth != 1)
+    if(end - op_pos <= operand_length + 1)
         return 0;
 
     *left = cfl_parser_malloc(sizeof(cfl_node));

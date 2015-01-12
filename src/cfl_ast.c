@@ -617,18 +617,32 @@ static void cfl_print_node_inner(cfl_node* node)
             printf(")");
             break;
         case CFL_NODE_LIST:
-            printf("[");
-            pos = node->data;
-            while(pos)
+            if(!node->data)
+                printf("[]");
+            else if(((cfl_list_node*) node->data)->node->type == CFL_NODE_CHAR)
             {
-                cfl_print_node_inner(pos->node);
-
-                if(pos->next)
-                    printf(", ");
-
-                pos = pos->next;
+                printf("\"");
+                pos = node->data;
+                while(pos)
+                {
+                    printf("%c", *((char*) pos->node->data));
+                    pos = pos->next;
+                }
+                printf("\"");
             }
-            printf("]");
+            else
+            {
+                printf("[");
+                pos = node->data;
+                while(pos)
+                {
+                    cfl_print_node_inner(pos->node);
+                    if(pos->next)
+                        printf(", ");
+                    pos = pos->next;
+                }
+                printf("]");
+            }
             break;
         case CFL_NODE_AND:
             printf("(");

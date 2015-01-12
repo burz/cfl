@@ -339,6 +339,17 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
 
         return result;
     }
+    else if(node->type == CFL_TYPE_CHAR)
+    {
+        cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+        if(!result)
+            return 0;
+
+        cfl_create_type_char(result);
+
+        return result;
+    }
     else if(node->type == CFL_TYPE_LIST)
     {
         cfl_type* new_content = cfl_substitute_type(head, node->input);
@@ -446,7 +457,8 @@ cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node)
             if(!cfl_compare_type(node, pos->left))
             {
                 if(pos->right->type == CFL_TYPE_BOOL ||
-                   pos->right->type == CFL_TYPE_INTEGER)
+                   pos->right->type == CFL_TYPE_INTEGER ||
+                   pos->right->type == CFL_TYPE_CHAR)
                 {
                     focus = pos->right;
 

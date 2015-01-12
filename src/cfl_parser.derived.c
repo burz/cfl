@@ -4,6 +4,104 @@
 
 extern void* cfl_parser_malloc(size_t size);
 
+char* cfl_parse_string(cfl_node* node, char* start, char* end)
+{
+    if(start == end || *(start++) != '"')
+        return 0;
+
+    cfl_list_node* list_start = 0;
+    cfl_list_node* list_pos = list_start;
+
+    while(start != end)
+    {
+        if(*start == '"')
+            break;
+
+        cfl_node* item = cfl_parser_malloc(sizeof(cfl_node));
+
+        if(!item)
+        {
+            if(!list_pos)
+                return 0;
+
+            list_pos->next = 0;
+
+            while(list_start)
+            {
+                cfl_list_node* temp = list_start;
+
+                list_start = list_start->next;
+
+                cfl_free_node(temp->node);
+                free(temp);
+            }
+
+            return 0;
+        }
+
+        cfl_create_node_char(item, *(start++));
+
+        if(!list_pos)
+        {
+            list_start = cfl_parser_malloc(sizeof(cfl_list_node));
+
+            if(!list_start)
+                return 0;
+
+            list_start->node = item;
+
+            list_pos = list_start;
+        }
+        else
+        {
+            list_pos->next = cfl_parser_malloc(sizeof(cfl_list_node));
+
+            if(!list_pos->next)
+            {
+                while(list_start)
+                {
+                    cfl_list_node* temp = list_start;
+
+                    list_start = list_start->next;
+
+                    cfl_free_node(temp->node);
+                    free(temp);
+                }
+
+                return 0;
+            }
+
+            list_pos = list_pos->next;
+
+            list_pos->node = item;
+        }
+    }
+
+    if(list_pos)
+        list_pos->next = 0;
+
+    if(start == end)
+    {
+        cfl_parse_error_expected("\"\\\"\"", "\"\\\"\"", end, end);
+
+        while(list_start)
+        {
+            cfl_list_node* temp = list_start;
+
+            list_start = list_start->next;
+
+            cfl_free_node(temp->node);
+            free(temp);
+        }
+
+        return 0;
+    }
+
+    cfl_create_node_list(node, list_start);
+
+    return start + 1;
+}
+
 static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* right)
 {
     if(right->type == CFL_NODE_INTEGER)

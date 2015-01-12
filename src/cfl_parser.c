@@ -132,6 +132,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
     if(!result && !cfl_error_occured_while_parsing())
         result = cfl_parse_tuple(node, start, end);
 
+    if(!result && !cfl_error_occured_while_parsing())
+        result = cfl_parse_string(node, start, end);
+
     return result;
 }
 
