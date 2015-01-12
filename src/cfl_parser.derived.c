@@ -796,16 +796,28 @@ char* cfl_parse_let(cfl_node* node, char* start, char* end)
 
     char* in_pos = start;
     int depth = 1;
+    int apostraphe = 0;
+    int quote = 0;
 
     while(in_pos != end)
     {
-        if(end - in_pos > 2 && in_pos[0] == 'l' &&
-           in_pos[1] == 'e' && in_pos[2] == 't')
-            ++depth;
-        else if(end - in_pos > 1 && in_pos[0] == 'i' &&
-                in_pos[1] == 'n' && cfl_is_whitespace(in_pos[2]))
-            if(depth-- == 1)
-                break;
+        if(*in_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
+        {
+            if(*in_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(end - in_pos > 2 && in_pos[0] == 'l' &&
+                   in_pos[1] == 'e' && in_pos[2] == 't')
+                    ++depth;
+                else if(end - in_pos > 1 && in_pos[0] == 'i' &&
+                        in_pos[1] == 'n' && cfl_is_whitespace(in_pos[2]))
+                    if(depth-- == 1)
+                        break;
+            }
+        }
 
         ++in_pos;
     }

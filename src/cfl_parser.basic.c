@@ -46,17 +46,29 @@ char* cfl_parse_parentheses(
         return 0;
 
     int depth = 1;
+    int apostraphe = 0;
+    int quote = 0;
     char* end_pos = start;
 
     while(end_pos != end)
     {
-        if(*end_pos == ')')
+        if(*end_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
         {
-            if(--depth == 0)
-                break;
+            if(*end_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(*end_pos == ')')
+                {
+                    if(--depth == 0)
+                        break;
+                }
+                else if(*end_pos == '(')
+                    ++depth;
+            }
         }
-        else if(*end_pos == '(')
-            ++depth;
 
         ++end_pos;
     }
@@ -626,21 +638,33 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
 
     char* then_pos = start;
     int depth = 1;
+    int apostraphe = 0;
+    int quote = 0;
 
     while(then_pos != end)
     {
-        if(end - then_pos > 1 && !strncmp(then_pos, "if", 2))
-            ++depth;
-        else if(end - then_pos > 3 && !strncmp(then_pos, "else", 4))
-            --depth;
-        else if(end - then_pos > 3 && depth == 1 &&
-                !strncmp(then_pos, "then", 4))
-            break;
+        if(*then_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
+        {
+            if(*then_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(end - then_pos > 1 && !strncmp(then_pos, "if", 2))
+                    ++depth;
+                else if(end - then_pos > 3 && !strncmp(then_pos, "else", 4))
+                    --depth;
+                else if(end - then_pos > 3 && depth == 1 &&
+                        !strncmp(then_pos, "then", 4))
+                    break;
+            }
+        }
 
         ++then_pos;
     }
 
-    if(then_pos == end || depth != 1)
+    if(then_pos == end)
     {
         cfl_parse_error_expected("\"then\"", "\"if\"", start, end);
 
@@ -675,17 +699,29 @@ char* cfl_parse_if(cfl_node* node, char* start, char* end)
     start = then_pos + 4;
 
     char* else_pos = start;
+    apostraphe = 0;
+    quote = 0;
 
     while(else_pos != end)
     {
-        if(end - else_pos > 1 && !strncmp(else_pos, "if", 2))
-            ++depth;
-        else if(end - else_pos > 3 && !strncmp(else_pos, "else", 4))
+        if(*else_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
         {
-            --depth;
+            if(*else_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(end - else_pos > 1 && !strncmp(else_pos, "if", 2))
+                    ++depth;
+                else if(end - else_pos > 3 && !strncmp(else_pos, "else", 4))
+                {
+                    --depth;
 
-            if(depth == 0)
-                break;
+                    if(depth == 0)
+                        break;
+                }
+            }
         }
 
         ++else_pos;
@@ -781,33 +817,45 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     char* of_pos = start;
     int depth = 1;
+    int apostraphe = 0;
+    int quote = 0;
 
     while(end - of_pos > 1 &&
           !(depth == 1 && !strncmp(of_pos, "of", 2)))
     {
-        if(end - of_pos > 3 && !strncmp(of_pos, "case", 4))
+        if(*of_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
         {
-            depth += 2;
+            if(*of_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(end - of_pos > 3 && !strncmp(of_pos, "case", 4))
+                {
+                    depth += 2;
 
-            of_pos += 4;
-        }
-        else if(end - of_pos > 7 && !strncmp(of_pos, "function", 8))
-        {
-            ++depth;
+                    of_pos += 3;
+                }
+                else if(end - of_pos > 7 && !strncmp(of_pos, "function", 8))
+                {
+                    ++depth;
 
-            of_pos += 8;
-        }
-        else if(end - of_pos > 2 && !strncmp(of_pos, "->", 2))
-        {
-            --depth;
+                    of_pos += 7;
+                }
+                else if(end - of_pos > 2 && !strncmp(of_pos, "->", 2))
+                {
+                    --depth;
 
-            of_pos += 2;
+                    ++of_pos;
+                }
+            }
         }
-        else
-            ++of_pos;
+
+        ++of_pos;
     }
 
-    if(end - of_pos < 2 || depth != 1)
+    if(end - of_pos < 2)
     {
         cfl_parse_error_expected("\"of\"", "\"case\"", start, end);
 
@@ -867,33 +915,45 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
 
     char* line_pos = start;
     depth = 1;
+    apostraphe = 0;
+    quote = 0;
 
     while(end - line_pos > 2 &&
           !(depth == 1 && line_pos[0] == '|' && line_pos[1] != '|'))
     {
-        if(end - line_pos > 3 && !strncmp(line_pos, "case", 4))
+        if(*line_pos == '\'')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
         {
-            depth += 2;
+            if(*line_pos == '"')
+                quote = !quote;
+            else if(!quote)
+            {
+                if(end - line_pos > 3 && !strncmp(line_pos, "case", 4))
+                {
+                    depth += 2;
 
-            line_pos += 4;
-        }
-        else if(end - line_pos > 7 && !strncmp(line_pos, "function", 8))
-        {
-            ++depth;
+                    line_pos += 3;
+                }
+                else if(end - line_pos > 7 && !strncmp(line_pos, "function", 8))
+                {
+                    ++depth;
 
-            line_pos += 8;
-        }
-        else if(end - line_pos > 2 && !strncmp(line_pos, "->", 2))
-        {
-            --depth;
+                    line_pos += 7;
+                }
+                else if(end - line_pos > 2 && !strncmp(line_pos, "->", 2))
+                {
+                    --depth;
 
-            line_pos += 2;
+                    ++line_pos;
+                }
+            }
         }
-        else
-            ++line_pos;
+
+        ++line_pos;
     }
 
-    if(end - line_pos < 3 || depth != 1)
+    if(end - line_pos < 3)
     {
         cfl_parse_error_expected("\"|\"", "\"case\"", start, end);
 
@@ -936,9 +996,23 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     start = cfl_parse_whitespace(pos + 1, end);
 
     char* semi_pos = start;
+    apostraphe = 0;
+    quote = 0;
 
-    while(end - semi_pos > 1 && *semi_pos != ':')
+    while(end - semi_pos > 1)
+    {
+        if(*semi_pos == '\"')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
+        {
+            if(*semi_pos == '"')
+                quote = !quote;
+            else if(!quote && *semi_pos == ':')
+                break;
+        }
+
         ++semi_pos;
+    }
 
     if(end - semi_pos < 2)
     {
@@ -989,9 +1063,23 @@ char* cfl_parse_case(cfl_node* node, char* start, char* end)
     start = cfl_parse_whitespace(semi_pos + 1, end);
 
     char* par_pos = start;
+    apostraphe = 0;
+    quote = 0;
 
-    while(end - par_pos > 1 && *par_pos != ')')
+    while(end - par_pos > 1)
+    {
+        if(*par_pos == '\"')
+            apostraphe = !apostraphe;
+        else if(!apostraphe)
+        {
+            if(*par_pos == '"')
+                quote = !quote;
+            else if(!quote && *par_pos == ')')
+                break;
+        }
+
         ++par_pos;
+    }
 
     if(end - par_pos < 2)
     {
