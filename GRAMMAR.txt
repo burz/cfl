@@ -83,7 +83,6 @@ e ::=   function c -> e
       | let c = e in e
       | let x c ... c = e in e
       | case e of [] -> e "|" (x : x) -> e
-      | t a ... a
       | n ++ e | n : e
       | r
 

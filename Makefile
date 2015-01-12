@@ -8,9 +8,7 @@ INCL = -I$(SRCDIR)
 FILES = \
     cfl_ast.o \
     cfl_parser.o \
-    cfl_parser.basic.o \
-    cfl_parser.operator.o \
-    cfl_parser.derived.o \
+    cfl_parser.token.o \
     cfl_eval.o \
     cfl_type.o \
     cfl_type.generate.o \

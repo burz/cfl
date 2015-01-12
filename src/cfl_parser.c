@@ -19,6 +19,13 @@ void* cfl_parser_malloc(size_t size)
     return result;
 }
 
+void cfl_parse_error_unexpected_char(char x)
+{
+    fprintf(stderr, "PARSING ERROR: Unexpected char %c\n", x);
+
+    cfl_parse_error = 1;
+}
+
 void cfl_parse_error_expected(char* expected, char* after, char* start, char* end)
 {
     if(cfl_parse_error)
@@ -107,128 +114,128 @@ static int cfl_error_occured_while_parsing(void)
     return cfl_parse_error || cfl_get_ast_error_flag();
 }
 
-char* cfl_parse_atom(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_not(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_char(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_bool(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_integer(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_variable(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_list(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_tuple(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_string(node, start, end);
-
-    return result;
-}
-
-char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_application(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_atom(node, start, end);
-
-    return result;
-}
-
-char* cfl_parse_factor(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_and(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_multiply(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_divide(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_mod(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_equal(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_less(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_less_equal(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_greater(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_greater_equal(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_molecule(node, start, end);
-
-    return result;
-}
-
-char* cfl_parse_term(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_or(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_add(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_subtract(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_factor(node, start, end);
-
-    return result;
-}
-
-char* cfl_parse_list_expression(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_push(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_term(node, start, end);
-
-    return result;
-}
-
-char* cfl_parse_expression(cfl_node* node, char* start, char* end)
-{
-    char* result = cfl_parse_if(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_let(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_function(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_case(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_concatenate(node, start, end);
-
-    if(!result && !cfl_error_occured_while_parsing())
-        result = cfl_parse_list_expression(node, start, end);
-
-    return result;
-}
+//char* cfl_parse_atom(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_not(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_char(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_bool(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_integer(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_variable(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_list(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_tuple(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_string(node, start, end);
+//
+//    return result;
+//}
+//
+//char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_application(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_atom(node, start, end);
+//
+//    return result;
+//}
+//
+//char* cfl_parse_factor(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_and(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_multiply(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_divide(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_mod(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_equal(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_less(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_less_equal(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_greater(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_greater_equal(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_molecule(node, start, end);
+//
+//    return result;
+//}
+//
+//char* cfl_parse_term(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_or(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_add(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_subtract(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_factor(node, start, end);
+//
+//    return result;
+//}
+//
+//char* cfl_parse_list_expression(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_push(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_term(node, start, end);
+//
+//    return result;
+//}
+//
+//char* cfl_parse_expression(cfl_node* node, char* start, char* end)
+//{
+//    char* result = cfl_parse_if(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_let(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_function(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_case(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_concatenate(node, start, end);
+//
+//    if(!result && !cfl_error_occured_while_parsing())
+//        result = cfl_parse_list_expression(node, start, end);
+//
+//    return result;
+//}
 
 int cfl_parse_file(cfl_node* node, char* filename)
 {
@@ -278,20 +285,29 @@ int cfl_parse_file(cfl_node* node, char* filename)
     cfl_reset_ast_error_flag();
 
     char* end = program + size;
-    char* pos = cfl_parse_whitespace(program, end);
 
-    pos = cfl_parse_program(node, pos, end);
+    cfl_token_chain head;
+    head.next = 0;
 
-    if(!pos)
-    {
-        cfl_parse_error_unparseable_file(filename);
-
-        free(program);
-
+    if(!cfl_generate_token_chain(&head, program, end))
         return 0;
-    }
 
-    free(program);
+    cfl_print_token_chain(head.next);
 
-    return 1;
+    return 0;
 }
+//    pos = cfl_parse_program(node, pos, end);
+//
+//    if(!pos)
+//    {
+//        cfl_parse_error_unparseable_file(filename);
+//
+//        free(program);
+//
+//        return 0;
+//    }
+//
+//    free(program);
+//
+//    return 1;
+//}

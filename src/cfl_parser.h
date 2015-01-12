@@ -3,8 +3,7 @@
 
 #include "cfl_ast.h"
 
-typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
-
+void cfl_parse_error_unexpected_char(char x);
 void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
 void cfl_parse_error_bad_division(void);
 void cfl_parse_error_partial_program(void);
@@ -12,9 +11,21 @@ void cfl_parse_error_missing_main(void);
 void cfl_parse_error_main_has_arguments(void);
 void cfl_parse_error_unparseable_file(char* filename);
 
-int cfl_is_whitespace(char c);
+bool cfl_is_whitespace(char x);
 
-char* cfl_parse_whitespace(char* start, char* end);
+typedef struct cfl_token_chain_t {
+    char* start;
+    char* end;
+    struct cfl_token_chain_t* next;
+} cfl_token_chain;
+
+cfl_token_chain* cfl_create_token_chain_node(char* start, unsigned int length);
+bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end);
+void cfl_print_token_chain(cfl_token_chain* chain);
+void cfl_delete_token_chain(cfl_token_chain* chain);
+
+typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
+
 char* cfl_parse_parentheses(cfl_node* node,
                             cfl_node_parser parser,
                             char* start,
