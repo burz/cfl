@@ -130,14 +130,24 @@ static int cfl_error_occured_while_parsing(void)
 }
 
 cfl_node* cfl_parse_atom(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     if(position == block)
         return 0;
 
-    cfl_node* result = cfl_parse_variable(end, position, block);
+    cfl_node* result = cfl_parse_not(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_char(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_variable(end, position, block);
 
     if(result || cfl_error_occured_while_parsing())
         return result;
@@ -149,18 +159,126 @@ cfl_node* cfl_parse_atom(
 
     result = cfl_parse_integer(end, position, block);
 
+    return result;
+}
+
+cfl_node* cfl_parse_molecule(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_atom(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_factor(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_multiply(end, position, block);
+
     if(result || cfl_error_occured_while_parsing())
         return result;
 
-    result = cfl_parse_char(end, position, block);
+    result = cfl_parse_divide(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_molecule(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_term(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_divide(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_factor(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_boolean_molecule(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_equal(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_less(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_term(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_boolean_factor(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_and(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_boolean_molecule(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_boolean_term(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_or(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_boolean_factor(end, position, block);
 
     return result;
 }
 
 cfl_node* cfl_parse_expression(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     if(position == block)
         return 0;
@@ -170,7 +288,20 @@ cfl_node* cfl_parse_expression(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
-    result = cfl_parse_atom(end, position, block);
+    result = cfl_parse_boolean_term(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_program(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_expression(end, position, block);
 
     return result;
 }
@@ -224,19 +355,19 @@ cfl_node* cfl_parse_file(char* filename)
 
     char* program_end = program + size;
 
-    cfl_token_chain head;
+    cfl_token_list head;
     head.next = 0;
 
-    if(!cfl_generate_token_chain(&head, program, program_end))
+    if(!cfl_generate_token_list(&head, program, program_end))
         return 0;
 
-    cfl_print_token_chain(head.next);
+    cfl_print_token_list(head.next);
 
-    cfl_token_chain* ending_position;
+    cfl_token_list* ending_position;
 
-    cfl_node* result = cfl_parse_expression(&ending_position, head.next, 0);
+    cfl_node* result = cfl_parse_program(&ending_position, head.next, 0);
 
-    cfl_delete_token_chain(head.next);
+    cfl_delete_token_list(head.next);
 
     free(program);
 
@@ -249,18 +380,3 @@ cfl_node* cfl_parse_file(char* filename)
 
     return result;
 }
-//    pos = cfl_parse_program(node, pos, end);
-//
-//    if(!pos)
-//    {
-//        cfl_parse_error_unparseable_file(filename);
-//
-//        free(program);
-//
-//        return 0;
-//    }
-//
-//    free(program);
-//
-//    return 1;
-//}

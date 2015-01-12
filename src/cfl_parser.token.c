@@ -5,9 +5,9 @@
 
 extern void* cfl_parser_malloc(size_t size);
 
-cfl_token_chain* cfl_create_token_chain_node(char* start, unsigned int length)
+cfl_token_list* cfl_create_token_list_node(char* start, unsigned int length)
 {
-    cfl_token_chain* result = cfl_parser_malloc(sizeof(cfl_token_chain));
+    cfl_token_list* result = cfl_parser_malloc(sizeof(cfl_token_list));
 
     if(!result)
         return 0;
@@ -35,9 +35,9 @@ bool cfl_is_letter(char x)
            ('A' <= x && x <= 'Z');
 }
 
-bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
+bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
 {
-    cfl_token_chain* back = head;
+    cfl_token_list* back = head;
 
     while(start != end)
     {
@@ -46,7 +46,7 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
            *start == '(' || *start == ')' || *start == '[' ||
            *start == ']' || *start == ',')
         {
-            back->next = cfl_create_token_chain_node(start, 1);
+            back->next = cfl_create_token_list_node(start, 1);
             ++start;
         }
         else if(*start == '\'')
@@ -60,7 +60,7 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
                 return 0;
             }
 
-            back->next = cfl_create_token_chain_node(start, pos - start + 1);
+            back->next = cfl_create_token_list_node(start, pos - start + 1);
             start = pos + 1;
         }
         else if(*start == '"')
@@ -77,19 +77,19 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
                 return 0;
             }
 
-            back->next = cfl_create_token_chain_node(start, pos - start + 1);
+            back->next = cfl_create_token_list_node(start, pos - start + 1);
             start = pos + 1;
         }
         else if(*start == '+')
         {
             if(start[1] == '+')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 start += 2;
             }
         }
@@ -97,7 +97,7 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         {
             if(start[1] == '>')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else if(cfl_is_number(start[1]))
@@ -107,13 +107,13 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
                 while(pos != end && cfl_is_number(*pos))
                     ++pos;
 
-                back->next = cfl_create_token_chain_node(start, pos - start);
+                back->next = cfl_create_token_list_node(start, pos - start);
 
                 start = pos;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 ++start;
             }
         }
@@ -121,12 +121,12 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         {
             if(start[1] == '=')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 ++start;
             }
         }
@@ -134,12 +134,12 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         {
             if(start[1] == '|')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 ++start;
             }
         }
@@ -147,12 +147,12 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         {
             if(start[1] == '=')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 ++start;
             }
         }
@@ -160,18 +160,18 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         {
             if(start[1] == '=')
             {
-                back->next = cfl_create_token_chain_node(start, 2);
+                back->next = cfl_create_token_list_node(start, 2);
                 start += 2;
             }
             else
             {
-                back->next = cfl_create_token_chain_node(start, 1);
+                back->next = cfl_create_token_list_node(start, 1);
                 ++start;
             }
         }
         else if(!strncmp(start, "&&", 2))
         {
-            back->next = cfl_create_token_chain_node(start, 2);
+            back->next = cfl_create_token_list_node(start, 2);
             start += 2;
         }
         else if(cfl_is_number(*start))
@@ -181,7 +181,7 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
             while(pos != end && cfl_is_number(*pos))
                 ++pos;
 
-            back->next = cfl_create_token_chain_node(start, pos - start);
+            back->next = cfl_create_token_list_node(start, pos - start);
 
             start = pos;
         }
@@ -196,7 +196,7 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
             while(pos != end && *pos == '\'')
                 ++pos;
 
-            back->next = cfl_create_token_chain_node(start, pos - start);
+            back->next = cfl_create_token_list_node(start, pos - start);
 
             start = pos;
         }
@@ -212,14 +212,14 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
 
             back->next = 0;
 
-            cfl_delete_token_chain(head);
+            cfl_delete_token_list(head);
 
             return 0;
         }
 
         if(!back->next)
         {
-            cfl_delete_token_chain(head);
+            cfl_delete_token_list(head);
 
             return 0;
         }
@@ -230,41 +230,41 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
     return true;
 }
 
-void cfl_print_token_chain(cfl_token_chain* chain)
+void cfl_print_token_list(cfl_token_list* list)
 {
-    while(chain)
+    while(list)
     {
-        char* pos = chain->start;
+        char* pos = list->start;
 
         printf("\"");
 
-        while(pos != chain->end)
+        while(pos != list->end)
             printf("%c", *(pos++));
 
         printf("\"");
 
-        if(chain->next)
+        if(list->next)
             printf(", ");
         else
             printf("\n");
 
-        chain = chain->next;
+        list = list->next;
     }
 }
 
-void cfl_delete_token_chain(cfl_token_chain* chain)
+void cfl_delete_token_list(cfl_token_list* list)
 {
-    while(chain)
+    while(list)
     {
-        cfl_token_chain* temp = chain;
+        cfl_token_list* temp = list;
 
-        chain = chain->next;
+        list = list->next;
 
         free(temp);
     }
 }
 
-bool cfl_token_string_compare(cfl_token_chain* position, char* string, int length)
+bool cfl_token_string_compare(cfl_token_list* position, char* string, int length)
 {
     if(position->end - position->start != length)
         return true;

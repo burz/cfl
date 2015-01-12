@@ -3,9 +3,9 @@
 extern void* cfl_parser_malloc(size_t size);
 
 cfl_node* cfl_parse_variable(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     if(!cfl_is_letter(*position->start))
         return 0;
@@ -35,9 +35,9 @@ cfl_node* cfl_parse_variable(
 }
 
 cfl_node* cfl_parse_bool(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     bool value;
 
@@ -66,9 +66,9 @@ cfl_node* cfl_parse_bool(
 }
 
 cfl_node* cfl_parse_integer(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     char* pos = position->start;
 
@@ -123,9 +123,9 @@ cfl_node* cfl_parse_integer(
 }
 
 cfl_node* cfl_parse_char(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     if(*position->start != '\'')
         return 0;
@@ -148,9 +148,9 @@ cfl_node* cfl_parse_char(
 }
 
 cfl_node* cfl_parse_function(
-        cfl_token_chain** end,
-        cfl_token_chain* position,
-        cfl_token_chain* block)
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
 {
     if(cfl_token_string_compare(position, "function", 8))
         return 0;

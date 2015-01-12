@@ -72,10 +72,10 @@ r ::=   f + r | f - r
 p ::=   r == r | r < r | r <= r | r > r | r >= r |
       | r
 
-b ::=   p "||" b
+b ::=   p "&&" b
       | p
 
-n ::=   b "&&" n
+n ::=   b "||" n
       | b
 
 e ::=   function c -> e
