@@ -7,6 +7,31 @@ extern void* cfl_parser_malloc(size_t size);
 
 static int cfl_subtraction_transform(cfl_node* node, cfl_node* left, cfl_node* right)
 {
+    if(right->type == CFL_NODE_INTEGER)
+    {
+        int negative_right = -*((int*) right->data);
+
+        cfl_delete_node(right);
+
+        if(!cfl_create_node_integer(right, negative_right))
+        {
+            cfl_free_node(left);
+            free(right);
+
+            return 0;
+        }
+
+        if(!cfl_create_node_add(node, left, right))
+        {
+            cfl_free_node(left);
+            cfl_free_node(right);
+
+            return 0;
+        }
+
+        return 1;
+    }
+
     cfl_node* negative = cfl_parser_malloc(sizeof(cfl_node));
 
     if(!negative)
