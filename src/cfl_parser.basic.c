@@ -200,6 +200,28 @@ char* cfl_parse_integer(cfl_node* node, char* start, char* end)
     return pos;
 }
 
+char* cfl_parse_char(cfl_node* node, char* start, char* end)
+{
+    if(end - start < 3 || *(start++) != '\'')
+        return 0;
+
+    if(!cfl_create_node_char(node, *start))
+    {
+        free(node);
+
+        return 0;
+    }
+
+    if(*(++start) != '\'')
+    {
+        cfl_free_node(node);
+
+        return 0;
+    }
+
+    return start + 1;
+}
+
 static char* cfl_parse_comma_separated(
         cfl_list_node** list_start,
         char* start,

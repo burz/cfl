@@ -276,27 +276,38 @@ int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain)
     for( ; chain; chain = chain->next)
         if((chain->left->type == CFL_TYPE_BOOL &&
             (chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_CHAR ||
              chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_TUPLE ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_INTEGER &&
             (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_CHAR ||
+             chain->right->type == CFL_TYPE_LIST ||
+             chain->right->type == CFL_TYPE_TUPLE ||
+             chain->right->type == CFL_TYPE_ARROW)) ||
+           (chain->left->type == CFL_TYPE_CHAR &&
+            (chain->right->type == CFL_TYPE_BOOL ||
+             chain->right->type == CFL_TYPE_INTEGER ||
              chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_TUPLE ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_LIST &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_CHAR ||
              chain->right->type == CFL_TYPE_TUPLE ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_TUPLE &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_CHAR ||
              chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_ARROW)) ||
            (chain->left->type == CFL_TYPE_ARROW &&
             (chain->right->type == CFL_TYPE_BOOL ||
              chain->right->type == CFL_TYPE_INTEGER ||
+             chain->right->type == CFL_TYPE_CHAR ||
              chain->right->type == CFL_TYPE_LIST ||
              chain->right->type == CFL_TYPE_TUPLE)))
             return 0;
@@ -512,7 +523,6 @@ cfl_type* cfl_typecheck(cfl_node* node)
         cfl_delete_type_equation_chain(chain.next);
         cfl_free_type(result);
 
-        printf("here\n");
         return 0;
     }
 

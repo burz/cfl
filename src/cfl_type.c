@@ -43,6 +43,14 @@ void cfl_create_type_integer(cfl_type* node)
     node->output = 0;
 }
 
+void cfl_create_type_char(cfl_type* node)
+{
+    node->type = CFL_TYPE_CHAR;
+    node->id = 0;
+    node->input = 0;
+    node->output = 0;
+}
+
 void cfl_create_type_list(cfl_type* node, cfl_type* content)
 {
     node->type = CFL_TYPE_LIST;
@@ -118,6 +126,9 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
             break;
         case CFL_TYPE_INTEGER:
             cfl_create_type_integer(target);
+            break;
+        case CFL_TYPE_CHAR:
+            cfl_create_type_char(target);
             break;
         case CFL_TYPE_LIST:
             input = cfl_type_malloc(sizeof(cfl_type));
@@ -251,10 +262,13 @@ static void cfl_print_type_inner(cfl_type* node)
             printf("a%u", node->id);
             break;
         case CFL_TYPE_BOOL:
-            printf("BOOL");
+            printf("Bool");
             break;
         case CFL_TYPE_INTEGER:
-            printf("INTEGER");
+            printf("Integer");
+            break;
+        case CFL_TYPE_CHAR:
+            printf("Char");
             break;
         case CFL_TYPE_LIST:
             printf("[");

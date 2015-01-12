@@ -16,6 +16,7 @@ typedef enum {
     CFL_NODE_VARIABLE,
     CFL_NODE_BOOL,
     CFL_NODE_INTEGER,
+    CFL_NODE_CHAR,
     CFL_NODE_FUNCTION,
     CFL_NODE_LIST,
     CFL_NODE_TUPLE,
@@ -45,6 +46,7 @@ typedef struct cfl_node_t {
 int cfl_create_node_variable(cfl_node* node, char* string);
 int cfl_create_node_bool(cfl_node* node, bool value);
 int cfl_create_node_integer(cfl_node* node, int value);
+int cfl_create_node_char(cfl_node* node, char value);
 int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
 
 typedef struct cfl_list_node_t {

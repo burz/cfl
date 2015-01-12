@@ -115,6 +115,9 @@ char* cfl_parse_atom(cfl_node* node, char* start, char* end)
         result = cfl_parse_not(node, start, end);
 
     if(!result && !cfl_error_occured_while_parsing())
+        result = cfl_parse_char(node, start, end);
+
+    if(!result && !cfl_error_occured_while_parsing())
         result = cfl_parse_bool(node, start, end);
 
     if(!result && !cfl_error_occured_while_parsing())

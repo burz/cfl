@@ -31,6 +31,7 @@ char* cfl_parse_binary_operation(cfl_node** left,
 char* cfl_parse_variable(cfl_node* node, char* start, char* end);
 char* cfl_parse_bool(cfl_node* node, char* start, char* end);
 char* cfl_parse_integer(cfl_node* node, char* start, char* end);
+char* cfl_parse_char(cfl_node* node, char* start, char* end);
 char* cfl_parse_list(cfl_node* node, char* start, char* end);
 char* cfl_parse_tuple(cfl_node* node, char* start, char* end);
 char* cfl_parse_function(cfl_node* node, char* start, char* end);

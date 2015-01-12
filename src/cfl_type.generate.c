@@ -87,6 +87,15 @@ cfl_type* cfl_generate_type_equation_chain(
             cfl_create_type_integer(result);
 
             break;
+        case CFL_NODE_CHAR:
+            result = cfl_type_malloc(sizeof(cfl_type));
+
+            if(!result)
+                break;
+
+            cfl_create_type_char(result);
+
+            break;
         case CFL_NODE_LIST:
             temp_type0 = cfl_type_malloc(sizeof(cfl_type));
 

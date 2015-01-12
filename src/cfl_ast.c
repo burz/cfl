@@ -78,6 +78,20 @@ int cfl_create_node_integer(cfl_node* node, int value)
     return 1;
 }
 
+int cfl_create_node_char(cfl_node* node, char value)
+{
+    node->type = CFL_NODE_CHAR;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(char));
+
+    if(!node->data)
+        return 0;
+
+    *((char*) node->data) = value;
+
+    return 1;
+}
+
 int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body)
 {
     node->type = CFL_NODE_FUNCTION;
@@ -372,6 +386,9 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
         case CFL_NODE_INTEGER:
             cfl_create_node_integer(target, *((int*) node->data));
             break;
+        case CFL_NODE_CHAR:
+            cfl_create_node_char(target, *((char*) node->data));
+            break;
         case CFL_NODE_LIST:
             if(node->data == 0)
             {
@@ -588,6 +605,9 @@ static void cfl_print_node_inner(cfl_node* node)
             break;
         case CFL_NODE_INTEGER:
             printf("%d", *((int*) node->data));
+            break;
+        case CFL_NODE_CHAR:
+            printf("'%c'", *((char*) node->data));
             break;
         case CFL_NODE_FUNCTION:
             printf("function ");
