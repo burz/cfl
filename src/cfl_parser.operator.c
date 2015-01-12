@@ -105,7 +105,17 @@ char* cfl_parse_and(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_and(node, left, right))
+    if(left->type == CFL_NODE_BOOL && right->type == CFL_NODE_BOOL)
+    {
+        bool result = *((bool*) left->data) && *((bool*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_and(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -133,7 +143,17 @@ char* cfl_parse_or(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_or(node, left, right))
+    if(left->type == CFL_NODE_BOOL && right->type == CFL_NODE_BOOL)
+    {
+        bool result = *((bool*) left->data) || *((bool*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_or(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -165,7 +185,16 @@ char* cfl_parse_not(cfl_node* node, char* start, char* end)
         return 0;
     }
 
-    if(!cfl_create_node_not(node, child_node))
+    if(child_node->type == CFL_NODE_BOOL)
+    {
+        bool result = !*((bool*) child_node->data);
+
+        cfl_free_node(child_node);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_not(node, child_node))
     {
         cfl_free_node(child_node);
 
@@ -192,7 +221,17 @@ char* cfl_parse_add(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_add(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        int result = *((int*) left->data) + *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_integer(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_add(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -220,7 +259,17 @@ char* cfl_parse_multiply(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_multiply(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        int result = *((int*) left->data) * *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_integer(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_multiply(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -248,7 +297,24 @@ char* cfl_parse_divide(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_divide(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        if(*((int*) right->data) == 0)
+        {
+            cfl_parse_error_bad_division();
+
+            return 0;
+        }
+
+        int result = *((int*) left->data) / *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_integer(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_divide(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -276,7 +342,17 @@ char* cfl_parse_equal(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_equal(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        bool result = *((int*) left->data) == *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_equal(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);
@@ -304,7 +380,17 @@ char* cfl_parse_less(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_create_node_less(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        bool result = *((int*) left->data) < *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_create_node_less(node, left, right))
     {
         cfl_free_node(left);
         cfl_free_node(right);

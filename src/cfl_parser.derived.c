@@ -100,7 +100,17 @@ char* cfl_parse_subtract(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_subtraction_transform(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        int result = *((int*) left->data) - *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_integer(node, result))
+            return 0;
+    }
+    else if(!cfl_subtraction_transform(node, left, right))
         return 0;
 
     return start;
@@ -122,6 +132,19 @@ char* cfl_parse_mod(cfl_node* node, char* start, char* end)
 
     if(!start)
         return 0;
+
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        int result = *((int*) left->data) % *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_integer(node, result))
+            return 0;
+
+        return start;
+    }
 
     cfl_node* left_copy = cfl_parser_malloc(sizeof(cfl_node));
 
@@ -330,7 +353,17 @@ char* cfl_parse_less_equal(cfl_node* node, char* start, char* end)
     if(!start)
         return 0;
 
-    if(!cfl_less_equal_transform(node, left, right))
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        bool result = *((int*) left->data) <= *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+    }
+    else if(!cfl_less_equal_transform(node, left, right))
         return 0;
 
     return start;
@@ -352,6 +385,19 @@ char* cfl_parse_greater(cfl_node* node, char* start, char* end)
 
     if(!start)
         return 0;
+
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        bool result = *((int*) left->data) > *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+
+        return start;
+    }
 
     cfl_node* less_equal = cfl_parser_malloc(sizeof(cfl_node));
 
@@ -392,6 +438,19 @@ char* cfl_parse_greater_equal(cfl_node* node, char* start, char* end)
 
     if(!start)
         return 0;
+
+    if(left->type == CFL_NODE_INTEGER && right->type == CFL_NODE_INTEGER)
+    {
+        bool result = *((int*) left->data) >= *((int*) right->data);
+
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        if(!cfl_create_node_bool(node, result))
+            return 0;
+
+        return start;
+    }
 
     cfl_node* less = cfl_parser_malloc(sizeof(cfl_node));
 

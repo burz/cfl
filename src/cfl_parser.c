@@ -46,6 +46,13 @@ void cfl_parse_error_expected(char* expected, char* after, char* start, char* en
     cfl_parse_error = 1;
 }
 
+void cfl_parse_error_bad_division(void)
+{
+    fprintf(stderr, "EVALUATION ERROR: Division by 0\n");
+
+    cfl_parse_error = 1;
+}
+
 void cfl_parse_error_unparseable_file(char* filename)
 {
         fprintf(stderr, "ERROR: Could not parse anything "
