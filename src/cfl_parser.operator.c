@@ -68,24 +68,10 @@ cfl_node* cfl_parse_and(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
+    cfl_node* result = cfl_create_new_node_and(left, right);
 
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
+    if(!result);
         return 0;
-    }
-
-    if(!cfl_create_node_and(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
 
     return result;
 }
@@ -109,26 +95,7 @@ cfl_node* cfl_parse_or(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_or(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_or(left, right);
 }
 
 cfl_node* cfl_parse_not(
@@ -150,24 +117,7 @@ cfl_node* cfl_parse_not(
         return 0;
     }
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(child);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_not(result, child))
-    {
-        cfl_free_node(child);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_not(child);
 }
 
 cfl_node* cfl_parse_add(
@@ -189,26 +139,7 @@ cfl_node* cfl_parse_add(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_add(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_add(left, right);
 }
 
 cfl_node* cfl_parse_multiply(
@@ -230,26 +161,7 @@ cfl_node* cfl_parse_multiply(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_multiply(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_multiply(left, right);
 }
 
 cfl_node* cfl_parse_divide(
@@ -271,26 +183,7 @@ cfl_node* cfl_parse_divide(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_divide(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_divide(left, right);
 }
 
 cfl_node* cfl_parse_equal(
@@ -312,26 +205,7 @@ cfl_node* cfl_parse_equal(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_equal(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_equal(left, right);
 }
 
 cfl_node* cfl_parse_less(
@@ -353,24 +227,49 @@ cfl_node* cfl_parse_less(
                                    block))
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
+    return cfl_create_new_node_less(left, right);
+}
 
-    if(!result)
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
+cfl_node* cfl_parse_push(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
 
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_boolean_term,
+                                   &cfl_parse_boolean_term,
+                                   1,
+                                   ":",
+                                   position,
+                                   block))
         return 0;
-    }
 
-    if(!cfl_create_node_less(result, left, right))
-    {
-        cfl_free_node(left);
-        cfl_free_node(right);
-        free(result);
+    return cfl_create_new_node_push(left, right);
+}
 
+cfl_node* cfl_parse_concatenate(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_boolean_term,
+                                   &cfl_parse_boolean_term,
+                                   2,
+                                   "++",
+                                   position,
+                                   block))
         return 0;
-    }
 
-    return result;
+    return cfl_create_new_node_concatenate(left, right);
 }

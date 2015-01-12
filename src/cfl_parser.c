@@ -216,6 +216,42 @@ cfl_node* cfl_parse_term(
     return result;
 }
 
+cfl_node* cfl_parse_list_molecule(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_push(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_term(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_list_factor(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_concatenate(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_list_molecule(end, position, block);
+
+    return result;
+}
+
 cfl_node* cfl_parse_boolean_molecule(
         cfl_token_list** end,
         cfl_token_list* position,

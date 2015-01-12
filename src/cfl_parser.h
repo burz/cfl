@@ -35,10 +35,13 @@ typedef cfl_node* cfl_node_parser(cfl_token_list** end,
                                   cfl_token_list* position,
                                   cfl_token_list* block);
 
-//char* cfl_parse_parentheses(cfl_node* node,
-//                            cfl_node_parser parser,
-//                            char* start,
-//                            char* end);
+
+cfl_node* cfl_parse_enclosure(cfl_token_list** end,
+                              cfl_node_parser* parser,
+                              char left_delimeter,
+                              char right_delimeter,
+                              cfl_token_list* position,
+                              cfl_token_list* block);
 
 cfl_node_parser cfl_parse_variable;
 cfl_node_parser cfl_parse_bool;
@@ -58,6 +61,7 @@ bool cfl_parse_binary_operation(cfl_token_list** end,
                                 char* operand,
                                 cfl_token_list* position,
                                 cfl_token_list* block);
+
 cfl_node_parser cfl_parse_and;
 cfl_node_parser cfl_parse_or;
 cfl_node_parser cfl_parse_not;
@@ -77,14 +81,16 @@ cfl_node_parser cfl_parse_less;
 //char* cfl_parse_let(cfl_node* node, char* start, char* end);
 //char* cfl_parse_if(cfl_node* node, char* start, char* end);
 
-//char* cfl_parse_push(cfl_node* node, char* start, char* end);
-//char* cfl_parse_concatenate(cfl_node* node, char* start, char* end);
-//char* cfl_parse_case(cfl_node* node, char* start, char* end);
+cfl_node_parser cfl_parse_push;
+cfl_node_parser cfl_parse_concatenate;
+//cfl_node_parser cfl_parse_case;
 
 cfl_node_parser cfl_parse_atom;
 cfl_node_parser cfl_parse_molecule;
 cfl_node_parser cfl_parse_factor;
 cfl_node_parser cfl_parse_term;
+cfl_node_parser cfl_parse_list_molecule;
+cfl_node_parser cfl_parse_list_factor;
 cfl_node_parser cfl_parse_boolean_molecule;
 cfl_node_parser cfl_parse_boolean_factor;
 cfl_node_parser cfl_parse_boolean_term;

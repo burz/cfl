@@ -17,21 +17,9 @@ cfl_node* cfl_parse_variable(
         if(!cfl_token_string_compare(position, reserved_words[i], length))
             return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-        return 0;
-
-    if(!cfl_create_node_variable_n(result, length, position->start))
-    {
-        free(result);
-
-        return 0;
-    }
-
     *end = position->next;
 
-    return result;
+    return cfl_create_new_node_variable(length, position->start);
 }
 
 cfl_node* cfl_parse_bool(
@@ -48,21 +36,9 @@ cfl_node* cfl_parse_bool(
     else
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-        return 0;
-
-    if(!cfl_create_node_bool(result, value))
-    {
-        free(result);
-
-        return 0;
-    }
-
     *end = position->next;
 
-    return result;
+    return cfl_create_new_node_bool(value);
 }
 
 cfl_node* cfl_parse_integer(
@@ -105,21 +81,9 @@ cfl_node* cfl_parse_integer(
     if(negate)
         value = -value;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-        return 0;
-
-    if(!cfl_create_node_integer(result, value))
-    {
-        free(result);
-
-        return 0;
-    }
-
     *end = position->next;
 
-    return result;
+    return cfl_create_new_node_integer(value);
 }
 
 cfl_node* cfl_parse_char(
@@ -130,21 +94,9 @@ cfl_node* cfl_parse_char(
     if(*position->start != '\'')
         return 0;
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-        return 0;
-
-    if(!cfl_create_node_char(result, position->start[1]))
-    {
-        free(result);
-
-        return 0;
-    }
-
     *end = position->next;
 
-    return result;
+    return cfl_create_new_node_char(position->start[1]);
 }
 
 cfl_node* cfl_parse_function(
@@ -176,24 +128,5 @@ cfl_node* cfl_parse_function(
         return 0;
     }
 
-    cfl_node* result = cfl_parser_malloc(sizeof(cfl_node));
-
-    if(!result)
-    {
-        cfl_free_node(variable);
-        cfl_free_node(expression);
-
-        return 0;
-    }
-
-    if(!cfl_create_node_function(result, variable, expression))
-    {
-        cfl_free_node(variable);
-        cfl_free_node(expression);
-        free(result);
-
-        return 0;
-    }
-
-    return result;
+    return cfl_create_new_node_function(variable, expression);
 }

@@ -34,6 +34,601 @@ void* cfl_ast_malloc(size_t size)
     return result;
 }
 
+cfl_node* cfl_create_new_node_variable(int string_length, char* string)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_VARIABLE;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(char) * (string_length + 1));
+
+    if(!node->data)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    strncpy(node->data, string, string_length);
+
+    ((char*) node->data)[string_length + 1] = 0;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_bool(bool value)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_BOOL;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(bool));
+
+    if(!node->data)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    *((bool*) node->data) = value;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_integer(int value)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_INTEGER;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(int));
+
+    if(!node->data)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    *((int*) node->data) = value;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_char(char value)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_CHAR;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(char));
+
+    if(!node->data)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    *((char*) node->data) = value;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_function(cfl_node* argument, cfl_node* body)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(argument);
+        cfl_free_node(body);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_FUNCTION;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(argument);
+        cfl_free_node(body);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = argument;
+    node->children[1] = body;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_list(cfl_list_node* list)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_LIST;
+    node->number_of_children = 0;
+    node->data = list;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_tuple(
+        unsigned int number_of_children,
+        cfl_node** children)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_TUPLE;
+    node->number_of_children = number_of_children;
+    node->data = 0;
+    node->children = children;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_and(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_AND;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_or(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_OR;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_not(cfl_node* child)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(child);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_NOT;
+    node->number_of_children = 1;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*));
+
+    if(!node->children)
+    {
+        cfl_free_node(child);
+        free(node);
+
+        return 0;
+    }
+
+    *node->children = child;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_add(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_ADD;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_multiply(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_MULTIPLY;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_divide(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_DIVIDE;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_equal(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_EQUAL;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_less(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_LESS;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_application(
+        cfl_node* function,
+        cfl_node* argument)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_APPLICATION;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = function;
+    node->children[1] = argument;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_if(
+        cfl_node* condition,
+        cfl_node* then_node,
+        cfl_node* else_node)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_IF;
+    node->number_of_children = 3;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 3);
+
+    if(!node->children)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = condition;
+    node->children[1] = then_node;
+    node->children[2] = else_node;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_let_rec(
+        cfl_node* name,
+        cfl_node* argument,
+        cfl_node* procedure,
+        cfl_node* body)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_LET_REC;
+    node->number_of_children = 4;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 4);
+
+    if(!node->children)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = name;
+    node->children[1] = argument;
+    node->children[2] = procedure;
+    node->children[3] = body;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_push(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_PUSH;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_concatenate(cfl_node* left, cfl_node* right)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    node->type = CFL_NODE_CONCATENATE;
+    node->number_of_children = 2;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 2);
+
+    if(!node->children)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = left;
+    node->children[1] = right;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_case(
+        cfl_node* list,
+        cfl_node* empty,
+        cfl_node* head,
+        cfl_node* tail,
+        cfl_node* nonempty)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_CASE;
+    node->number_of_children = 5;
+    node->data = 0;
+    node->children = cfl_ast_malloc(sizeof(cfl_node*) * 5);
+
+    if(!node->children)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    node->children[0] = list;
+    node->children[1] = empty;
+    node->children[2] = head;
+    node->children[3] = tail;
+    node->children[4] = nonempty;
+
+    return node;
+}
+
+// deprecated functions
 int cfl_create_node_variable(cfl_node* node, char* string)
 {
     node->type = CFL_NODE_VARIABLE;
@@ -46,22 +641,6 @@ int cfl_create_node_variable(cfl_node* node, char* string)
     strncpy(node->data, string, MAX_IDENTIFIER_LENGTH);
 
     ((char*) node->data)[MAX_IDENTIFIER_LENGTH - 1] = 0;
-
-    return 1;
-}
-
-int cfl_create_node_variable_n(cfl_node* node, int string_length, char* string)
-{
-    node->type = CFL_NODE_VARIABLE;
-    node->number_of_children = 0;
-    node->data = cfl_ast_malloc(sizeof(char) * (string_length + 1));
-
-    if(!node->data)
-        return 0;
-
-    strncpy(node->data, string, string_length);
-
-    ((char*) node->data)[string_length + 1] = 0;
 
     return 1;
 }
@@ -388,6 +967,7 @@ int cfl_create_node_case(
 
     return 1;
 }
+// end deprecated functions
 
 int cfl_copy_node(cfl_node* target, cfl_node* node)
 {

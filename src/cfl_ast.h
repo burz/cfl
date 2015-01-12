@@ -43,17 +43,52 @@ typedef struct cfl_node_t {
     struct cfl_node_t** children;
 } cfl_node;
 
-int cfl_create_node_variable(cfl_node* node, char* string);
-int cfl_create_node_variable_n(cfl_node* node, int string_length, char* string);
-int cfl_create_node_bool(cfl_node* node, bool value);
-int cfl_create_node_integer(cfl_node* node, int value);
-int cfl_create_node_char(cfl_node* node, char value);
-int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
+cfl_node* cfl_create_new_node_variable(int string_length, char* string);
+cfl_node* cfl_create_new_node_bool(bool value);
+cfl_node* cfl_create_new_node_integer(int value);
+cfl_node* cfl_create_new_node_char(char value);
+cfl_node* cfl_create_new_node_function(cfl_node* argument, cfl_node* body);
 
 typedef struct cfl_list_node_t {
     cfl_node* node;
     struct cfl_list_node_t* next;
 } cfl_list_node;
+
+cfl_node* cfl_create_new_node_list(cfl_list_node* list);
+cfl_node* cfl_create_new_node_tuple(unsigned int number_of_children, cfl_node** children);
+
+cfl_node* cfl_create_new_node_and(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_or(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_not(cfl_node* child);
+cfl_node* cfl_create_new_node_add(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_multiply(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_divide(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_equal(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_less(cfl_node* left, cfl_node* right);
+
+cfl_node* cfl_create_new_node_application(cfl_node* function, cfl_node* argument);
+cfl_node* cfl_create_new_node_if(cfl_node* condition,
+                                 cfl_node* then_node,
+                                 cfl_node* else_node);
+cfl_node* cfl_create_new_node_let_rec(cfl_node* name,
+                                      cfl_node* argument,
+                                      cfl_node* procedure,
+                                      cfl_node* body);
+
+cfl_node* cfl_create_new_node_push(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_concatenate(cfl_node* left, cfl_node* right);
+cfl_node* cfl_create_new_node_case(cfl_node* list,
+                                   cfl_node* empty,
+                                   cfl_node* head,
+                                   cfl_node* tail,
+                                   cfl_node* nonempty);
+
+// deprecated functions
+int cfl_create_node_variable(cfl_node* node, char* string);
+int cfl_create_node_bool(cfl_node* node, bool value);
+int cfl_create_node_integer(cfl_node* node, int value);
+int cfl_create_node_char(cfl_node* node, char value);
+int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
 
 void cfl_create_node_list(cfl_node* node, cfl_list_node* list);
 void cfl_create_node_tuple(cfl_node* node,
@@ -90,6 +125,7 @@ int cfl_create_node_case(cfl_node* node,
                          cfl_node* head,
                          cfl_node* tail,
                          cfl_node* nonempty);
+// end deprecated functions
 
 int cfl_copy_node(cfl_node* target, cfl_node* node);
 
