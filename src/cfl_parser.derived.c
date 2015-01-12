@@ -1,6 +1,5 @@
 #include "cfl_parser.h"
 
-#include <stdio.h>
 #include <string.h>
 
 extern void* cfl_parser_malloc(size_t size);
@@ -976,8 +975,7 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
 
     if(start != end)
     {
-        fprintf(stderr, "PARSE ERROR: Could not parse a full program. "
-                        "Perhaps a \";\" is missing\n");
+        cfl_parse_error_partial_program();
 
         cfl_delete_definition_chain(definitions.next);
 
@@ -987,8 +985,7 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
         return 0;
     else if(strcmp(definitions.next->name->data, "main"))
     {
-        fprintf(stderr, "PARSING ERROR: The final definition in the "
-                        "program is not the definition of \"main\"\n");
+        cfl_parse_error_missing_main();
 
         cfl_delete_definition_chain(definitions.next);
 
@@ -996,7 +993,7 @@ char* cfl_parse_program(cfl_node* node, char* start, char* end)
     }
     else if(definitions.next->arguments.next)
     {
-        fprintf(stderr, "PARSING ERROR: \"main\" cannot have any arguments\n");
+        cfl_parse_error_main_has_arguments();
 
         cfl_delete_definition_chain(definitions.next);
 

@@ -21,6 +21,9 @@ void* cfl_parser_malloc(size_t size)
 
 void cfl_parse_error_expected(char* expected, char* after, char* start, char* end)
 {
+    if(cfl_parse_error)
+        return;
+
     char buffer[100];
     int length = 0;
 
@@ -48,15 +51,55 @@ void cfl_parse_error_expected(char* expected, char* after, char* start, char* en
 
 void cfl_parse_error_bad_division(void)
 {
+    if(cfl_parse_error)
+        return;
+
     fprintf(stderr, "EVALUATION ERROR: Division by 0\n");
+
+    cfl_parse_error = 1;
+}
+
+void cfl_parse_error_partial_program(void)
+{
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: Could not parse a full program. "
+                    "Perhaps a \";\" is missing\n");
+
+    cfl_parse_error = 1;
+}
+
+void cfl_parse_error_missing_main(void)
+{
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: The final definition in the "
+                    "program is not the definition of \"main\"\n");
+
+    cfl_parse_error = 1;
+}
+
+void cfl_parse_error_main_has_arguments(void)
+{
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: \"main\" cannot have any arguments\n");
 
     cfl_parse_error = 1;
 }
 
 void cfl_parse_error_unparseable_file(char* filename)
 {
-        fprintf(stderr, "ERROR: Could not parse anything "
-                        "in file %s\n", filename);
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: Could not parse anything "
+                    "in file %s\n", filename);
+
+    cfl_parse_error = 1;
 }
 
 static int cfl_error_occured_while_parsing(void)
@@ -216,7 +259,7 @@ int cfl_parse_file(cfl_node* node, char* filename)
 
     if(size < 1)
     {
-        fprintf(stderr, "PARSE ERROR: The file %s was empty\n", filename);
+        fprintf(stderr, "PARSING ERROR: The file %s was empty\n", filename);
 
         free(program);
 

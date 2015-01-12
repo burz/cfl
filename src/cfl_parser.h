@@ -7,6 +7,9 @@ typedef char* (*cfl_node_parser)(cfl_node *node, char* start, char* end);
 
 void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
 void cfl_parse_error_bad_division(void);
+void cfl_parse_error_partial_program(void);
+void cfl_parse_error_missing_main(void);
+void cfl_parse_error_main_has_arguments(void);
 void cfl_parse_error_unparseable_file(char* filename);
 
 int cfl_is_whitespace(char c);
