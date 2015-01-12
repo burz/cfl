@@ -26,6 +26,21 @@ void cfl_parse_error_unexpected_char(char x)
     cfl_parse_error = 1;
 }
 
+void cfl_parse_error_integer_overflow(char* start, int length)
+{
+    fprintf(stderr, "PARSING ERROR: The integer \"");
+
+    char* pos = start;
+
+    while(pos - start < length)
+        fprintf(stderr, "%c", *pos);
+
+    fprintf(stderr, "\" is too big. The integer string length maximum is "
+            "%d characters\n", MAX_INTEGER_STRING_LENGTH);
+
+    cfl_parse_error = 1;
+}
+
 void cfl_parse_error_expected(char* expected, char* after, char* start, char* end)
 {
     if(cfl_parse_error)
@@ -34,7 +49,7 @@ void cfl_parse_error_expected(char* expected, char* after, char* start, char* en
     char buffer[100];
     int length = 0;
 
-    while(start != end && !cfl_is_whitespace(*start))
+    while(start != end && length < 100 && !cfl_is_whitespace(*start))
     {
         buffer[length] = *start;
 
@@ -114,130 +129,53 @@ static int cfl_error_occured_while_parsing(void)
     return cfl_parse_error || cfl_get_ast_error_flag();
 }
 
-//char* cfl_parse_atom(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_parentheses(node, &cfl_parse_expression, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_not(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_char(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_bool(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_integer(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_variable(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_list(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_tuple(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_string(node, start, end);
-//
-//    return result;
-//}
-//
-//char* cfl_parse_molecule(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_application(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_atom(node, start, end);
-//
-//    return result;
-//}
-//
-//char* cfl_parse_factor(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_and(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_multiply(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_divide(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_mod(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_equal(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_less(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_less_equal(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_greater(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_greater_equal(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_molecule(node, start, end);
-//
-//    return result;
-//}
-//
-//char* cfl_parse_term(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_or(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_add(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_subtract(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_factor(node, start, end);
-//
-//    return result;
-//}
-//
-//char* cfl_parse_list_expression(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_push(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_term(node, start, end);
-//
-//    return result;
-//}
-//
-//char* cfl_parse_expression(cfl_node* node, char* start, char* end)
-//{
-//    char* result = cfl_parse_if(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_let(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_function(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_case(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_concatenate(node, start, end);
-//
-//    if(!result && !cfl_error_occured_while_parsing())
-//        result = cfl_parse_list_expression(node, start, end);
-//
-//    return result;
-//}
+cfl_node* cfl_parse_atom(
+        cfl_token_chain** end,
+        cfl_token_chain* position,
+        cfl_token_chain* block)
+{
+    if(position == block)
+        return 0;
 
-int cfl_parse_file(cfl_node* node, char* filename)
+    cfl_node* result = cfl_parse_variable(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_bool(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_integer(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_char(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_expression(
+        cfl_token_chain** end,
+        cfl_token_chain* position,
+        cfl_token_chain* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_function(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_atom(end, position, block);
+
+    return result;
+}
+
+cfl_node* cfl_parse_file(char* filename)
 {
     FILE* f = fopen(filename, "rb");
 
@@ -284,17 +222,32 @@ int cfl_parse_file(cfl_node* node, char* filename)
     cfl_parse_error = 0;
     cfl_reset_ast_error_flag();
 
-    char* end = program + size;
+    char* program_end = program + size;
 
     cfl_token_chain head;
     head.next = 0;
 
-    if(!cfl_generate_token_chain(&head, program, end))
+    if(!cfl_generate_token_chain(&head, program, program_end))
         return 0;
 
     cfl_print_token_chain(head.next);
 
-    return 0;
+    cfl_token_chain* ending_position;
+
+    cfl_node* result = cfl_parse_expression(&ending_position, head.next, 0);
+
+    cfl_delete_token_chain(head.next);
+
+    free(program);
+
+    if(!result)
+    {
+        cfl_parse_error_unparseable_file(filename);
+
+        return 0;
+    }
+
+    return result;
 }
 //    pos = cfl_parse_program(node, pos, end);
 //

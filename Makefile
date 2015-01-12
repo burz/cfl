@@ -9,6 +9,7 @@ FILES = \
     cfl_ast.o \
     cfl_parser.o \
     cfl_parser.token.o \
+    cfl_parser.basic.o \
     cfl_eval.o \
     cfl_type.o \
     cfl_type.generate.o \

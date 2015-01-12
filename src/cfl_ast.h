@@ -44,6 +44,7 @@ typedef struct cfl_node_t {
 } cfl_node;
 
 int cfl_create_node_variable(cfl_node* node, char* string);
+int cfl_create_node_variable_n(cfl_node* node, int string_length, char* string);
 int cfl_create_node_bool(cfl_node* node, bool value);
 int cfl_create_node_integer(cfl_node* node, int value);
 int cfl_create_node_char(cfl_node* node, char value);

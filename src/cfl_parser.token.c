@@ -18,21 +18,21 @@ cfl_token_chain* cfl_create_token_chain_node(char* start, unsigned int length)
     return result;
 }
 
-static bool cfl_is_number(char x)
-{
-    return '0' <= x && x <= '9';
-}
-
-static bool cfl_is_letter(char x)
-{
-    return ('a' <= x && x <= 'z') ||
-           ('A' <= x && x <= 'Z');
-}
-
 bool cfl_is_whitespace(char x)
 {
     return x == ' ' || x == '\n' || x == '\t' ||
            x == '\r' || x == '\v' || x == '\f';
+}
+
+bool cfl_is_number(char x)
+{
+    return '0' <= x && x <= '9';
+}
+
+bool cfl_is_letter(char x)
+{
+    return ('a' <= x && x <= 'z') ||
+           ('A' <= x && x <= 'Z');
 }
 
 bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
@@ -51,14 +51,11 @@ bool cfl_generate_token_chain(cfl_token_chain* head, char* start, char* end)
         }
         else if(*start == '\'')
         {
-            char* pos = start + 1;
+            char* pos = start + 2;
 
-            while(pos != end && *pos != '\'')
-                ++pos;
-
-            if(pos == end)
+            if(*pos != '\'')
             {
-                cfl_parse_error_expected("\"'\"", "\"'\"", end, end);
+                cfl_parse_error_expected("\"'\"", "\"'\"", pos, end);
 
                 return 0;
             }
@@ -251,11 +248,7 @@ void cfl_print_token_chain(cfl_token_chain* chain)
         else
             printf("\n");
 
-        cfl_token_chain* temp = chain;
-
         chain = chain->next;
-
-        free(temp);
     }
 }
 
@@ -269,4 +262,12 @@ void cfl_delete_token_chain(cfl_token_chain* chain)
 
         free(temp);
     }
+}
+
+bool cfl_token_string_compare(cfl_token_chain* position, char* string, int length)
+{
+    if(position->end - position->start != length)
+        return true;
+
+    return strncmp(position->start, string, length);
 }

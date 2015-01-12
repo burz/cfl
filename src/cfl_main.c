@@ -18,29 +18,33 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    cfl_node node;
+    cfl_node* node;
 
     if(argc > 2)
     {
         if(!strcmp(argv[1], "-ast"))
         {
-            if(!cfl_parse_file(&node, argv[2]))
+            node = cfl_parse_file(argv[2]);
+
+            if(!node)
                 return 1;
 
-            cfl_print_node(&node);
+            cfl_print_node(node);
 
-            cfl_delete_node(&node);
+            cfl_free_node(node);
         }
         else if(argc > 2 && !strcmp(argv[1], "-type"))
         {
-            if(!cfl_parse_file(&node, argv[2]))
+            node = cfl_parse_file(argv[2]);
+
+            if(!node)
                 return 1;
 
-            cfl_type* type = cfl_typecheck(&node);
+            cfl_type* type = cfl_typecheck(node);
 
             if(!type)
             {
-                cfl_delete_node(&node);
+                cfl_free_node(node);
 
                 return 1;
             }
@@ -49,7 +53,7 @@ int main(int argc, char* argv[])
 
             cfl_free_type(type);
 
-            cfl_delete_node(&node);
+            cfl_free_node(node);
         }
         else
         {
@@ -58,36 +62,36 @@ int main(int argc, char* argv[])
 
             return 1;
         }
-
-        return 0;
     }
     else
     {
-        if(!cfl_parse_file(&node, argv[1]))
+        node = cfl_parse_file(argv[1]);
+
+        if(!node)
             return 1;
 
-        cfl_type* type = cfl_typecheck(&node);
+        cfl_type* type = cfl_typecheck(node);
 
         if(!type)
         {
-            cfl_delete_node(&node);
+            cfl_free_node(node);
 
             return 1;
         }
 
         cfl_free_type(type);
 
-        if(!cfl_evaluate(&node))
+        if(!cfl_evaluate(node))
         {
-            cfl_delete_node(&node);
+            cfl_free_node(node);
 
             return 1;
         }
 
-        cfl_print_node(&node);
+        cfl_print_node(node);
 
-        cfl_delete_node(&node);
-
-        return 0;
+        cfl_free_node(node);
     }
+
+    return 0;
 }

@@ -50,6 +50,22 @@ int cfl_create_node_variable(cfl_node* node, char* string)
     return 1;
 }
 
+int cfl_create_node_variable_n(cfl_node* node, int string_length, char* string)
+{
+    node->type = CFL_NODE_VARIABLE;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(char) * (string_length + 1));
+
+    if(!node->data)
+        return 0;
+
+    strncpy(node->data, string, string_length);
+
+    ((char*) node->data)[string_length + 1] = 0;
+
+    return 1;
+}
+
 int cfl_create_node_bool(cfl_node* node, bool value)
 {
     node->type = CFL_NODE_BOOL;
