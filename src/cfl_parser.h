@@ -41,10 +41,15 @@ cfl_node_parser cfl_parse_variable;
 cfl_node_parser cfl_parse_bool;
 cfl_node_parser cfl_parse_integer;
 cfl_node_parser cfl_parse_char;
-//cfl_node_parser cfl_parse_string;
-//cfl_node_parser cfl_parse_list;
-//cfl_node_parser cfl_parse_tuple;
+cfl_node_parser cfl_parse_string;
 cfl_node_parser cfl_parse_function;
+
+cfl_list_node* cfl_parse_comma_separated(cfl_token_list** end,
+                                         cfl_token_list* position,
+                                         cfl_token_list* block);
+
+cfl_node_parser cfl_parse_list;
+cfl_node_parser cfl_parse_tuple;
 
 bool cfl_parse_binary_operation(cfl_token_list** end,
                                 cfl_node** left,

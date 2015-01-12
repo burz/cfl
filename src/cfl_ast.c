@@ -160,12 +160,29 @@ cfl_node* cfl_create_new_node_function(cfl_node* argument, cfl_node* body)
     return node;
 }
 
+void cfl_delete_list_nodes(cfl_list_node* list)
+{
+    while(list)
+    {
+        cfl_list_node* temp = list;
+
+        list = list->next;
+
+        cfl_free_node(temp->node);
+        free(temp);
+    }
+}
+
 cfl_node* cfl_create_new_node_list(cfl_list_node* list)
 {
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        cfl_delete_list_nodes(list);
+
         return 0;
+    }
 
     node->type = CFL_NODE_LIST;
     node->number_of_children = 0;
@@ -181,7 +198,18 @@ cfl_node* cfl_create_new_node_tuple(
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        if(number_of_children)
+        {
+            int i = 0;
+            for( ; i < number_of_children; ++i)
+                free(children[i]);
+
+            free(children);
+        }
+
         return 0;
+    }
 
     node->type = CFL_NODE_TUPLE;
     node->number_of_children = number_of_children;

@@ -54,6 +54,8 @@ typedef struct cfl_list_node_t {
     struct cfl_list_node_t* next;
 } cfl_list_node;
 
+void cfl_delete_list_nodes(cfl_list_node* list);
+
 cfl_node* cfl_create_new_node_list(cfl_list_node* list);
 cfl_node* cfl_create_new_node_tuple(unsigned int number_of_children, cfl_node** children);
 

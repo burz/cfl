@@ -142,6 +142,21 @@ cfl_node* cfl_parse_atom(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
+    result = cfl_parse_string(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_list(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_tuple(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
     result = cfl_parse_not(end, position, block);
 
     if(result || cfl_error_occured_while_parsing())
