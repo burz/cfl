@@ -49,7 +49,7 @@ cfl_node* cfl_parse_variable(
 
     *end = position->next;
 
-    return cfl_create_new_node_variable(length, position->start);
+    return cfl_create_new_node_variable_n(length, position->start);
 }
 
 cfl_node* cfl_parse_bool(

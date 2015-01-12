@@ -34,7 +34,32 @@ void* cfl_ast_malloc(size_t size)
     return result;
 }
 
-cfl_node* cfl_create_new_node_variable(int string_length, char* string)
+cfl_node* cfl_create_new_node_variable(char* string)
+{
+    cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
+
+    if(!node)
+        return 0;
+
+    node->type = CFL_NODE_VARIABLE;
+    node->number_of_children = 0;
+    node->data = cfl_ast_malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
+
+    if(!node->data)
+    {
+        free(node);
+
+        return 0;
+    }
+
+    strncpy(node->data, string, MAX_IDENTIFIER_LENGTH);
+
+    ((char*) node->data)[MAX_IDENTIFIER_LENGTH - 1] = 0;
+
+    return node;
+}
+
+cfl_node* cfl_create_new_node_variable_n(int string_length, char* string)
 {
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
@@ -656,6 +681,147 @@ cfl_node* cfl_create_new_node_case(
     return node;
 }
 
+cfl_node* cfl_copy_new_node(cfl_node* node)
+{
+    if(node->type == CFL_NODE_VARIABLE)
+        return cfl_create_new_node_variable(node->data);
+    else if(node->type == CFL_NODE_BOOL)
+        return cfl_create_new_node_bool(*((bool*) node->data));
+    else if(node->type == CFL_NODE_INTEGER)
+        return cfl_create_new_node_integer(*((int*) node->data));
+    else if(node->type == CFL_NODE_CHAR)
+        return cfl_create_new_node_char(*((char*) node->data));
+    else if(node->type == CFL_NODE_LIST)
+    {
+        if(node->data == 0)
+        {
+            cfl_create_new_node_list(0);
+
+            return 0;
+        }
+
+        cfl_list_node* start =
+            cfl_ast_malloc(sizeof(cfl_list_node));
+
+        if(!start)
+            return 0;
+
+        cfl_list_node* node_pos = node->data;
+
+        start->node = cfl_copy_new_node(node_pos->node);
+
+        if(!start->node)
+        {
+            free(start);
+
+            return 0;
+        }
+
+        node_pos = node_pos->next;
+
+        cfl_list_node* target_pos = start;
+
+        while(node_pos)
+        {
+            target_pos->next =
+                cfl_ast_malloc(sizeof(cfl_list_node));
+
+            if(!target_pos->next)
+            {
+                while(start)
+                {
+                    target_pos = start;
+
+                    start = start->next;
+
+                    cfl_free_node(target_pos->node);
+                    free(target_pos);
+                }
+
+                return 0;
+            }
+
+            target_pos->next->node = cfl_copy_new_node(node_pos->node);
+
+            if(!target_pos->next->node)
+            {
+                free(target_pos->next);
+
+                target_pos->next = 0;
+
+                while(start->next != 0)
+                {
+                    target_pos = start;
+
+                    start = start->next;
+
+                    cfl_free_node(target_pos->node);
+                    free(target_pos);
+                }
+
+                free(start->node);
+                free(start);
+
+                return 0;
+            }
+
+            node_pos = node_pos->next;
+        }
+
+        target_pos->next = 0;
+
+        return cfl_create_new_node_list(start);
+    }
+    else
+    {
+        cfl_node* target = cfl_ast_malloc(sizeof(cfl_node));
+
+        if(!target)
+            return 0;
+
+        target->type = node->type;
+        target->number_of_children = node->number_of_children;
+        target->data = 0;
+
+        if(node->number_of_children)
+        {
+            target->children = cfl_ast_malloc(sizeof(cfl_node*) *
+                                              target->number_of_children);
+
+            if(!target->children)
+            {
+                free(target);
+
+                return 0;
+            }
+
+            int i = 0;
+
+            for( ; i < target->number_of_children; ++i)
+            {
+                cfl_node* child = cfl_copy_new_node(node->children[i]);
+
+                if(!child)
+                {
+                    int j = 0;
+
+                    for( ; j < i; ++j)
+                        free(target->children[j]);
+
+                    free(target->children);
+                    free(target);
+
+                    return 0;
+                }
+
+                target->children[i] = child;
+            }
+        }
+
+        return target;
+    }
+}
+
 // deprecated functions
 int cfl_create_node_variable(cfl_node* node, char* string)
 {
@@ -995,7 +1161,6 @@ int cfl_create_node_case(
 
     return 1;
 }
-// end deprecated functions
 
 int cfl_copy_node(cfl_node* target, cfl_node* node)
 {
@@ -1173,6 +1338,7 @@ int cfl_copy_node(cfl_node* target, cfl_node* node)
 
     return 1;
 }
+// end deprecated functions
 
 void cfl_delete_node(cfl_node* node)
 {

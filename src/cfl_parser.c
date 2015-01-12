@@ -213,6 +213,11 @@ cfl_node* cfl_parse_factor(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
+    result = cfl_parse_mod(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
     result = cfl_parse_molecule(end, position, block);
 
     return result;
@@ -227,6 +232,11 @@ cfl_node* cfl_parse_term(
         return 0;
 
     cfl_node* result = cfl_parse_add(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_subtract(end, position, block);
 
     if(result || cfl_error_occured_while_parsing())
         return result;
@@ -290,7 +300,7 @@ cfl_node* cfl_parse_boolean_molecule(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
-    result = cfl_parse_term(end, position, block);
+    result = cfl_parse_list_factor(end, position, block);
 
     return result;
 }

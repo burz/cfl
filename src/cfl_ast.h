@@ -43,7 +43,8 @@ typedef struct cfl_node_t {
     struct cfl_node_t** children;
 } cfl_node;
 
-cfl_node* cfl_create_new_node_variable(int string_length, char* string);
+cfl_node* cfl_create_new_node_variable(char* string);
+cfl_node* cfl_create_new_node_variable_n(int string_length, char* string);
 cfl_node* cfl_create_new_node_bool(bool value);
 cfl_node* cfl_create_new_node_integer(int value);
 cfl_node* cfl_create_new_node_char(char value);
@@ -84,6 +85,8 @@ cfl_node* cfl_create_new_node_case(cfl_node* list,
                                    cfl_node* head,
                                    cfl_node* tail,
                                    cfl_node* nonempty);
+
+cfl_node* cfl_copy_new_node(cfl_node* node);
 
 // deprecated functions
 int cfl_create_node_variable(cfl_node* node, char* string);
@@ -127,9 +130,9 @@ int cfl_create_node_case(cfl_node* node,
                          cfl_node* head,
                          cfl_node* tail,
                          cfl_node* nonempty);
-// end deprecated functions
 
 int cfl_copy_node(cfl_node* target, cfl_node* node);
+// end deprecated functions
 
 void cfl_delete_node(cfl_node* node);
 void cfl_free_node(cfl_node* node);
