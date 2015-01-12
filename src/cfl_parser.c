@@ -300,6 +300,21 @@ cfl_node* cfl_parse_boolean_molecule(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
+    result = cfl_parse_less_equal(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_greater(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_greater_equal(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
     result = cfl_parse_list_factor(end, position, block);
 
     return result;

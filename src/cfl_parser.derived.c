@@ -159,3 +159,124 @@ cfl_node* cfl_parse_mod(
 
     return cfl_subtraction_transform(left, multiple);
 }
+
+static cfl_node* cfl_less_equal_transform(cfl_node* left, cfl_node* right)
+{
+    cfl_node* left_copy = cfl_copy_new_node(left);
+
+    if(!left_copy)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    cfl_node* right_copy = cfl_copy_new_node(right);
+
+    if(!right_copy)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+        cfl_free_node(left_copy);
+
+        return 0;
+    }
+
+    cfl_node* less = cfl_create_new_node_less(left_copy, right_copy);
+
+    if(!less)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    cfl_node* equal = cfl_create_new_node_equal(left, right);
+
+    if(!equal)
+    {
+        cfl_free_node(equal);
+
+        return 0;
+    }
+
+    return cfl_create_new_node_or(less, equal);
+}
+
+cfl_node* cfl_parse_less_equal(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_factor,
+                                   &cfl_parse_term,
+                                   2,
+                                   "<=",
+                                   position,
+                                   block))
+        return 0;
+
+    return cfl_less_equal_transform(left, right);
+}
+
+cfl_node* cfl_parse_greater(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_term,
+                                   &cfl_parse_term,
+                                   1,
+                                   ">",
+                                   position,
+                                   block))
+        return 0;
+
+    cfl_node* less_equal = cfl_less_equal_transform(left, right);
+
+    if(!less_equal)
+        return 0;
+
+    return cfl_create_new_node_not(less_equal);
+}
+
+cfl_node* cfl_parse_greater_equal(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_term,
+                                   &cfl_parse_term,
+                                   2,
+                                   ">=",
+                                   position,
+                                   block))
+        return 0;
+
+    cfl_node* less = cfl_create_new_node_less(left, right);
+
+    if(!less)
+        return 0;
+
+    return cfl_create_new_node_not(less);
+}

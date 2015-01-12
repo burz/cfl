@@ -71,9 +71,9 @@ cfl_node_parser cfl_parse_divide;
 cfl_node_parser cfl_parse_mod;
 cfl_node_parser cfl_parse_equal;
 cfl_node_parser cfl_parse_less;
-//cfl_node_parser cfl_parse_less_equal;
-//cfl_node_parser cfl_parse_greater;
-//cfl_node_parser cfl_parse_greater_equal;
+cfl_node_parser cfl_parse_less_equal;
+cfl_node_parser cfl_parse_greater;
+cfl_node_parser cfl_parse_greater_equal;
 
 //cfl_node_parser cfl_parse_application;
 
