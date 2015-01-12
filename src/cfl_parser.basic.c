@@ -2,6 +2,39 @@
 
 extern void* cfl_parser_malloc(size_t size);
 
+cfl_node* cfl_parse_parentheses(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(cfl_token_string_compare(position, "(", 1))
+        return 0;
+
+    cfl_node* result = cfl_parse_expression(&position, position->next, block);
+
+    if(!result)
+    {
+        cfl_parse_error_expected("expression", "\"(\"",
+                                 position->start, position->end);
+
+        return 0;
+    }
+
+    if(cfl_token_string_compare(position, ")", 1))
+    {
+        cfl_parse_error_expected("\")\"", "\"(\"",
+                                 position->start, position->end);
+
+        cfl_free_node(result);
+
+        return 0;
+    }
+
+    *end = position->next;
+
+    return result;
+}
+
 cfl_node* cfl_parse_variable(
         cfl_token_list** end,
         cfl_token_list* position,

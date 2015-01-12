@@ -35,13 +35,7 @@ typedef cfl_node* cfl_node_parser(cfl_token_list** end,
                                   cfl_token_list* position,
                                   cfl_token_list* block);
 
-
-cfl_node* cfl_parse_enclosure(cfl_token_list** end,
-                              cfl_node_parser* parser,
-                              char left_delimeter,
-                              char right_delimeter,
-                              cfl_token_list* position,
-                              cfl_token_list* block);
+cfl_node_parser cfl_parse_parentheses;
 
 cfl_node_parser cfl_parse_variable;
 cfl_node_parser cfl_parse_bool;

@@ -137,7 +137,12 @@ cfl_node* cfl_parse_atom(
     if(position == block)
         return 0;
 
-    cfl_node* result = cfl_parse_not(end, position, block);
+    cfl_node* result = cfl_parse_parentheses(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
+    result = cfl_parse_not(end, position, block);
 
     if(result || cfl_error_occured_while_parsing())
         return result;
@@ -206,7 +211,7 @@ cfl_node* cfl_parse_term(
     if(position == block)
         return 0;
 
-    cfl_node* result = cfl_parse_divide(end, position, block);
+    cfl_node* result = cfl_parse_add(end, position, block);
 
     if(result || cfl_error_occured_while_parsing())
         return result;

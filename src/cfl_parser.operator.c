@@ -13,10 +13,16 @@ bool cfl_parse_binary_operation(cfl_token_list** end,
                                 cfl_token_list* block)
 {
     cfl_token_list* op_pos = position;
+    int depth = 0;
 
     while(op_pos != block)
     {
-        if(!cfl_token_string_compare(op_pos, operand, operand_length))
+        if(!cfl_token_string_compare(op_pos, "(", 1))
+            ++depth;
+        else if(!cfl_token_string_compare(op_pos, ")", 1))
+            --depth;
+        else if(depth == 0 &&
+                !cfl_token_string_compare(op_pos, operand, operand_length))
             break;
 
         op_pos = op_pos->next;
