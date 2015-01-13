@@ -346,7 +346,7 @@ bool cfl_parse_def(cfl_token_list** end,
 
     *definition = cfl_parse_expression(end, position, block);
 
-    if(!definition)
+    if(!*definition)
     {
         cfl_delete_list_nodes(argument_head->next);
         cfl_free_node(*name);

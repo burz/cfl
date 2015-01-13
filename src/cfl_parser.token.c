@@ -227,6 +227,8 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
         back = back->next;
     }
 
+    back->next = 0;
+
     return true;
 }
 

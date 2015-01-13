@@ -93,46 +93,6 @@ cfl_node* cfl_copy_new_node(cfl_node* node);
 int cfl_create_node_variable(cfl_node* node, char* string);
 int cfl_create_node_bool(cfl_node* node, bool value);
 int cfl_create_node_integer(cfl_node* node, int value);
-int cfl_create_node_char(cfl_node* node, char value);
-int cfl_create_node_function(cfl_node* node, cfl_node* argument, cfl_node* body);
-
-void cfl_create_node_list(cfl_node* node, cfl_list_node* list);
-void cfl_create_node_tuple(cfl_node* node,
-                           unsigned int number_of_children,
-                           cfl_node** children);
-
-int cfl_create_node_and(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_or(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_not(cfl_node* node, cfl_node* child);
-int cfl_create_node_add(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_multiply(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_divide(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_equal(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_less(cfl_node* node, cfl_node* left, cfl_node* right);
-
-int cfl_create_node_application(cfl_node* node,
-                                cfl_node* function,
-                                cfl_node* argument);
-int cfl_create_node_if(cfl_node* node,
-                       cfl_node* condition,
-                       cfl_node* then_node,
-                       cfl_node* else_node);
-int cfl_create_node_let_rec(cfl_node* node,
-                            cfl_node* name,
-                            cfl_node* argument,
-                            cfl_node* procedure,
-                            cfl_node* body);
-
-int cfl_create_node_push(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_concatenate(cfl_node* node, cfl_node* left, cfl_node* right);
-int cfl_create_node_case(cfl_node* node,
-                         cfl_node* list,
-                         cfl_node* empty,
-                         cfl_node* head,
-                         cfl_node* tail,
-                         cfl_node* nonempty);
-
-int cfl_copy_node(cfl_node* target, cfl_node* node);
 // end deprecated functions
 
 void cfl_delete_node(cfl_node* node);

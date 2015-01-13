@@ -196,7 +196,7 @@ cfl_list_node* cfl_parse_comma_separated(
             break;
         }
 
-        list_pos->next = cfl_parser_malloc(sizeof(cfl_list_node*));
+        list_pos->next = cfl_parser_malloc(sizeof(cfl_list_node));
 
         if(!list_pos->next)
         {
@@ -354,21 +354,23 @@ cfl_node* cfl_parse_application(
 static cfl_token_list* cfl_skip_inside_delimiter(
         cfl_token_list* position,
         cfl_token_list* block,
+        unsigned int open_size,
         char* open,
+        unsigned int close_size,
         char* close)
 {
     int depth = 1;
 
     while(position != block)
     {
-        if(!cfl_token_string_compare(position, close, 1))
+        if(!cfl_token_string_compare(position, close, close_size))
         {
             if(depth == 1)
                 break;
             else
                 --depth;
         }
-        else if(!cfl_token_string_compare(position, open, 1))
+        else if(!cfl_token_string_compare(position, open, open_size))
             ++depth;
 
         position = position->next;
@@ -388,9 +390,12 @@ cfl_token_list* cfl_lookahead_for(
 {
     while(position != block)
     {
-        if(!cfl_token_string_compare(position, "(", 1))
+        if(!cfl_token_string_compare(position, symbol, symbol_length))
+            break;
+        else if(!cfl_token_string_compare(position, "(", 1))
         {
-            position = cfl_skip_inside_delimiter(position->next, block, "(", ")");
+            position = cfl_skip_inside_delimiter(position->next, block,
+                                                 1, "(", 1, ")");
 
             if(!position)
                 return 0;
@@ -399,15 +404,62 @@ cfl_token_list* cfl_lookahead_for(
             return 0;
         else if(!cfl_token_string_compare(position, "[", 1))
         {
-            position = cfl_skip_inside_delimiter(position->next, block, "[", "]");
+            position = cfl_skip_inside_delimiter(position->next, block,
+                                                 1, "[", 1, "]");
 
             if(!position)
                 return 0;
         }
         else if(!cfl_token_string_compare(position, "]", 1))
             return 0;
-        else if(!cfl_token_string_compare(position, symbol, symbol_length))
-            break;
+        else if(!cfl_token_string_compare(position, "if", 2))
+        {
+            position = cfl_skip_inside_delimiter(position->next, block,
+                                                 2, "if", 4, "else");
+
+            if(!position)
+                return 0;
+        }
+        else if(!cfl_token_string_compare(position, "else", 4))
+            return 0;
+        else if(!cfl_token_string_compare(position, "let", 3))
+        {
+            position = cfl_skip_inside_delimiter(position->next, block,
+                                                 3, "let", 2, "in");
+
+            if(!position)
+                return 0;
+        }
+        else if(!cfl_token_string_compare(position, "in", 2))
+            return 0;
+        else if(!cfl_token_string_compare(position, "case", 4))
+        {
+            position = position->next;
+
+            int depth = 2;
+
+            while(position != block)
+            {
+                if(!cfl_token_string_compare(position, "case", 4))
+                    depth += 2;
+                else if(!cfl_token_string_compare(position, "function", 8))
+                    ++depth;
+                else if(!cfl_token_string_compare(position, "->", 2))
+                {
+                    if(depth == 1)
+                        break;
+                    else
+                        --depth;
+                }
+
+                position = position->next;
+            }
+
+            if(position == block)
+                return 0;
+
+            position = position->next;
+        }
         else
             position = position->next;
     }
