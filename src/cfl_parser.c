@@ -190,7 +190,7 @@ cfl_node* cfl_parse_molecule(
     if(position == block)
         return 0;
 
-    cfl_node* result = cfl_parse_atom(end, position, block);
+    cfl_node* result = cfl_parse_application(end, position, block);
 
     return result;
 }

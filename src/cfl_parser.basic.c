@@ -149,7 +149,7 @@ cfl_node* cfl_parse_function(
         return 0;
     }
 
-    cfl_node* expression = cfl_parse_expression(&position, position->next, block);
+    cfl_node* expression = cfl_parse_expression(end, position->next, block);
 
     if(!expression)
     {
@@ -312,6 +312,43 @@ cfl_node* cfl_parse_tuple(
     return cfl_create_new_node_tuple(number_of_children, children);
 }
 
+cfl_node* cfl_parse_application(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* result = 0;
+
+    while(position != block)
+    {
+        cfl_token_list* pos;
+        cfl_node* atom = cfl_parse_atom(&pos, position, block);
+
+        if(!atom)
+            break;
+
+        position = pos;
+
+        if(!result)
+        {
+            result = atom;
+
+            continue;
+        }
+        else
+        {
+            result = cfl_create_new_node_application(result, atom);
+
+            if(!result)
+                return 0;
+        }
+    }
+
+    *end = position;
+
+    return result;
+}
+
 static cfl_token_list* cfl_skip_inside_delimiter(
         cfl_token_list* position,
         cfl_token_list* block,
@@ -322,14 +359,14 @@ static cfl_token_list* cfl_skip_inside_delimiter(
 
     while(position != block)
     {
-        if(cfl_token_string_compare(position, close, 1))
+        if(!cfl_token_string_compare(position, close, 1))
         {
             if(depth == 1)
                 break;
             else
                 --depth;
         }
-        else if(cfl_token_string_compare(position, open, 1))
+        else if(!cfl_token_string_compare(position, open, 1))
             ++depth;
 
         position = position->next;
@@ -338,7 +375,7 @@ static cfl_token_list* cfl_skip_inside_delimiter(
     if(position == block)
         return 0;
 
-    return position + 1;
+    return position->next;
 }
 
 cfl_token_list* cfl_lookahead_for(
@@ -351,7 +388,7 @@ cfl_token_list* cfl_lookahead_for(
     {
         if(!cfl_token_string_compare(position, "(", 1))
         {
-            position = cfl_skip_inside_delimiter(position, block, "(", ")");
+            position = cfl_skip_inside_delimiter(position->next, block, "(", ")");
 
             if(!position)
                 return 0;
@@ -360,7 +397,7 @@ cfl_token_list* cfl_lookahead_for(
             return 0;
         else if(!cfl_token_string_compare(position, "[", 1))
         {
-            position = cfl_skip_inside_delimiter(position, block, "[", "]");
+            position = cfl_skip_inside_delimiter(position->next, block, "[", "]");
 
             if(!position)
                 return 0;

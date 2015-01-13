@@ -80,7 +80,7 @@ cfl_node_parser cfl_parse_less_equal;
 cfl_node_parser cfl_parse_greater;
 cfl_node_parser cfl_parse_greater_equal;
 
-//cfl_node_parser cfl_parse_application;
+cfl_node_parser cfl_parse_application;
 
 //char* cfl_parse_let(cfl_node* node, char* start, char* end);
 cfl_node_parser cfl_parse_if;
@@ -90,9 +90,9 @@ cfl_node_parser cfl_parse_concatenate;
 //cfl_node_parser cfl_parse_case;
 
 cfl_node_parser cfl_parse_atom;
-cfl_node_parser cfl_parse_molecule;
 cfl_node_parser cfl_parse_factor;
 cfl_node_parser cfl_parse_term;
+cfl_node_parser cfl_parse_molecule;
 cfl_node_parser cfl_parse_list_molecule;
 cfl_node_parser cfl_parse_list_factor;
 cfl_node_parser cfl_parse_boolean_molecule;
