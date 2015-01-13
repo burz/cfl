@@ -8,6 +8,7 @@ INCL = -I$(SRCDIR)
 FILES = \
     cfl_ast.o \
     cfl_parser.o \
+    cfl_parser.error.o \
     cfl_parser.token.o \
     cfl_parser.basic.o \
     cfl_parser.operator.o \

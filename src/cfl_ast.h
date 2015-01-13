@@ -7,6 +7,7 @@
 #define MAX_IDENTIFIER_LENGTH 100
 #define NUMBER_OF_RESERVED_WORDS 10
 
+extern int reserved_word_size[];
 extern char* reserved_words[];
 
 void cfl_reset_ast_error_flag(void);
@@ -136,6 +137,8 @@ int cfl_copy_node(cfl_node* target, cfl_node* node);
 
 void cfl_delete_node(cfl_node* node);
 void cfl_free_node(cfl_node* node);
+
+bool cfl_is_free(char* name, cfl_node* node);
 
 void cfl_print_node(cfl_node* node);
 

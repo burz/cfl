@@ -7,6 +7,8 @@ char* reserved_words[] = { "true", "false", "function",
                            "if", "then", "else", "let", "in",
                            "case", "of" };
 
+int reserved_word_size[] = { 4, 5, 8, 2, 4, 4, 3, 2, 4, 2 };
+
 static int cfl_ast_error;
 
 void cfl_reset_ast_error_flag(void)
@@ -578,7 +580,14 @@ cfl_node* cfl_create_new_node_let_rec(
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        cfl_free_node(name);
+        cfl_free_node(argument);
+        cfl_free_node(procedure);
+        cfl_free_node(body);
+
         return 0;
+    }
 
     node->type = CFL_NODE_LET_REC;
     node->number_of_children = 4;
@@ -587,6 +596,10 @@ cfl_node* cfl_create_new_node_let_rec(
 
     if(!node->children)
     {
+        cfl_free_node(name);
+        cfl_free_node(argument);
+        cfl_free_node(procedure);
+        cfl_free_node(body);
         free(node);
 
         return 0;
@@ -1407,6 +1420,74 @@ void cfl_free_node(cfl_node* node)
     cfl_delete_node(node);
 
     free(node);
+}
+
+bool cfl_is_free(char* name, cfl_node* node)
+{
+    int i;
+    cfl_list_node* pos;
+
+    switch(node->type)
+    {
+        case CFL_NODE_VARIABLE:
+            if(!strcmp(name, node->data))
+                return true;
+            break;
+        case CFL_NODE_BOOL:
+        case CFL_NODE_INTEGER:
+        case CFL_NODE_CHAR:
+            break;
+        case CFL_NODE_FUNCTION:
+            if(strcmp(name, node->children[0]->data))
+                return cfl_is_free(name, node->children[1]);
+            break;
+        case CFL_NODE_LIST:
+            for(pos = node->data; pos; pos = pos->next)
+                if(cfl_is_free(name, pos->node))
+                    return true;
+            break;
+        case CFL_NODE_LET_REC:
+            if(strcmp(name, node->children[0]->data))
+            {
+                if(strcmp(name, node->children[1]->data))
+                    return cfl_is_free(name, node->children[2]) ||
+                           cfl_is_free(name, node->children[3]);
+                else
+                    return cfl_is_free(name, node->children[3]);
+            }
+            break;
+        case CFL_NODE_CASE:
+            if(!strcmp(name, node->children[2]->data) ||
+               !strcmp(name, node->children[3]->data))
+                return cfl_is_free(name, node->children[0]) ||
+                       cfl_is_free(name, node->children[1]);
+            else
+                return cfl_is_free(name, node->children[0]) ||
+                       cfl_is_free(name, node->children[1]) ||
+                       cfl_is_free(name, node->children[4]);
+            break;
+        case CFL_NODE_AND:
+        case CFL_NODE_OR:
+        case CFL_NODE_NOT:
+        case CFL_NODE_ADD:
+        case CFL_NODE_MULTIPLY:
+        case CFL_NODE_DIVIDE:
+        case CFL_NODE_EQUAL:
+        case CFL_NODE_LESS:
+        case CFL_NODE_APPLICATION:
+        case CFL_NODE_IF:
+        case CFL_NODE_PUSH:
+        case CFL_NODE_CONCATENATE:
+        case CFL_NODE_TUPLE:
+            for(i = 0; i < node->number_of_children; ++i)
+                if(cfl_is_free(name, node->children[i]))
+                    return true;
+            break;
+        default:
+            break;
+    }
+
+    return false;
 }
 
 static void cfl_print_node_inner(cfl_node* node)

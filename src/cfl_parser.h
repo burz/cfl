@@ -8,11 +8,15 @@
 void cfl_parse_error_unexpected_char(char x);
 void cfl_parse_error_integer_overflow(char* start, int length);
 void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
+void cfl_parse_error_no_equal_after_def(char* name);
+void cfl_parse_error_bad_arguments_after_def(char* name);
 void cfl_parse_error_bad_division(void);
 void cfl_parse_error_partial_program(void);
 void cfl_parse_error_missing_main(void);
 void cfl_parse_error_main_has_arguments(void);
 void cfl_parse_error_unparseable_file(char* filename);
+
+bool cfl_error_occured_while_parsing(void);
 
 bool cfl_is_whitespace(char x);
 bool cfl_is_number(char x);
@@ -82,7 +86,14 @@ cfl_node_parser cfl_parse_greater_equal;
 
 cfl_node_parser cfl_parse_application;
 
-//char* cfl_parse_let(cfl_node* node, char* start, char* end);
+bool cfl_parse_def(cfl_token_list** end,
+                   cfl_node** name,
+                   cfl_list_node* argument_head,
+                   cfl_node** definition,
+                   cfl_token_list* position,
+                   cfl_token_list* block);
+
+cfl_node_parser cfl_parse_let;
 cfl_node_parser cfl_parse_if;
 
 cfl_node_parser cfl_parse_push;

@@ -44,7 +44,9 @@ cfl_node* cfl_parse_variable(
     int i = 0;
 
     for( ; i < NUMBER_OF_RESERVED_WORDS; ++i)
-        if(!cfl_token_string_compare(position, reserved_words[i], length))
+        if(!cfl_token_string_compare(position,
+                                     reserved_words[i],
+                                     reserved_word_size[i]))
             return 0;
 
     *end = position->next;
