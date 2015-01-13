@@ -311,3 +311,166 @@ cfl_node* cfl_parse_tuple(
 
     return cfl_create_new_node_tuple(number_of_children, children);
 }
+
+static cfl_token_list* cfl_skip_inside_delimiter(
+        cfl_token_list* position,
+        cfl_token_list* block,
+        char* open,
+        char* close)
+{
+    int depth = 1;
+
+    while(position != block)
+    {
+        if(cfl_token_string_compare(position, close, 1))
+        {
+            if(depth == 1)
+                break;
+            else
+                --depth;
+        }
+        else if(cfl_token_string_compare(position, open, 1))
+            ++depth;
+
+        position = position->next;
+    }
+
+    if(position == block)
+        return 0;
+
+    return position + 1;
+}
+
+cfl_token_list* cfl_lookahead_for(
+        unsigned int symbol_length,
+        char* symbol,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    while(position != block)
+    {
+        if(!cfl_token_string_compare(position, "(", 1))
+        {
+            position = cfl_skip_inside_delimiter(position, block, "(", ")");
+
+            if(!position)
+                return 0;
+        }
+        else if(!cfl_token_string_compare(position, ")", 1))
+            return 0;
+        else if(!cfl_token_string_compare(position, "[", 1))
+        {
+            position = cfl_skip_inside_delimiter(position, block, "[", "]");
+
+            if(!position)
+                return 0;
+        }
+        else if(!cfl_token_string_compare(position, "]", 1))
+            return 0;
+        else if(!cfl_token_string_compare(position, symbol, symbol_length))
+            break;
+        else
+            position = position->next;
+    }
+
+    if(position == block)
+        return 0;
+
+    return position;
+}
+
+cfl_node* cfl_parse_if(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(cfl_token_string_compare(position, "if", 2))
+        return 0;
+
+    position = position->next;
+
+    cfl_token_list* then_pos = cfl_lookahead_for(4, "then", position, block);
+
+    if(!then_pos)
+    {
+        cfl_parse_error_expected("\"then\"", "\"if\"",
+                                 position->start, position->end);
+
+        return 0;
+    }
+
+    cfl_token_list* pos;
+    cfl_node* condition = cfl_parse_expression(&pos, position, then_pos);
+
+    if(!condition)
+    {
+        cfl_parse_error_expected("expression", "\"if\"",
+                                 position->start, position->end);
+
+        return 0;
+    }
+
+    if(pos != then_pos)
+    {
+        cfl_parse_error_expected("expression", "\"if\"",
+                                 position->start, position->end);
+
+        cfl_free_node(condition);
+
+        return 0;
+    }
+
+    position = then_pos->next;
+
+    cfl_token_list* else_pos = cfl_lookahead_for(4, "else", position, block);
+
+    if(!else_pos)
+    {
+        cfl_parse_error_expected("\"else\"", "\"then\"",
+                                 position->start, position->end);
+
+        cfl_free_node(condition);
+
+        return 0;
+    }
+
+    cfl_node* then_node = cfl_parse_expression(&pos, position, else_pos);
+
+    if(!then_node)
+    {
+        cfl_parse_error_expected("expression", "\"then\"",
+                                 position->start, position->end);
+
+        cfl_free_node(condition);
+
+        return 0;
+    }
+
+    if(pos != else_pos)
+    {
+        cfl_parse_error_expected("expression", "\"then\"",
+                                 position->start, position->end);
+
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
+
+        return 0;
+    }
+
+    position = else_pos->next;
+
+    cfl_node* else_node = cfl_parse_expression(end, position, block);
+
+    if(!else_node)
+    {
+        cfl_parse_error_expected("expression", "\"else\"",
+                                 position->start, position->end);
+
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
+
+        return 0;
+    }
+
+    return cfl_create_new_node_if(condition, then_node, else_node);
+}

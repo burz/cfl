@@ -51,12 +51,17 @@ cfl_list_node* cfl_parse_comma_separated(cfl_token_list** end,
 cfl_node_parser cfl_parse_list;
 cfl_node_parser cfl_parse_tuple;
 
+cfl_token_list* cfl_lookahead_for(unsigned int symbol_length,
+                                  char* symbol,
+                                  cfl_token_list* position,
+                                  cfl_token_list* block);
+
 bool cfl_parse_binary_operation(cfl_token_list** end,
                                 cfl_node** left,
                                 cfl_node** right,
                                 cfl_node_parser* left_parser,
                                 cfl_node_parser* right_parser,
-                                int operand_length,
+                                unsigned int operand_length,
                                 char* operand,
                                 cfl_token_list* position,
                                 cfl_token_list* block);
@@ -78,7 +83,7 @@ cfl_node_parser cfl_parse_greater_equal;
 //cfl_node_parser cfl_parse_application;
 
 //char* cfl_parse_let(cfl_node* node, char* start, char* end);
-//char* cfl_parse_if(cfl_node* node, char* start, char* end);
+cfl_node_parser cfl_parse_if;
 
 cfl_node_parser cfl_parse_push;
 cfl_node_parser cfl_parse_concatenate;

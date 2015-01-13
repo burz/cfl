@@ -532,7 +532,13 @@ cfl_node* cfl_create_new_node_if(
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
+        cfl_free_node(else_node);
+
         return 0;
+    }
 
     node->type = CFL_NODE_IF;
     node->number_of_children = 3;
@@ -541,6 +547,9 @@ cfl_node* cfl_create_new_node_if(
 
     if(!node->children)
     {
+        cfl_free_node(condition);
+        cfl_free_node(then_node);
+        cfl_free_node(else_node);
         free(node);
 
         return 0;

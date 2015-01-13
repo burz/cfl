@@ -369,6 +369,11 @@ cfl_node* cfl_parse_expression(
     if(result || cfl_error_occured_while_parsing())
         return result;
 
+    result = cfl_parse_if(end, position, block);
+
+    if(result || cfl_error_occured_while_parsing())
+        return result;
+
     result = cfl_parse_boolean_term(end, position, block);
 
     return result;
