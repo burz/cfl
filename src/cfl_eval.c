@@ -25,12 +25,12 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
         case CFL_NODE_VARIABLE:
             if(!strcmp(target->data, variable))
             {
-                cfl_delete_node(target);
-
                 cfl_node* result = cfl_copy_new_node(value);
 
                 if(!result)
                     return 0;
+
+                cfl_delete_node(target);
 
                 *target = *result;
 

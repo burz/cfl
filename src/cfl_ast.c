@@ -736,11 +736,7 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
     else if(node->type == CFL_NODE_LIST)
     {
         if(node->data == 0)
-        {
-            cfl_create_new_node_list(0);
-
-            return 0;
-        }
+            return cfl_create_new_node_list(0);
 
         cfl_list_node* start =
             cfl_ast_malloc(sizeof(cfl_list_node));
@@ -806,6 +802,8 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
 
                 return 0;
             }
+
+            target_pos = target_pos->next;
 
             node_pos = node_pos->next;
         }
