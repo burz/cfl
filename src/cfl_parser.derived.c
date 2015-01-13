@@ -1,5 +1,7 @@
 #include "cfl_parser.h"
 
+#include <string.h>
+
 extern void* cfl_parser_malloc(size_t size);
 
 cfl_node* cfl_parse_string(
@@ -490,4 +492,153 @@ cfl_node* cfl_parse_let(
     }
 
     return cfl_let_transform(name, argument_head.next, definition, body);
+}
+
+typedef struct cfl_program_list_t {
+    cfl_node* name;
+    cfl_list_node* arguments;
+    cfl_node* definition;
+    struct cfl_program_list_t* next;
+} cfl_program_list;
+
+static void cfl_delete_program_list(cfl_program_list* list)
+{
+    while(list)
+    {
+        cfl_program_list* temp = list;
+
+        list = list->next;
+
+        cfl_free_node(temp->name);
+        cfl_delete_list_nodes(temp->arguments);
+        cfl_free_node(temp->definition);
+        free(temp);
+    }
+}
+
+cfl_node* cfl_parse_program(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_program_list head;
+    head.next = 0;
+
+    bool semi = false;
+
+    while(position != block)
+    {
+        cfl_node* name;
+        cfl_node* definition;
+        cfl_list_node argument_head;
+        argument_head.next = 0;
+
+        cfl_token_list* pos;
+
+        if(!cfl_parse_def(&pos, &name, &argument_head,
+                          &definition, position, block))
+        {
+            if(semi)
+            {
+                cfl_parse_error_expected("statement", "\";\"",
+                                         position->start, position->end);
+
+                cfl_delete_program_list(head.next);
+            }
+            else
+                cfl_parse_error_partial_program();
+
+            return 0;
+        }
+
+        position = pos;
+
+        cfl_program_list* new_statement =
+            cfl_parser_malloc(sizeof(cfl_program_list));
+
+        if(!new_statement)
+        {
+            cfl_free_node(name);
+            cfl_delete_list_nodes(argument_head.next);
+            cfl_free_node(definition);
+            cfl_delete_program_list(head.next);
+
+            return 0;
+        }
+
+        new_statement->name = name;
+        new_statement->arguments = argument_head.next;
+        new_statement->definition = definition;
+        new_statement->next = head.next;
+
+        head.next = new_statement;
+
+        if(position != block && !cfl_token_string_compare(position, ";", 1))
+        {
+            semi = true;
+
+            position = position->next;
+        }
+        else
+            break;
+    }
+
+    if(position != block)
+    {
+        cfl_parse_error_partial_program();
+
+        cfl_delete_program_list(head.next);
+
+        return 0;
+    }
+    else if(strncmp(head.next->name->data, "main", 4))
+    {
+        cfl_parse_error_missing_main();
+
+        cfl_delete_program_list(head.next);
+
+        return 0;
+    }
+    else if(head.next->arguments)
+    {
+        cfl_parse_error_main_has_arguments();
+
+        cfl_delete_program_list(head.next);
+
+        return 0;
+    }
+
+    cfl_program_list* temp = head.next;
+
+    head.next = temp->next;
+
+    cfl_node* body = temp->definition;
+
+    cfl_free_node(temp->name);
+    free(temp);
+
+    while(head.next)
+    {
+        temp = head.next;
+
+        head.next = temp->next;
+
+        body = cfl_let_transform(temp->name,
+                                 temp->arguments,
+                                 temp->definition,
+                                 body);
+
+        free(temp);
+
+        if(!body)
+        {
+            cfl_delete_program_list(head.next);
+
+            return 0;
+        }
+    }
+
+    *end = position;
+
+    return body;
 }

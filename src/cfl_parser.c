@@ -266,19 +266,6 @@ cfl_node* cfl_parse_expression(
     return result;
 }
 
-cfl_node* cfl_parse_program(
-        cfl_token_list** end,
-        cfl_token_list* position,
-        cfl_token_list* block)
-{
-    if(position == block)
-        return 0;
-
-    cfl_node* result = cfl_parse_expression(end, position, block);
-
-    return result;
-}
-
 cfl_node* cfl_parse_file(char* filename)
 {
     FILE* f = fopen(filename, "rb");
@@ -333,8 +320,6 @@ cfl_node* cfl_parse_file(char* filename)
 
     if(!cfl_generate_token_list(&head, program, program_end))
         return 0;
-
-    cfl_print_token_list(head.next);
 
     cfl_token_list* ending_position;
 
