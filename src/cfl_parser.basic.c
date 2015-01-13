@@ -511,3 +511,216 @@ cfl_node* cfl_parse_if(
 
     return cfl_create_new_node_if(condition, then_node, else_node);
 }
+
+cfl_node* cfl_parse_case(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(cfl_token_string_compare(position, "case", 4))
+        return 0;
+
+    position = position->next;
+
+    cfl_token_list* of_pos = cfl_lookahead_for(2, "of", position, block);
+
+    if(!of_pos)
+    {
+        cfl_parse_error_expected("\"of\"", "\"case\"",
+                                 position->start, position->end);
+
+        return 0;
+    }
+
+    cfl_token_list* pos;
+
+    cfl_node* list = cfl_parse_expression(&pos, position, of_pos);
+
+    if(!list)
+    {
+        cfl_parse_error_expected("expression", "\"case\"",
+                                 position->start, position->end);
+
+        return 0;
+    }
+
+    if(pos != of_pos)
+    {
+        cfl_parse_error_expected("expression", "\"case\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+
+        return 0;
+    }
+
+    position = of_pos->next;
+
+    if(position == block || position->next == block ||
+       cfl_token_string_compare(position, "[", 1) ||
+       cfl_token_string_compare(position->next, "]", 1))
+    {
+        cfl_parse_error_expected("\"[]\"", "\"of\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+
+        return 0;
+    }
+
+    position = position->next->next;
+
+    if(position == block || cfl_token_string_compare(position, "->", 2))
+    {
+        cfl_parse_error_expected("\"->\"", "\"of\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+
+        return 0;
+    }
+
+    position = position->next;
+
+    cfl_token_list* line_pos = cfl_lookahead_for(1, "|", position, block);
+
+    if(!line_pos)
+    {
+        cfl_parse_error_expected("\"|\"", "\"->\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+
+        return 0;
+    }
+
+    cfl_node* empty = cfl_parse_expression(&pos, position, line_pos);
+
+    if(!empty)
+    {
+        cfl_parse_error_expected("expression", "\"->\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+
+        return 0;
+    }
+
+    if(pos != line_pos)
+    {
+        cfl_parse_error_expected("expression", "\"->\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+
+        return 0;
+    }
+
+    position = line_pos->next;
+
+    if(position == block || cfl_token_string_compare(position, "(", 1))
+    {
+        cfl_parse_error_expected("\"(\"", "\"|\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+
+        return 0;
+    }
+
+    position = position->next;
+
+    cfl_node* head = cfl_parse_variable(&pos, position, block);
+
+    if(!head)
+    {
+        cfl_parse_error_expected("variable", "\"(\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+
+        return 0;
+    }
+
+    position = pos;
+
+    if(position == block || cfl_token_string_compare(position, ":", 1))
+    {
+        cfl_parse_error_expected("\":\"", "\"(\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+
+        return 0;
+    }
+
+    position = position->next;
+
+    cfl_node* tail = cfl_parse_variable(&pos, position, block);
+
+    if(!tail)
+    {
+        cfl_parse_error_expected("variable", "\":\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+
+        return 0;
+    }
+
+    position = pos;
+
+    if(position == block || cfl_token_string_compare(position, ")", 1))
+    {
+        cfl_parse_error_expected("\")\"", "\"(\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        cfl_free_node(tail);
+
+        return 0;
+    }
+
+    position = position->next;
+
+    if(position == block || cfl_token_string_compare(position, "->", 2))
+    {
+        cfl_parse_error_expected("\")\"", "\"(\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        cfl_free_node(tail);
+
+        return 0;
+    }
+
+    position = position->next;
+
+    cfl_node* nonempty = cfl_parse_expression(end, position, block);
+
+    if(!nonempty)
+    {
+        cfl_parse_error_expected("expression", "\"->\"",
+                                 position->start, position->end);
+
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        cfl_free_node(tail);
+
+        return 0;
+    }
+
+    return cfl_create_new_node_case(list, empty, head, tail, nonempty);
+}

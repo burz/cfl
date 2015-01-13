@@ -504,7 +504,12 @@ cfl_node* cfl_create_new_node_application(
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        cfl_free_node(function);
+        cfl_free_node(argument);
+
         return 0;
+    }
 
     node->type = CFL_NODE_APPLICATION;
     node->number_of_children = 2;
@@ -513,6 +518,8 @@ cfl_node* cfl_create_new_node_application(
 
     if(!node->children)
     {
+        cfl_free_node(function);
+        cfl_free_node(argument);
         free(node);
 
         return 0;
@@ -667,7 +674,15 @@ cfl_node* cfl_create_new_node_case(
     cfl_node* node = cfl_ast_malloc(sizeof(cfl_node));
 
     if(!node)
+    {
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        cfl_free_node(tail);
+        cfl_free_node(nonempty);
+
         return 0;
+    }
 
     node->type = CFL_NODE_CASE;
     node->number_of_children = 5;
@@ -676,6 +691,11 @@ cfl_node* cfl_create_new_node_case(
 
     if(!node->children)
     {
+        cfl_free_node(list);
+        cfl_free_node(empty);
+        cfl_free_node(head);
+        cfl_free_node(tail);
+        cfl_free_node(nonempty);
         free(node);
 
         return 0;

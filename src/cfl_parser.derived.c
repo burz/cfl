@@ -49,6 +49,8 @@ cfl_node* cfl_parse_string(
 
     list_pos->next = 0;
 
+    *end = position->next;
+
     return cfl_create_new_node_list(head.next);
 }
 

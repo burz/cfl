@@ -87,7 +87,7 @@ cfl_node_parser cfl_parse_if;
 
 cfl_node_parser cfl_parse_push;
 cfl_node_parser cfl_parse_concatenate;
-//cfl_node_parser cfl_parse_case;
+cfl_node_parser cfl_parse_case;
 
 cfl_node_parser cfl_parse_atom;
 cfl_node_parser cfl_parse_factor;
