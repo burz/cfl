@@ -32,6 +32,143 @@ cfl_node* cfl_parse_parentheses(
     return result;
 }
 
+cfl_list_node* cfl_parse_comma_separated(
+        cfl_token_list** end,
+        cfl_node_parser* element_parser,
+        char* element_name,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_list_node head;
+    cfl_list_node* list_pos = &head;
+
+    bool comma = false;
+
+    while(position != block)
+    {
+        cfl_token_list* pos;
+
+        cfl_node* new_node = (*element_parser)(&pos, position, block);
+
+        if(!new_node)
+        {
+            if(comma)
+            {
+                cfl_parse_error_expected(element_name, "\",\"",
+                                         position->start, position->end);
+
+                list_pos->next = 0;
+
+                cfl_delete_list_nodes(head.next);
+
+                return 0;
+            }
+
+            break;
+        }
+
+        list_pos->next = cfl_parser_malloc(sizeof(cfl_list_node));
+
+        if(!list_pos->next)
+        {
+            cfl_free_node(new_node);
+
+            cfl_delete_list_nodes(head.next);
+
+            return 0;
+        }
+
+        list_pos->next->node = new_node;
+
+        list_pos = list_pos->next;
+
+        if(cfl_token_string_compare(pos, ",", 1))
+        {
+            position = pos;
+
+            break;
+        }
+
+        comma = true;
+
+        position = pos->next;
+    }
+
+    list_pos->next = 0;
+
+    *end = position;
+
+    return head.next;
+}
+
+bool cfl_parse_tuple_structure(
+        cfl_token_list** end,
+        unsigned int* number_of_children,
+        cfl_node*** children,
+        cfl_node_parser* element_parser,
+        char* element_name,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(cfl_token_string_compare(position, "(", 1))
+        return false;
+
+    cfl_list_node* list = cfl_parse_comma_separated(&position,
+                                                    element_parser,
+                                                    element_name,
+                                                    position->next,
+                                                    block);
+
+    if(cfl_token_string_compare(position, ")", 1))
+    {
+        cfl_delete_list_nodes(list);
+
+        return false;
+    }
+
+    *end = position->next;
+
+    cfl_list_node* list_pos = list;
+    *number_of_children = 0;
+
+    while(list_pos)
+    {
+        ++*number_of_children;
+
+        list_pos = list_pos->next;
+    }
+
+    if(*number_of_children)
+    {
+        *children = cfl_parser_malloc(sizeof(cfl_node*) * (*number_of_children));
+
+        if(!*children)
+        {
+            cfl_delete_list_nodes(list);
+
+            return false;
+        }
+
+        list_pos = list;
+        int i = 0;
+
+        while(list_pos)
+        {
+            (*children)[i] = list_pos->node;
+
+            cfl_list_node* temp = list_pos;
+
+            list_pos = list_pos->next;
+
+            free(temp);
+
+            ++i;
+        }
+    }
+
+    return true;
+}
+
 cfl_node* cfl_parse_variable(
         cfl_token_list** end,
         cfl_token_list* position,
@@ -163,73 +300,6 @@ cfl_node* cfl_parse_function(
     return cfl_create_new_node_function(variable, expression);
 }
 
-cfl_list_node* cfl_parse_comma_separated(
-        cfl_token_list** end,
-        cfl_token_list* position,
-        cfl_token_list* block)
-{
-    cfl_list_node head;
-    cfl_list_node* list_pos = &head;
-
-    bool comma = false;
-
-    while(position != block)
-    {
-        cfl_token_list* pos;
-
-        cfl_node* new_node = cfl_parse_expression(&pos, position, block);
-
-        if(!new_node)
-        {
-            if(comma)
-            {
-                cfl_parse_error_expected("expression", "\",\"",
-                                         position->start, position->end);
-
-                list_pos->next = 0;
-
-                cfl_delete_list_nodes(head.next);
-
-                return 0;
-            }
-
-            break;
-        }
-
-        list_pos->next = cfl_parser_malloc(sizeof(cfl_list_node));
-
-        if(!list_pos->next)
-        {
-            cfl_free_node(new_node);
-
-            cfl_delete_list_nodes(head.next);
-
-            return 0;
-        }
-
-        list_pos->next->node = new_node;
-
-        list_pos = list_pos->next;
-
-        if(cfl_token_string_compare(pos, ",", 1))
-        {
-            position = pos;
-
-            break;
-        }
-
-        comma = true;
-
-        position = pos->next;
-    }
-
-    list_pos->next = 0;
-
-    *end = position;
-
-    return head.next;
-}
-
 cfl_node* cfl_parse_list(
         cfl_token_list** end,
         cfl_token_list* position,
@@ -238,7 +308,11 @@ cfl_node* cfl_parse_list(
     if(cfl_token_string_compare(position, "[", 1))
         return 0;
 
-    cfl_list_node* list = cfl_parse_comma_separated(&position, position->next, block);
+    cfl_list_node* list = cfl_parse_comma_separated(&position,
+                                                    &cfl_parse_expression,
+                                                    "expression",
+                                                    position->next,
+                                                    block);
 
     if(cfl_token_string_compare(position, "]", 1))
     {
@@ -257,59 +331,16 @@ cfl_node* cfl_parse_tuple(
         cfl_token_list* position,
         cfl_token_list* block)
 {
-    if(cfl_token_string_compare(position, "(", 1))
+    unsigned int number_of_children;
+    cfl_node** children;
+
+    if(!cfl_parse_tuple_structure(end,
+                                  &number_of_children,
+                                  &children,
+                                  &cfl_parse_expression,
+                                  "expression",
+                                  position, block))
         return 0;
-
-    cfl_list_node* list = cfl_parse_comma_separated(&position, position->next, block);
-
-    if(cfl_token_string_compare(position, ")", 1))
-    {
-        cfl_delete_list_nodes(list);
-
-        return 0;
-    }
-
-    *end = position->next;
-
-    cfl_list_node* list_pos = list;
-    int number_of_children = 0;
-
-    while(list_pos)
-    {
-        ++number_of_children;
-
-        list_pos = list_pos->next;
-    }
-
-    cfl_node** children = 0;
-
-    if(number_of_children)
-    {
-        children = cfl_parser_malloc(sizeof(cfl_node*) * number_of_children);
-
-        if(!children)
-        {
-            cfl_delete_list_nodes(list);
-
-            return 0;
-        }
-
-        list_pos = list;
-        int i = 0;
-
-        while(list_pos)
-        {
-            children[i] = list_pos->node;
-
-            cfl_list_node* temp = list_pos;
-
-            list_pos = list_pos->next;
-
-            free(temp);
-
-            ++i;
-        }
-    }
 
     return cfl_create_new_node_tuple(number_of_children, children);
 }

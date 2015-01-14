@@ -41,15 +41,26 @@ typedef cfl_node* cfl_node_parser(cfl_token_list** end,
 cfl_node_parser cfl_parse_parentheses;
 
 cfl_node_parser cfl_parse_variable;
+
+cfl_list_node* cfl_parse_comma_separated(cfl_token_list** end,
+                                         cfl_node_parser* element_parser,
+                                         char* element_name,
+                                         cfl_token_list* position,
+                                         cfl_token_list* block);
+
+bool cfl_parse_tuple_structure(cfl_token_list** end,
+                               unsigned int* number_of_children,
+                               cfl_node*** children,
+                               cfl_node_parser* element_parser,
+                               char* element_name,
+                               cfl_token_list* position,
+                               cfl_token_list* block);
+
 cfl_node_parser cfl_parse_bool;
 cfl_node_parser cfl_parse_integer;
 cfl_node_parser cfl_parse_char;
 cfl_node_parser cfl_parse_string;
 cfl_node_parser cfl_parse_function;
-
-cfl_list_node* cfl_parse_comma_separated(cfl_token_list** end,
-                                         cfl_token_list* position,
-                                         cfl_token_list* block);
 
 cfl_node_parser cfl_parse_list;
 cfl_node_parser cfl_parse_tuple;
