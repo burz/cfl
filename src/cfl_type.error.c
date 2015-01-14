@@ -29,6 +29,14 @@ bool cfl_get_type_error_flag(void)
     return cfl_type_error;
 }
 
+void cfl_type_error_undefined_variable(char* name)
+{
+    fprintf(stderr, "TYPE ERROR: The variable \"%s\" must be "
+                    "defined before it is used\n", name);
+
+    cfl_type_error = true;
+}
+
 void cfl_type_error_failure(void)
 {
     fprintf(stderr, "TYPE ERROR: Could not type expression\n");

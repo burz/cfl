@@ -41,7 +41,16 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
 
     while(start != end)
     {
-        if(*start == '*' || *start == '/' || *start == '%' ||
+        if(*start == '/' && start[1] == '/')
+        {
+            while(start + 1 != end && *start != '\n')
+                ++start;
+
+            ++start;
+
+            continue;
+        }
+        else if(*start == '*' || *start == '/' || *start == '%' ||
            *start == '!' || *start == ':' || *start == ';' ||
            *start == '(' || *start == ')' || *start == '[' ||
            *start == ']' || *start == ',' || *start == '_')

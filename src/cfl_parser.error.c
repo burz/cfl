@@ -108,6 +108,17 @@ void cfl_parse_error_bad_division(void)
     cfl_parse_error = true;
 }
 
+void cfl_parse_error_complex_function_name(void)
+{
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: The name of a function cannot "
+                    "be a complex variable\n");
+
+    cfl_parse_error = true;
+}
+
 void cfl_parse_error_partial_program(void)
 {
     if(cfl_parse_error)

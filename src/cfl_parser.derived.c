@@ -292,7 +292,7 @@ bool cfl_parse_def(cfl_token_list** end,
                    cfl_token_list* position,
                    cfl_token_list* block)
 {
-    *name = cfl_parse_variable(&position, position, block);
+    *name = cfl_parse_complex_variable(&position, position, block);
 
     if(!*name)
         return false;
@@ -365,6 +365,18 @@ static cfl_node* cfl_let_transform(
 {
     if(arguments)
     {
+        if(name->type != CFL_NODE_VARIABLE)
+        {
+            cfl_parse_error_complex_function_name();
+
+            cfl_free_node(name);
+            cfl_delete_list_nodes(arguments);
+            cfl_free_node(definition);
+            cfl_free_node(body);
+
+            return 0;
+        }
+
         while(arguments->next)
         {
             cfl_list_node* temp = arguments;

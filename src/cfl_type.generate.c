@@ -31,45 +31,126 @@ unsigned int cfl_lookup_hypothesis(cfl_type_hypothesis_chain* chain, char* name)
     return result;
 }
 
-static bool cfl_generate_type_equation_chain_given_variable(
-    cfl_type** variable_type,
-    cfl_type** node_type,
-    cfl_type_equation_chain* equation_head,
-    cfl_type_hypothesis_chain* hypothesis_head,
-    cfl_node* variable,
-    cfl_node* node)
+static unsigned int cfl_generate_hypotheses(
+        cfl_type** variable_type,
+        cfl_type_hypothesis_chain* hypothesis_head,
+        cfl_node* variable)
 {
-    unsigned int id = next_id++;
+    if(variable->type == CFL_NODE_VARIABLE)
+    {
+        unsigned int id = next_id++;
 
-    cfl_type_hypothesis_chain* hypothesis_chain_node =
-        cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
+        cfl_type_hypothesis_chain* hypothesis_chain_node =
+            cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
 
-    if(!hypothesis_chain_node)
-        return false;
+        if(!hypothesis_chain_node)
+            return 0;
 
-    hypothesis_chain_node->name = variable->data;
-    hypothesis_chain_node->id = id;
-    hypothesis_chain_node->next = hypothesis_head->next;
+        hypothesis_chain_node->name = variable->data;
+        hypothesis_chain_node->id = id;
+        hypothesis_chain_node->next = hypothesis_head->next;
 
-    hypothesis_head->next = hypothesis_chain_node;
+        hypothesis_head->next = hypothesis_chain_node;
 
-    *node_type = cfl_generate_type_equation_chain(equation_head,
-                                                  hypothesis_head,
-                                                  node);
+        *variable_type = cfl_type_malloc(sizeof(cfl_type));
 
-    hypothesis_head->next = hypothesis_chain_node->next;
+        if(!*variable_type)
+            return 0;
 
-    free(hypothesis_chain_node);
+        cfl_create_type_variable(*variable_type, id);
 
-    if(!*node_type)
-        return false;
+        return 1;
+    }
+
+    cfl_type** children = cfl_type_malloc(sizeof(cfl_type*) *
+                                          variable->number_of_children);
+
+    if(!children)
+        return 0;
+
+    unsigned int hypothesis_count = 0;
+
+    int i = 0;
+    for( ; i < variable->number_of_children; ++i)
+    {
+        unsigned int change = cfl_generate_hypotheses(&children[i],
+                                                      hypothesis_head,
+                                                      variable->children[i]);
+
+        if(!change)
+        {
+            int j = 0;
+            for( ; j < i; ++j)
+            {
+                cfl_free_type(children[j]);
+
+                cfl_type_hypothesis_chain* temp = hypothesis_head->next;
+
+                hypothesis_head->next = temp->next;
+
+                free(temp);
+            }
+
+            free(children);
+
+            return 0;
+        }
+
+        hypothesis_count += change;
+    }
 
     *variable_type = cfl_type_malloc(sizeof(cfl_type));
 
     if(!*variable_type)
-        return false;
+    {
+        for(i = 0; i < variable->number_of_children; ++i)
+        {
+            cfl_free_type(children[i]);
 
-    cfl_create_type_variable(*variable_type, id);
+            cfl_type_hypothesis_chain* temp = hypothesis_head->next;
+
+            hypothesis_head->next = temp->next;
+
+            free(temp);
+        }
+
+        free(children);
+
+        return 0;
+    }
+
+    cfl_create_type_tuple(*variable_type, variable->number_of_children, children);
+
+    return hypothesis_count;
+}
+
+static bool cfl_generate_type_equation_chain_given_variable(
+        cfl_type** variable_type,
+        cfl_type** node_type,
+        cfl_type_equation_chain* equation_head,
+        cfl_type_hypothesis_chain* hypothesis_head,
+        cfl_node* variable,
+        cfl_node* node)
+{
+   unsigned int added_hypotheses = cfl_generate_hypotheses(variable_type,
+                                                           hypothesis_head,
+                                                           variable);
+
+   *node_type = cfl_generate_type_equation_chain(equation_head,
+                                                 hypothesis_head,
+                                                 node);
+
+    for( ; added_hypotheses > 0; --added_hypotheses)
+    {
+        cfl_type_hypothesis_chain* temp = hypothesis_head->next;
+
+        hypothesis_head->next = temp->next;
+
+        free(temp);
+    }
+
+    if(!*node_type)
+        return false;
 
     return true;
 }
@@ -101,9 +182,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             if(!id0)
             {
-                fprintf(stderr, "TYPE ERROR: The variable \"%s\" "
-                        "must be defined before it is used\n",
-                        (char*) node->data);
+                cfl_type_error_undefined_variable(node->data);
 
                 break;
             }
@@ -1084,20 +1163,6 @@ cfl_type* cfl_generate_type_equation_chain(
             hypothesis_chain_node->next = hypothesis_head->next;
 
             hypothesis_head->next = hypothesis_chain_node;
-
-            hypothesis_chain_node =
-                cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
-
-            if(!hypothesis_chain_node)
-            {
-                hypothesis_chain_node = hypothesis_head->next;
-
-                hypothesis_head->next = hypothesis_chain_node->next;
-
-                free(hypothesis_chain_node);
-
-                break;
-            }
 
             bool success = cfl_generate_type_equation_chain_given_variable(
                     &temp_type0, &child_type0, equation_head,

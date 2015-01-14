@@ -16,6 +16,19 @@ void* cfl_eval_malloc(size_t size)
     return result;
 }
 
+static bool cfl_complex_variable_contains(cfl_node* node, char* variable)
+{
+    if(node->type == CFL_NODE_VARIABLE)
+        return !strcmp(node->data, variable);
+
+    int i = 0;
+    for( ; i < node->number_of_children; ++i)
+        if(cfl_complex_variable_contains(node->children[i], variable))
+            return true;
+
+    return false;
+}
+
 bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 {
     int i;
@@ -38,14 +51,14 @@ bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
             }
             break;
         case CFL_NODE_FUNCTION:
-            if(strcmp(target->children[0]->data, variable))
+            if(!cfl_complex_variable_contains(target->children[0], variable))
                 if(!cfl_substitute(target->children[1], variable, value))
                     return false;
             break;
         case CFL_NODE_LET_REC:
             if(strcmp(target->children[0]->data, variable))
             {
-                if(strcmp(target->children[1]->data, variable))
+                if(!cfl_complex_variable_contains(target->children[1], variable))
                 {
                     if(!cfl_substitute(target->children[2], variable, value) ||
                        !cfl_substitute(target->children[3], variable, value))
@@ -60,7 +73,7 @@ bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                !cfl_substitute(target->children[1], variable, value))
                 return false;
 
-            if(strcmp(target->children[2]->data, variable) &&
+            if(!cfl_complex_variable_contains(target->children[2], variable) &&
                strcmp(target->children[3]->data, variable))
                     if(!cfl_substitute(target->children[4], variable, value))
                         return false;
@@ -71,6 +84,24 @@ bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                     return false;
             break;
     }
+
+    return true;
+}
+
+bool cfl_complex_substitute(cfl_node* target, cfl_node* variable, cfl_node* value)
+{
+    if(variable->type == CFL_NODE_VARIABLE)
+    {
+        if(*((char*) variable->data) == '_')
+            return true;
+
+        return cfl_substitute(target, variable->data, value);
+    }
+
+    int i = 0;
+    for( ; i < variable->number_of_children; ++i)
+        if(!cfl_complex_substitute(target, variable->children[i], value->children[i]))
+            return false;
 
     return true;
 }
@@ -215,9 +246,9 @@ bool cfl_evaluate(cfl_node* node)
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
             return false;
 
-        if(!cfl_substitute(node->children[0]->children[1],
-                           node->children[0]->children[0]->data,
-                           node->children[1]))
+        if(!cfl_complex_substitute(node->children[0]->children[1],
+                                   node->children[0]->children[0],
+                                   node->children[1]))
             return false;
 
         cfl_free_node(node->children[0]->children[0]);
@@ -460,7 +491,7 @@ bool cfl_evaluate(cfl_node* node)
             if(!tail)
                 return false;
 
-            if(!cfl_substitute(node->children[4], node->children[2]->data, head) ||
+            if(!cfl_complex_substitute(node->children[4], node->children[2], head) ||
                !cfl_substitute(node->children[4], node->children[3]->data, tail))
             {
                 free(tail);
