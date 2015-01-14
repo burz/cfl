@@ -56,6 +56,7 @@ bool cfl_parse_tuple_structure(cfl_token_list** end,
                                cfl_token_list* position,
                                cfl_token_list* block);
 
+cfl_node_parser cfl_parse_complex_variable;
 cfl_node_parser cfl_parse_bool;
 cfl_node_parser cfl_parse_integer;
 cfl_node_parser cfl_parse_char;

@@ -311,7 +311,7 @@ bool cfl_parse_def(cfl_token_list** end,
     while(position != equal_pos)
     {
         cfl_token_list* pos;
-        cfl_node* argument = cfl_parse_variable(&pos, position, equal_pos);
+        cfl_node* argument = cfl_parse_complex_variable(&pos, position, equal_pos);
 
         if(!argument)
         {

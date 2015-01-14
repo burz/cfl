@@ -4,6 +4,7 @@
 #include <string.h>
 
 extern void* cfl_type_malloc(size_t size);
+extern void cfl_reset_type_generator(void);
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
 {
@@ -506,6 +507,7 @@ void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain)
 cfl_type* cfl_typecheck(cfl_node* node)
 {
     cfl_reset_type_error_flag();
+    cfl_reset_type_generator();
 
     cfl_type_equation_chain chain;
     chain.next = 0;

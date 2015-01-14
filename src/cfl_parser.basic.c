@@ -191,6 +191,37 @@ cfl_node* cfl_parse_variable(
     return cfl_create_new_node_variable_n(length, position->start);
 }
 
+cfl_node* cfl_parse_complex_variable(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(!cfl_token_string_compare(position, "_", 1))
+    {
+        *end = position->next;
+
+        return cfl_create_new_node_variable_n(1, "_");
+    }
+
+    cfl_node* result = cfl_parse_variable(end, position, block);
+
+    if(result)
+        return result;
+
+    unsigned int number_of_children;
+    cfl_node** children;
+
+    if(!cfl_parse_tuple_structure(end,
+                                  &number_of_children,
+                                  &children,
+                                  &cfl_parse_complex_variable,
+                                  "variable",
+                                  position, block))
+        return 0;
+
+    return cfl_create_new_node_tuple(number_of_children, children);
+}
+
 cfl_node* cfl_parse_bool(
         cfl_token_list** end,
         cfl_token_list* position,
@@ -276,13 +307,17 @@ cfl_node* cfl_parse_function(
     if(cfl_token_string_compare(position, "function", 8))
         return 0;
 
-    cfl_node* variable = cfl_parse_variable(&position, position->next, block);
+    cfl_node* variable = cfl_parse_complex_variable(&position, position->next, block);
 
     if(!variable)
         return 0;
 
     if(position == block || cfl_token_string_compare(position, "->", 2))
     {
+        cfl_parse_error_expected("\"->\"", "\"function\"",
+                                 position ? position->start : 0,
+                                 position ? position->end : 0);
+
         cfl_free_node(variable);
 
         return 0;
@@ -717,7 +752,7 @@ cfl_node* cfl_parse_case(
 
     position = position->next;
 
-    cfl_node* head = cfl_parse_variable(&pos, position, block);
+    cfl_node* head = cfl_parse_complex_variable(&pos, position, block);
 
     if(!head)
     {
