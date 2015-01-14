@@ -5,7 +5,6 @@
 
 void cfl_reset_type_error_flag(void);
 bool cfl_get_type_error_flag(void);
-
 void cfl_type_error_failure(void);
 
 typedef enum {

@@ -16,42 +16,42 @@ cfl_node* cfl_parse_atom(
 
     cfl_node* result = cfl_parse_parentheses(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_string(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_list(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_tuple(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_not(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_char(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_variable(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_bool(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_integer(end, position, block);
@@ -82,17 +82,17 @@ cfl_node* cfl_parse_factor(
 
     cfl_node* result = cfl_parse_multiply(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_divide(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_mod(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_molecule(end, position, block);
@@ -110,12 +110,12 @@ cfl_node* cfl_parse_term(
 
     cfl_node* result = cfl_parse_add(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_subtract(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_factor(end, position, block);
@@ -133,7 +133,7 @@ cfl_node* cfl_parse_list_molecule(
 
     cfl_node* result = cfl_parse_push(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_term(end, position, block);
@@ -151,7 +151,7 @@ cfl_node* cfl_parse_list_factor(
 
     cfl_node* result = cfl_parse_concatenate(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_list_molecule(end, position, block);
@@ -169,27 +169,27 @@ cfl_node* cfl_parse_boolean_molecule(
 
     cfl_node* result = cfl_parse_equal(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_less(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_less_equal(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_greater(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_greater_equal(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_list_factor(end, position, block);
@@ -207,7 +207,7 @@ cfl_node* cfl_parse_boolean_factor(
 
     cfl_node* result = cfl_parse_and(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_boolean_molecule(end, position, block);
@@ -225,7 +225,7 @@ cfl_node* cfl_parse_boolean_term(
 
     cfl_node* result = cfl_parse_or(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_boolean_factor(end, position, block);
@@ -243,22 +243,22 @@ cfl_node* cfl_parse_expression(
 
     cfl_node* result = cfl_parse_function(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_if(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_let(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_case(end, position, block);
 
-    if(result || cfl_error_occured_while_parsing())
+    if(result || cfl_get_parse_error_flag())
         return result;
 
     result = cfl_parse_boolean_term(end, position, block);

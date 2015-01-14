@@ -5,6 +5,7 @@
 
 #define MAX_INTEGER_STRING_LENGTH 11
 
+bool cfl_get_parse_error_flag(void);
 void cfl_parse_error_unexpected_char(char x);
 void cfl_parse_error_integer_overflow(char* start, int length);
 void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
@@ -15,8 +16,6 @@ void cfl_parse_error_partial_program(void);
 void cfl_parse_error_missing_main(void);
 void cfl_parse_error_main_has_arguments(void);
 void cfl_parse_error_unparseable_file(char* filename);
-
-bool cfl_error_occured_while_parsing(void);
 
 bool cfl_is_whitespace(char x);
 bool cfl_is_number(char x);

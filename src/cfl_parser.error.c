@@ -151,7 +151,7 @@ void cfl_parse_error_unparseable_file(char* filename)
     cfl_parse_error = true;
 }
 
-bool cfl_error_occured_while_parsing(void)
+bool cfl_get_parse_error_flag(void)
 {
     return cfl_parse_error || cfl_get_ast_error_flag();
 }
