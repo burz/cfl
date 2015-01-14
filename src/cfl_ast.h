@@ -89,11 +89,8 @@ cfl_node* cfl_create_new_node_case(cfl_node* list,
 
 cfl_node* cfl_copy_new_node(cfl_node* node);
 
-// deprecated functions
-int cfl_create_node_variable(cfl_node* node, char* string);
-int cfl_create_node_bool(cfl_node* node, bool value);
-int cfl_create_node_integer(cfl_node* node, int value);
-// end deprecated functions
+bool cfl_reinitialize_node_bool(cfl_node* node, bool value);
+bool cfl_reinitialize_node_integer(cfl_node* node, int value);
 
 void cfl_delete_node(cfl_node* node);
 void cfl_free_node(cfl_node* node);

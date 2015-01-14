@@ -16,7 +16,7 @@ void* cfl_eval_malloc(size_t size)
     return result;
 }
 
-int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
+bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 {
     int i;
 
@@ -28,7 +28,7 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                 cfl_node* result = cfl_copy_new_node(value);
 
                 if(!result)
-                    return 0;
+                    return false;
 
                 cfl_delete_node(target);
 
@@ -40,7 +40,7 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
         case CFL_NODE_FUNCTION:
             if(strcmp(target->children[0]->data, variable))
                 if(!cfl_substitute(target->children[1], variable, value))
-                    return 0;
+                    return false;
             break;
         case CFL_NODE_LET_REC:
             if(strcmp(target->children[0]->data, variable))
@@ -49,33 +49,33 @@ int cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
                 {
                     if(!cfl_substitute(target->children[2], variable, value) ||
                        !cfl_substitute(target->children[3], variable, value))
-                        return 0;
+                        return false;
                 }
                 else if(!cfl_substitute(target->children[3], variable, value))
-                    return 0;
+                    return false;
             }
             break;
         case CFL_NODE_CASE:
             if(!cfl_substitute(target->children[0], variable, value) ||
                !cfl_substitute(target->children[1], variable, value))
-                return 0;
+                return false;
 
             if(strcmp(target->children[2]->data, variable) &&
                strcmp(target->children[3]->data, variable))
                     if(!cfl_substitute(target->children[4], variable, value))
-                        return 0;
+                        return false;
             break;
         default:
             for(i = 0; i < target->number_of_children; ++i)
                 if(!cfl_substitute(target->children[i], variable, value))
-                    return 0;
+                    return false;
             break;
     }
 
-    return 1;
+    return true;
 }
 
-int cfl_evaluate(cfl_node* node)
+bool cfl_evaluate(cfl_node* node)
 {
     if(node->type == CFL_NODE_LIST)
     {
@@ -84,7 +84,7 @@ int cfl_evaluate(cfl_node* node)
         while(pos)
         {
             if(!cfl_evaluate(pos->node))
-                return 0;
+                return false;
 
             pos = pos->next;
         }
@@ -94,141 +94,131 @@ int cfl_evaluate(cfl_node* node)
         int i = 0;
         for( ; i < node->number_of_children; ++i)
             if(!cfl_evaluate(node->children[i]))
-                return 0;
+                return false;
     }
     else if(node->type == CFL_NODE_AND)
     {
         if(!cfl_evaluate(node->children[0]))
-            return 0;
+            return false;
 
         if(!*((bool*) node->children[0]->data))
         {
-            cfl_delete_node(node);
+            if(!cfl_reinitialize_node_bool(node, false))
+                return false;
 
-            cfl_create_node_bool(node, false);
-
-            return 1;
+            return true;
         }
 
         if(!cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         bool result = *((bool*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_bool(node, result);
+        if(!cfl_reinitialize_node_bool(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_OR)
     {
         if(!cfl_evaluate(node->children[0]))
-            return 0;
+            return false;
 
         if(*((bool*) node->children[0]->data))
         {
-            cfl_delete_node(node);
+            if(!cfl_reinitialize_node_bool(node, true))
+                return false;
 
-            cfl_create_node_bool(node, true);
-
-            return 1;
+            return true;
         }
 
         if(!cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         bool result = *((bool*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_bool(node, result);
+        if(!cfl_reinitialize_node_bool(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_NOT)
     {
         if(!cfl_evaluate(node->children[0]))
-            return 0;
+            return false;
 
         bool result = !*((bool*) node->children[0]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_bool(node, result);
+        if(!cfl_reinitialize_node_bool(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_ADD)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         int result = *((int*) node->children[0]->data) +
                      *((int*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_integer(node, result);
+        if(!cfl_reinitialize_node_integer(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_MULTIPLY)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         int result = *((int*) node->children[0]->data) *
                      *((int*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_integer(node, result);
+        if(!cfl_reinitialize_node_integer(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_DIVIDE)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         if(*((int*) node->children[1]->data) == 0)
         {
             fprintf(stderr, "EVALUATION ERROR: Division by zero\n");
 
-            return 0;
+            return false;
         }
 
         int result = *((int*) node->children[0]->data) /
                      *((int*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_integer(node, result);
+        if(!cfl_reinitialize_node_integer(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_EQUAL)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         bool result = *((int*) node->children[0]->data) ==
                       *((int*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_bool(node, result);
+        if(!cfl_reinitialize_node_bool(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_LESS)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         bool result = *((int*) node->children[0]->data) <
                       *((int*) node->children[1]->data);
 
-        cfl_delete_node(node);
-
-        cfl_create_node_bool(node, result);
+        if(!cfl_reinitialize_node_bool(node, result))
+            return false;
     }
     else if(node->type == CFL_NODE_APPLICATION)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         if(!cfl_substitute(node->children[0]->children[1],
                            node->children[0]->children[0]->data,
                            node->children[1]))
-            return 0;
+            return false;
 
         cfl_free_node(node->children[0]->children[0]);
         cfl_free_node(node->children[1]);
@@ -248,12 +238,12 @@ int cfl_evaluate(cfl_node* node)
     else if(node->type == CFL_NODE_IF)
     {
         if(!cfl_evaluate(node->children[0]))
-            return 0;
+            return false;
 
         if(*((bool*) node->children[0]->data))
         {
             if(!cfl_evaluate(node->children[1]))
-                return 0;
+                return false;
 
             cfl_node** temp = node->children;
 
@@ -268,7 +258,7 @@ int cfl_evaluate(cfl_node* node)
         else
         {
             if(!cfl_evaluate(node->children[2]))
-                return 0;
+                return false;
 
             cfl_node** temp = node->children;
 
@@ -286,7 +276,7 @@ int cfl_evaluate(cfl_node* node)
         cfl_node* temp0 = cfl_copy_new_node(node->children[0]);
 
         if(!temp0)
-            return 0;
+            return false;
 
         cfl_node* temp1 = cfl_copy_new_node(node->children[1]);
 
@@ -294,13 +284,13 @@ int cfl_evaluate(cfl_node* node)
         {
             cfl_free_node(temp0);
 
-            return 0;
+            return false;
         }
 
         cfl_node* temp2 = cfl_create_new_node_application(temp0, temp1);
 
         if(!temp2)
-            return 0;
+            return false;
 
         temp0 = cfl_copy_new_node(node->children[0]);
 
@@ -308,7 +298,7 @@ int cfl_evaluate(cfl_node* node)
         {
             cfl_free_node(temp2);
 
-            return 0;
+            return false;
         }
 
         temp1 = cfl_copy_new_node(node->children[1]);
@@ -318,7 +308,7 @@ int cfl_evaluate(cfl_node* node)
             cfl_free_node(temp0);
             cfl_free_node(temp2);
 
-            return 0;
+            return false;
         }
 
         cfl_node* temp3 = cfl_copy_new_node(node->children[2]);
@@ -329,13 +319,13 @@ int cfl_evaluate(cfl_node* node)
             cfl_free_node(temp1);
             cfl_free_node(temp2);
 
-            return 0;
+            return false;
         }
 
         cfl_node* temp4 = cfl_create_new_node_let_rec(temp0, temp1, temp3, temp2);
 
         if(!temp4)
-            return 0;
+            return false;
 
         temp0 = cfl_copy_new_node(node->children[1]);
 
@@ -343,19 +333,19 @@ int cfl_evaluate(cfl_node* node)
         {
             cfl_free_node(temp4);
 
-            return 0;
+            return false;
         }
 
         temp1 = cfl_create_new_node_function(temp0, temp4);
 
         if(!temp1)
-            return 0;
+            return false;
 
         if(!cfl_substitute(node->children[2], node->children[0]->data, temp1))
         {
             cfl_free_node(temp1);
 
-            return 0;
+            return false;
         }
 
         cfl_free_node(temp1);
@@ -363,7 +353,7 @@ int cfl_evaluate(cfl_node* node)
         temp0 = cfl_create_new_node_function(node->children[1], node->children[2]);
 
         if(!temp0)
-            return 0;
+            return false;
 
         if(!cfl_substitute(node->children[3], node->children[0]->data, temp0))
         {
@@ -373,7 +363,7 @@ int cfl_evaluate(cfl_node* node)
             free(node->children);
             node->number_of_children = 0;
 
-            return 0;
+            return false;
         }
 
         cfl_free_node(temp0);
@@ -392,7 +382,7 @@ int cfl_evaluate(cfl_node* node)
     else if(node->type == CFL_NODE_PUSH)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         cfl_node* list_node = node->children[1];
 
@@ -401,7 +391,7 @@ int cfl_evaluate(cfl_node* node)
             list_node->data = cfl_eval_malloc(sizeof(cfl_list_node));
 
             if(!list_node->data)
-                return 0;
+                return false;
 
             ((cfl_list_node*) list_node->data)->next = 0;
         }
@@ -410,7 +400,7 @@ int cfl_evaluate(cfl_node* node)
             cfl_list_node* new_node = cfl_eval_malloc(sizeof(cfl_list_node));
 
             if(!new_node)
-                return 0;
+                return false;
 
             new_node->next = list_node->data;
 
@@ -428,7 +418,7 @@ int cfl_evaluate(cfl_node* node)
     else if(node->type == CFL_NODE_CONCATENATE)
     {
         if(!cfl_evaluate(node->children[0]) || !cfl_evaluate(node->children[1]))
-            return 0;
+            return false;
 
         cfl_node* list_node = node->children[0];
 
@@ -456,7 +446,7 @@ int cfl_evaluate(cfl_node* node)
     else if(node->type == CFL_NODE_CASE)
     {
         if(!cfl_evaluate(node->children[0]))
-            return 0;
+            return false;
 
         if(node->children[0]->data)
         {
@@ -468,14 +458,14 @@ int cfl_evaluate(cfl_node* node)
             cfl_node* tail = cfl_create_new_node_list(tail_list);
 
             if(!tail)
-                return 0;
+                return false;
 
             if(!cfl_substitute(node->children[4], node->children[2]->data, head) ||
                !cfl_substitute(node->children[4], node->children[3]->data, tail))
             {
                 free(tail);
 
-                return 0;
+                return false;
             }
 
             cfl_node* temp = node->children[4];
@@ -496,7 +486,7 @@ int cfl_evaluate(cfl_node* node)
         else
         {
             if(!cfl_evaluate(node->children[1]))
-                return 0;
+                return false;
 
             cfl_node* temp = node->children[1];
 
@@ -512,5 +502,5 @@ int cfl_evaluate(cfl_node* node)
         }
     }
 
-    return 1;
+    return true;
 }

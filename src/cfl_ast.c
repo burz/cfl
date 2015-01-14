@@ -862,51 +862,51 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
     }
 }
 
-// deprecated functions
-int cfl_create_node_variable(cfl_node* node, char* string)
+bool cfl_reinitialize_node_bool(cfl_node* node, bool value)
 {
-    node->type = CFL_NODE_VARIABLE;
-    node->number_of_children = 0;
-    node->data = cfl_ast_malloc(sizeof(char) * MAX_IDENTIFIER_LENGTH);
+    if(node->type == CFL_NODE_BOOL)
+    {
+        *((bool*) node->data) = value;
 
-    if(!node->data)
-        return 0;
+        return true;
+    }
 
-    strncpy(node->data, string, MAX_IDENTIFIER_LENGTH);
+    cfl_delete_node(node);
 
-    ((char*) node->data)[MAX_IDENTIFIER_LENGTH - 1] = 0;
-
-    return 1;
-}
-
-int cfl_create_node_bool(cfl_node* node, bool value)
-{
     node->type = CFL_NODE_BOOL;
     node->number_of_children = 0;
     node->data = cfl_ast_malloc(sizeof(bool));
 
     if(!node->data)
-        return 0;
+        return false;
 
     *((bool*) node->data) = value;
 
-    return 1;
+    return true;
 }
 
-int cfl_create_node_integer(cfl_node* node, int value)
+bool cfl_reinitialize_node_integer(cfl_node* node, int value)
 {
+    if(node->type == CFL_NODE_INTEGER)
+    {
+        *((int*) node->data) = value;
+
+        return true;
+    }
+
+    cfl_delete_node(node);
+
     node->type = CFL_NODE_INTEGER;
     node->number_of_children = 0;
     node->data = cfl_ast_malloc(sizeof(int));
 
     if(!node->data)
-        return 0;
+        return false;
 
     *((int*) node->data) = value;
 
-    return 1;
+    return true;
 }
-// end deprecated functions
 
 void cfl_delete_node(cfl_node* node)
 {
