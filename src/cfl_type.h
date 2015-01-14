@@ -3,6 +3,11 @@
 
 #include "cfl_ast.h"
 
+void cfl_reset_type_error_flag(void);
+bool cfl_get_type_error_flag(void);
+
+void cfl_type_error_failure(void);
+
 typedef enum {
     CFL_TYPE_VARIABLE,
     CFL_TYPE_BOOL,

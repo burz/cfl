@@ -2,22 +2,7 @@
 
 #include <stdio.h>
 
-int cfl_type_error;
-
-void* cfl_type_malloc(size_t size)
-{
-    void* result = malloc(size);
-
-    if(!result)
-    {
-        fprintf(stderr, "MEMORY ERROR: Ran out of memory "
-                        "while typechecking");
-
-        cfl_type_error = 1;
-    }
-
-    return result;
-}
+extern void* cfl_type_malloc(size_t size);
 
 void cfl_create_type_variable(cfl_type* node, unsigned int id)
 {

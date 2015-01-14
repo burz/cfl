@@ -15,6 +15,7 @@ FILES = \
     cfl_parser.derived.o \
     cfl_eval.o \
     cfl_type.o \
+    cfl_type.error.o \
     cfl_type.generate.o \
     cfl_type.check.o
 

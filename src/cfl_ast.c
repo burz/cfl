@@ -9,14 +9,14 @@ char* reserved_words[] = { "true", "false", "function",
 
 int reserved_word_size[] = { 4, 5, 8, 2, 4, 4, 3, 2, 4, 2 };
 
-static int cfl_ast_error;
+static bool cfl_ast_error;
 
 void cfl_reset_ast_error_flag(void)
 {
-    cfl_ast_error = 0;
+    cfl_ast_error = false;
 }
 
-int cfl_get_ast_error_flag(void)
+bool cfl_get_ast_error_flag(void)
 {
     return cfl_ast_error;
 }
@@ -30,7 +30,7 @@ void* cfl_ast_malloc(size_t size)
         fprintf(stderr, "MEMORY ERROR: Ran out of memory while "
                         "creating an AST node\n");
 
-        cfl_ast_error = 1;
+        cfl_ast_error = true;
     }
 
     return result;
