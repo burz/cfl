@@ -923,6 +923,19 @@ void cfl_free_node(cfl_node* node)
     free(node);
 }
 
+static bool cfl_is_bound_in(char* name, cfl_node* node)
+{
+    if(node->type == CFL_NODE_VARIABLE)
+        return !strcmp(name, node->data);
+
+    int i = 0;
+    for( ; i < node->number_of_children; ++i)
+        if(cfl_is_bound_in(name, node->children[i]))
+            return true;
+
+    return false;
+}
+
 bool cfl_is_free(char* name, cfl_node* node)
 {
     int i;
@@ -939,7 +952,7 @@ bool cfl_is_free(char* name, cfl_node* node)
         case CFL_NODE_CHAR:
             break;
         case CFL_NODE_FUNCTION:
-            if(strcmp(name, node->children[0]->data))
+            if(!cfl_is_bound_in(name, node->children[0]))
                 return cfl_is_free(name, node->children[1]);
             break;
         case CFL_NODE_LIST:
@@ -950,7 +963,7 @@ bool cfl_is_free(char* name, cfl_node* node)
         case CFL_NODE_LET_REC:
             if(strcmp(name, node->children[0]->data))
             {
-                if(strcmp(name, node->children[1]->data))
+                if(!cfl_is_bound_in(name, node->children[1]))
                     return cfl_is_free(name, node->children[2]) ||
                            cfl_is_free(name, node->children[3]);
                 else
@@ -958,7 +971,7 @@ bool cfl_is_free(char* name, cfl_node* node)
             }
             break;
         case CFL_NODE_CASE:
-            if(!strcmp(name, node->children[2]->data) ||
+            if(cfl_is_bound_in(name, node->children[2]) ||
                !strcmp(name, node->children[3]->data))
                 return cfl_is_free(name, node->children[0]) ||
                        cfl_is_free(name, node->children[1]);
