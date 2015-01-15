@@ -172,6 +172,11 @@ cfl_node* cfl_parse_boolean_molecule(
     if(result || cfl_get_parse_error_flag())
         return result;
 
+    result = cfl_parse_not_equal(end, position, block);
+
+    if(result || cfl_get_parse_error_flag())
+        return result;
+
     result = cfl_parse_less(end, position, block);
 
     if(result || cfl_get_parse_error_flag())

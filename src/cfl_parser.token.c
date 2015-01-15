@@ -51,10 +51,10 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
             continue;
         }
         else if(*start == '*' || *start == '/' || *start == '%' ||
-           *start == '!' || *start == ':' || *start == ';' ||
-           *start == '(' || *start == ')' || *start == '[' ||
-           *start == ']' || *start == ',' || *start == '_' ||
-           *start == '.' || *start == '$')
+           *start == ':' || *start == ';' || *start == '(' ||
+           *start == ')' || *start == '[' || *start == ']' ||
+           *start == ',' || *start == '_' || *start == '.' ||
+           *start == '$')
         {
             back->next = cfl_create_token_list_node(start, 1);
             ++start;
@@ -98,6 +98,19 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
             back->next = cfl_create_token_list_node(start, pos - start + 1);
             start = pos + 1;
         }
+        else if(*start == '!')
+        {
+            if(start[1] == '=')
+            {
+                back->next = cfl_create_token_list_node(start, 2);
+                start += 2;
+            }
+            else
+            {
+                back->next = cfl_create_token_list_node(start, 1);
+                ++start;
+            }
+        }
         else if(*start == '+')
         {
             if(start[1] == '+')
@@ -108,7 +121,7 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
             else
             {
                 back->next = cfl_create_token_list_node(start, 1);
-                start += 2;
+                ++start;
             }
         }
         else if(*start == '-')

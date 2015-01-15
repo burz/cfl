@@ -57,7 +57,8 @@ f ::=   m * f | m / f | m % f
 r ::=   f + r | f - r
       | f
 
-p ::=   r == r | r < r | r <= r | r > r | r >= r |
+p ::=   r == r | r != r
+      | r < r | r <= r | r > r | r >= r |
       | r
 
 l ::=   p : l

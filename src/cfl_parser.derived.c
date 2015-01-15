@@ -165,6 +165,33 @@ cfl_node* cfl_parse_mod(
     return cfl_subtraction_transform(left, multiple);
 }
 
+cfl_node* cfl_parse_not_equal(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_term,
+                                   &cfl_parse_term,
+                                   2,
+                                   "!=",
+                                   position,
+                                   block))
+        return 0;
+
+    cfl_node* equal = cfl_create_new_node_equal(left, right);
+
+    if(!equal)
+        return 0;
+
+    return cfl_create_new_node_not(equal);
+}
+
 static cfl_node* cfl_less_equal_transform(cfl_node* left, cfl_node* right)
 {
     cfl_node* left_copy = cfl_copy_new_node(left);
