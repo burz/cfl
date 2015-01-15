@@ -468,12 +468,15 @@ bool cfl_parse_def(cfl_token_list** end,
     return true;
 }
 
-static cfl_node* cfl_let_transform(
+static bool cfl_partial_let_transform(
+        cfl_node** argument,
+        cfl_node** new_definition,
         cfl_node* name,
         cfl_list_node* arguments,
-        cfl_node* definition,
-        cfl_node* body)
+        cfl_node* definition)
 {
+    *new_definition = definition;
+
     if(arguments)
     {
         if(name->type != CFL_NODE_VARIABLE)
@@ -483,9 +486,8 @@ static cfl_node* cfl_let_transform(
             cfl_free_node(name);
             cfl_delete_list_nodes(arguments);
             cfl_free_node(definition);
-            cfl_free_node(body);
 
-            return 0;
+            return false;
         }
 
         while(arguments->next)
@@ -494,29 +496,52 @@ static cfl_node* cfl_let_transform(
 
             arguments = arguments->next;
 
-            definition = cfl_create_new_node_function(temp->node, definition);
+            *new_definition = cfl_create_new_node_function(temp->node, *new_definition);
 
-            if(!definition)
+            if(!*new_definition)
             {
                 cfl_free_node(name);
                 cfl_delete_list_nodes(arguments);
-                cfl_free_node(body);
 
-                return 0;
+                return false;
             }
 
             free(temp);
         }
 
-        cfl_node* argument = arguments->node;
+        *argument = arguments->node;
 
         free(arguments);
+    }
+    else 
+        *argument = 0;
 
-        if(cfl_is_free(name->data, definition))
-            return cfl_create_new_node_let_rec(name, argument, definition, body);
+    return true;
+}
+
+static cfl_node* cfl_let_transform(
+        cfl_node* name,
+        cfl_list_node* arguments,
+        cfl_node* definition,
+        cfl_node* body)
+{
+    cfl_node* argument;
+    cfl_node* new_definition;
+
+    if(!cfl_partial_let_transform(&argument, &new_definition, name, arguments, definition))
+    {
+        cfl_free_node(body);
+
+        return 0; 
+    }
+
+    if(arguments)
+    {
+        if(cfl_is_free(name->data, new_definition))
+            return cfl_create_new_node_let_rec(name, argument, new_definition, body);
         else
         {
-            definition = cfl_create_new_node_function(argument, definition);
+            definition = cfl_create_new_node_function(argument, new_definition);
 
             if(!body)
             {
@@ -538,17 +563,19 @@ static cfl_node* cfl_let_transform(
             return cfl_create_new_node_application(function, definition);
         }
     }
-
-    cfl_node* function = cfl_create_new_node_function(name, body);
-
-    if(!function)
+    else
     {
-        cfl_free_node(body);
+        cfl_node* function = cfl_create_new_node_function(name, body);
 
-        return 0;
+        if(!function)
+        {
+            cfl_free_node(body);
+
+            return 0;
+        }
+
+        return cfl_create_new_node_application(function, definition);
     }
-
-    return cfl_create_new_node_application(function, definition);
 }
 
 cfl_node* cfl_parse_let(
@@ -619,7 +646,6 @@ cfl_node* cfl_parse_let(
 
 static cfl_definition_list* cfl_create_definition_list_node(
         cfl_node* name,
-        cfl_list_node* arguments,
         cfl_node* definition)
 {
     cfl_definition_list* result = cfl_parser_malloc(sizeof(cfl_definition_list));
@@ -627,24 +653,113 @@ static cfl_definition_list* cfl_create_definition_list_node(
     if(!result)
     {
         cfl_free_node(name);
-        cfl_delete_list_nodes(arguments);
         cfl_free_node(definition);
 
         return 0;
     }
 
     result->name = name;
-    result->arguments = arguments;
     result->definition = definition;
     result->type = 0;
 
     return result;
 }
 
+static cfl_node* cfl_function_transform(
+        cfl_node* name,
+        cfl_list_node* arguments,
+        cfl_node* definition)
+{
+    cfl_node* argument;
+    cfl_node* new_definition;
+
+    if(!cfl_partial_let_transform(&argument, &new_definition, name, arguments, definition))
+        return 0;
+
+    if(argument)
+    {
+        if(cfl_is_free(name->data, new_definition))
+        {
+            cfl_node* name_copy = cfl_create_new_node_variable(name->data);
+
+            if(!name_copy)
+            {
+                cfl_free_node(name);
+                cfl_free_node(argument);
+                cfl_free_node(new_definition);
+
+                return 0;
+            }
+
+            static unsigned int next_id = 0;
+
+            char buffer[100];
+
+            sprintf(buffer, "_F%d", next_id++);
+
+            cfl_node* variable = cfl_create_new_node_variable(buffer);
+
+            if(!variable)
+            {
+                cfl_free_node(name);
+                cfl_free_node(argument);
+                cfl_free_node(new_definition);
+                cfl_free_node(name_copy);
+
+                return 0;
+            }
+
+            cfl_node* body = cfl_create_new_node_application(name_copy, variable);
+
+            if(!body)
+            {
+                cfl_free_node(name);
+                cfl_free_node(argument);
+                cfl_free_node(new_definition);
+
+                return 0;
+            }
+
+            cfl_node* let_rec = cfl_create_new_node_let_rec(name,
+                                                            argument,
+                                                            new_definition,
+                                                            body);
+
+            if(!let_rec)
+                return 0;
+
+            variable = cfl_create_new_node_variable(buffer);
+
+            if(!variable)
+            {
+                cfl_free_node(let_rec);
+
+                return 0;
+            }
+
+            return cfl_create_new_node_function(variable, let_rec);
+        }
+
+        new_definition = cfl_create_new_node_function(argument, new_definition);
+
+        if(!new_definition)
+        {
+            cfl_free_node(name);
+
+            return 0;
+        }
+    }
+
+    cfl_free_node(name);
+
+    return new_definition;
+}
+
 cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 {
     cfl_definition_list head;
     head.next = 0;
+    cfl_node* main_body;
 
     bool semi = false;
 
@@ -675,19 +790,61 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 
         position = pos;
 
-        cfl_definition_list* new_definition = cfl_create_definition_list_node(
-                name, argument_head.next, definition);
+        if(!strcmp(name->data, "main"))
+        {
+            if(argument_head.next)
+            {
+                cfl_parse_error_main_has_arguments();
+    
+                cfl_free_definition_list(head.next);
+    
+                return 0;
+            }
+
+            main_body = definition;
+
+            cfl_free_node(name);
+
+            continue;
+        }
+
+        cfl_node* name_copy = cfl_create_new_node_variable(name->data);
+
+        if(!name_copy)
+        {
+            cfl_free_node(name);
+            cfl_free_definition_list(head.next);
+            cfl_free_node(definition);
+            cfl_free_definition_list(head.next);
+
+            return 0;
+        }
+
+        cfl_node* new_definition = cfl_function_transform(name_copy,
+                                                          argument_head.next,
+                                                          definition);
 
         if(!new_definition)
+        {
+            cfl_free_node(name);
+            cfl_free_definition_list(head.next);
+
+            return 0;
+        }
+
+        cfl_definition_list* new_definition_list_node =
+                cfl_create_definition_list_node(name, new_definition);
+
+        if(!new_definition_list_node)
         {
             cfl_free_definition_list(head.next);
 
             return 0;
         }
 
-        new_definition->next = head.next;
+        new_definition_list_node->next = head.next;
 
-        head.next = new_definition;
+        head.next = new_definition_list_node;
 
         if(position != block && !cfl_token_string_compare(position, ";", 1))
         {
@@ -705,9 +862,12 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 
         cfl_free_definition_list(head.next);
 
+        if(main_body)
+            cfl_free_node(main_body);
+
         return 0;
     }
-    else if(strncmp(head.next->name->data, "main", 4))
+    else if(!main_body)
     {
         cfl_parse_error_missing_main();
 
@@ -715,28 +875,11 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 
         return 0;
     }
-    else if(head.next->arguments)
-    {
-        cfl_parse_error_main_has_arguments();
-
-        cfl_free_definition_list(head.next);
-
-        return 0;
-    }
-
-    cfl_definition_list* temp = head.next;
-
-    head.next = temp->next;
-
-    cfl_node* body = temp->definition;
-
-    cfl_free_node(temp->name);
-    free(temp);
 
     cfl_program* result = cfl_parser_malloc(sizeof(cfl_program));
 
     result->definitions = head.next;
-    result->main = body;
+    result->main = main_body;
 
     return result;
 }

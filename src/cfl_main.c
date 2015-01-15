@@ -1,4 +1,5 @@
 #include "cfl_parser.h"
+#include "cfl_program.h"
 #include "cfl_type.h"
 #include "cfl_eval.h"
 
@@ -19,19 +20,20 @@ int main(int argc, char* argv[])
     }
 
     cfl_node* node;
+    cfl_program* program;
 
     if(argc > 2)
     {
         if(!strcmp(argv[1], "-ast"))
         {
-            node = cfl_parse_file(argv[2]);
+            program = cfl_parse_file(argv[2]);
 
-            if(!node)
+            if(!program)
                 return 1;
 
-            cfl_print_node(node);
+            cfl_print_program(program);
 
-            cfl_free_node(node);
+            cfl_free_program(program);
         }
         else if(argc > 2 && !strcmp(argv[1], "-type"))
         {
