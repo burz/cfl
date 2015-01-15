@@ -17,6 +17,7 @@ void cfl_parse_error_complex_function_name(void);
 void cfl_parse_error_partial_program(void);
 void cfl_parse_error_missing_main(void);
 void cfl_parse_error_main_has_arguments(void);
+void cfl_parse_error_redeclaration(char* name);
 void cfl_parse_error_unparseable_file(char* filename);
 
 bool cfl_is_whitespace(char x);

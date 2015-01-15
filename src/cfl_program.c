@@ -49,3 +49,24 @@ void cfl_print_program(cfl_program* program)
 
     cfl_print_node(program->main);
 }
+
+static void cfl_reverse_print_definition_types(cfl_definition_list* definitions)
+{
+    if(!definitions)
+        return;
+
+    cfl_reverse_print_definition_types(definitions->next);
+
+    printf("%s => ", (char*) definitions->name->data);
+
+    cfl_print_type(definitions->type);
+}
+
+void cfl_print_program_type(cfl_program* program)
+{
+    cfl_reverse_print_definition_types(program->definitions);
+
+    printf("main => ");
+
+    cfl_print_type(program->type);
+}

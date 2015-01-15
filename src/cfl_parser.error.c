@@ -10,6 +10,11 @@ void cfl_reset_parser_error_flag(void)
     cfl_parse_error = false;
 }
 
+bool cfl_get_parse_error_flag(void)
+{
+    return cfl_parse_error || cfl_get_ast_error_flag();
+}
+
 void* cfl_parser_malloc(size_t size)
 {
     void* result = malloc(size);
@@ -151,6 +156,17 @@ void cfl_parse_error_main_has_arguments(void)
     cfl_parse_error = true;
 }
 
+void cfl_parse_error_redeclaration(char* name)
+{
+    if(cfl_parse_error)
+        return;
+
+    fprintf(stderr, "PARSING ERROR: Redeclaration of global variable "
+                    "\"%s\"\n", name);
+
+    cfl_parse_error = true;
+}
+
 void cfl_parse_error_unparseable_file(char* filename)
 {
     if(cfl_parse_error)
@@ -160,9 +176,4 @@ void cfl_parse_error_unparseable_file(char* filename)
                     "in file %s\n", filename);
 
     cfl_parse_error = true;
-}
-
-bool cfl_get_parse_error_flag(void)
-{
-    return cfl_parse_error || cfl_get_ast_error_flag();
 }

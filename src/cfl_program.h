@@ -16,10 +16,13 @@ void cfl_free_definition_list(cfl_definition_list* list);
 typedef struct {
     cfl_definition_list* definitions;
     cfl_node* main;
+    cfl_type* type;
 } cfl_program;
 
 void cfl_free_program(cfl_program* program);
 
 void cfl_print_program(cfl_program* program);
+
+void cfl_print_program_type(cfl_program* program);
 
 #endif

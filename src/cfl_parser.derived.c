@@ -788,6 +788,18 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
             return 0;
         }
 
+        cfl_definition_list* def_pos = head.next;
+
+        for( ; def_pos; def_pos = def_pos->next)
+            if(!strcmp(name->data, def_pos->name->data))
+            {
+                cfl_parse_error_redeclaration(name->data);
+
+                cfl_free_definition_list(head.next);
+
+                return 0;
+            }
+
         position = pos;
 
         if(!strcmp(name->data, "main"))
@@ -798,6 +810,15 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
     
                 cfl_free_definition_list(head.next);
     
+                return 0;
+            }
+
+            if(main_body)
+            {
+                cfl_parse_error_redeclaration("main");
+
+                cfl_free_definition_list(head.next);
+
                 return 0;
             }
 
@@ -880,6 +901,7 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 
     result->definitions = head.next;
     result->main = main_body;
+    result->type = 0;
 
     return result;
 }
