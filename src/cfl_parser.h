@@ -97,6 +97,7 @@ cfl_node_parser cfl_parse_greater;
 cfl_node_parser cfl_parse_greater_equal;
 
 cfl_node_parser cfl_parse_application;
+cfl_node_parser cfl_parse_applicative;
 
 bool cfl_parse_def(cfl_token_list** end,
                    cfl_node** name,

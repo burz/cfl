@@ -53,7 +53,8 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
         else if(*start == '*' || *start == '/' || *start == '%' ||
            *start == '!' || *start == ':' || *start == ';' ||
            *start == '(' || *start == ')' || *start == '[' ||
-           *start == ']' || *start == ',' || *start == '_')
+           *start == ']' || *start == ',' || *start == '_' ||
+           *start == '$')
         {
             back->next = cfl_create_token_list_node(start, 1);
             ++start;
@@ -65,6 +66,10 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
             if(*pos != '\'')
             {
                 cfl_parse_error_expected("\"'\"", "\"'\"", pos, end);
+
+                back->next = 0;
+
+                cfl_delete_token_list(head->next);
 
                 return 0;
             }
@@ -82,6 +87,10 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
             if(pos == end)
             {
                 cfl_parse_error_expected("\"\"\"", "\"\"\"", end, end);
+
+                back->next = 0;
+
+                cfl_delete_token_list(head->next);
 
                 return 0;
             }
@@ -221,14 +230,14 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
 
             back->next = 0;
 
-            cfl_delete_token_list(head);
+            cfl_delete_token_list(head->next);
 
             return 0;
         }
 
         if(!back->next)
         {
-            cfl_delete_token_list(head);
+            cfl_delete_token_list(head->next);
 
             return 0;
         }

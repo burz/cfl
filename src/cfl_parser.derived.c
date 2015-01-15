@@ -285,6 +285,28 @@ cfl_node* cfl_parse_greater_equal(
     return cfl_create_new_node_not(less);
 }
 
+cfl_node* cfl_parse_applicative(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_expression,
+                                   &cfl_parse_expression,
+                                   1,
+                                   "$",
+                                   position,
+                                   block))
+        return 0;
+
+    return cfl_create_new_node_application(left, right);
+}
+
 bool cfl_parse_def(cfl_token_list** end,
                    cfl_node** name,
                    cfl_list_node* argument_head,

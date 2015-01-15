@@ -261,6 +261,11 @@ cfl_node* cfl_parse_expression(
     if(result || cfl_get_parse_error_flag())
         return result;
 
+    result = cfl_parse_applicative(end, position, block);
+
+    if(result || cfl_get_parse_error_flag())
+        return result;
+
     result = cfl_parse_boolean_term(end, position, block);
 
     return result;
@@ -283,7 +288,7 @@ cfl_node* cfl_parse_file(char* filename)
 
     fseek(f, 0, SEEK_SET);
 
-    char* program = malloc(file_size + 1);
+    char* program = cfl_parser_malloc(file_size + 1);
 
     if(!program)
     {
@@ -319,7 +324,11 @@ cfl_node* cfl_parse_file(char* filename)
     head.next = 0;
 
     if(!cfl_generate_token_list(&head, program, program_end))
+    {
+        free(program);
+
         return 0;
+    }
 
     cfl_token_list* ending_position;
 

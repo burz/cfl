@@ -72,8 +72,14 @@ r ::=   f + r | f - r
 p ::=   r == r | r < r | r <= r | r > r | r >= r |
       | r
 
-b ::=   p "&&" b
+l ::=   p : l
       | p
+
+g ::=   l ++ g |
+      | l
+
+b ::=   g "&&" b
+      | g
 
 n ::=   b "||" n
       | b
@@ -83,11 +89,8 @@ e ::=   function c -> e
       | let c = e in e
       | let x c ... c = e in e
       | case e of [] -> e "|" (x : x) -> e
-      | n ++ e | n : e
+      | e $ e
       | r
-
-y ::=   Bool | Int
-      | t
 
 s ::=   c = e
       | x c ... c = e
