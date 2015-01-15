@@ -40,12 +40,23 @@ void cfl_type_error_undefined_variable(char* name)
     cfl_type_error = true;
 }
 
+void cfl_type_error_bad_definition(char* name)
+{
+    if(cfl_type_error)
+        return;
+
+    fprintf(stderr, "TYPE ERROR: Could not type the definition "
+                    "of \"%s\"\n", name);
+
+    cfl_type_error = true;
+}
+
 void cfl_type_error_failure(void)
 {
     if(cfl_type_error)
         return;
 
-    fprintf(stderr, "TYPE ERROR: Could not type expression\n");
+    fprintf(stderr, "TYPE ERROR: Could not type \"main\"\n");
 
     cfl_type_error = true;
 }

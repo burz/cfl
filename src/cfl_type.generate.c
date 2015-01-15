@@ -1267,6 +1267,7 @@ static void cfl_delete_type_equation_chain_until(
 static cfl_type* cfl_run_hidden_typecheck(
         cfl_type_equation_chain* equation_head,
         cfl_type_hypothesis_chain* hypothesis_head,
+        char* name,
         cfl_node* node)
 {
     cfl_type_equation_chain* position = equation_head->next;
@@ -1287,7 +1288,7 @@ static cfl_type* cfl_run_hidden_typecheck(
 
     if(!cfl_ensure_type_equation_chain_consistency(equation_head->next))
     {
-        cfl_type_error_failure();
+        cfl_type_error_bad_definition(name);
 
         cfl_free_type(result);
 
@@ -1314,6 +1315,7 @@ unsigned int cfl_setup_definitions(
     {
         pos->type = cfl_run_hidden_typecheck(equation_head,
                                              hypothesis_head,
+                                             pos->name->data,
                                              pos->definition);
 
         if(!pos->type)
