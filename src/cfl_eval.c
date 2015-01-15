@@ -32,6 +32,7 @@ static bool cfl_complex_variable_contains(cfl_node* node, char* variable)
 bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 {
     int i;
+    cfl_list_node* pos;
 
     switch(target->type)
     {
@@ -49,6 +50,12 @@ bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
 
                 free(result);
             }
+            break;
+        case CFL_NODE_LIST:
+            pos = target->data;
+            for( ; pos; pos = pos->next)
+                if(!cfl_substitute(pos->node, variable, value))
+                    return false;
             break;
         case CFL_NODE_FUNCTION:
             if(!cfl_complex_variable_contains(target->children[0], variable))
@@ -92,7 +99,7 @@ bool cfl_complex_substitute(cfl_node* target, cfl_node* variable, cfl_node* valu
 {
     if(variable->type == CFL_NODE_VARIABLE)
     {
-        if(*((char*) variable->data) == '_' && ((char*) variable->data)[1] == 0)
+        if(*((char*) variable->data) == '_')
             return true;
 
         return cfl_substitute(target, variable->data, value);

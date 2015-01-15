@@ -336,7 +336,7 @@ cfl_node* cfl_parse_composition(
 
     char buffer[100];
 
-    int length = sprintf(buffer, "_C%d", next_id++);
+    int length = sprintf(buffer, "~C%d", next_id++);
 
     cfl_node* variable = cfl_create_new_node_variable_n(length, buffer);
 
@@ -695,7 +695,7 @@ static cfl_node* cfl_function_transform(
 
             char buffer[100];
 
-            sprintf(buffer, "_F%d", next_id++);
+            sprintf(buffer, "~F%d", next_id++);
 
             cfl_node* variable = cfl_create_new_node_variable(buffer);
 
