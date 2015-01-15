@@ -233,6 +233,25 @@ cfl_node* cfl_parse_boolean_term(
     return result;
 }
 
+cfl_node* cfl_parse_function_factor(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    if(position == block)
+        return 0;
+
+    cfl_node* result = cfl_parse_composition(end, position, block);
+
+    if(result || cfl_get_parse_error_flag())
+        return result;
+
+    result = cfl_parse_boolean_term(end, position, block);
+
+    return result;
+}
+
+
 cfl_node* cfl_parse_expression(
         cfl_token_list** end,
         cfl_token_list* position,
@@ -266,7 +285,7 @@ cfl_node* cfl_parse_expression(
     if(result || cfl_get_parse_error_flag())
         return result;
 
-    result = cfl_parse_boolean_term(end, position, block);
+    result = cfl_parse_function_factor(end, position, block);
 
     return result;
 }

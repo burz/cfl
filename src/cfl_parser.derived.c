@@ -1,5 +1,6 @@
 #include "cfl_parser.h"
 
+#include <stdio.h>
 #include <string.h>
 
 extern void* cfl_parser_malloc(size_t size);
@@ -285,6 +286,67 @@ cfl_node* cfl_parse_greater_equal(
     return cfl_create_new_node_not(less);
 }
 
+cfl_node* cfl_parse_composition(
+        cfl_token_list** end,
+        cfl_token_list* position,
+        cfl_token_list* block)
+{
+    cfl_node* left;
+    cfl_node* right;
+
+    if(!cfl_parse_binary_operation(end,
+                                   &left,
+                                   &right,
+                                   &cfl_parse_boolean_term,
+                                   &cfl_parse_function_factor,
+                                   1,
+                                   ".",
+                                   position,
+                                   block))
+        return 0;
+
+    static unsigned int next_id = 0;
+
+    char buffer[100];
+
+    int length = sprintf(buffer, "_C%d", next_id++);
+
+    cfl_node* variable = cfl_create_new_node_variable_n(length, buffer);
+
+    if(!variable)
+    {
+        cfl_free_node(left);
+        cfl_free_node(right);
+
+        return 0;
+    }
+
+    cfl_node* inner_application = cfl_create_new_node_application(right, variable);
+
+    if(!inner_application)
+    {
+        cfl_free_node(left);
+
+        return 0;
+    }
+
+    cfl_node* outer_application = cfl_create_new_node_application(left, inner_application);
+
+    if(!outer_application)
+        return 0;
+
+    variable = cfl_create_new_node_variable_n(length, buffer);
+
+    if(!variable)
+    {
+        cfl_free_node(outer_application);
+
+        return 0;
+    }
+
+    return cfl_create_new_node_function(variable, outer_application);
+}
+
 cfl_node* cfl_parse_applicative(
         cfl_token_list** end,
         cfl_token_list* position,
@@ -296,7 +358,7 @@ cfl_node* cfl_parse_applicative(
     if(!cfl_parse_binary_operation(end,
                                    &left,
                                    &right,
-                                   &cfl_parse_expression,
+                                   &cfl_parse_function_factor,
                                    &cfl_parse_expression,
                                    1,
                                    "$",

@@ -54,7 +54,7 @@ bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end)
            *start == '!' || *start == ':' || *start == ';' ||
            *start == '(' || *start == ')' || *start == '[' ||
            *start == ']' || *start == ',' || *start == '_' ||
-           *start == '$')
+           *start == '.' || *start == '$')
         {
             back->next = cfl_create_token_list_node(start, 1);
             ++start;
