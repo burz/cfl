@@ -2,6 +2,7 @@
 #define _CFL_PARSER_H_
 
 #include "cfl_ast.h"
+#include "cfl_program.h"
 
 #define MAX_INTEGER_STRING_LENGTH 11
 
@@ -126,8 +127,9 @@ cfl_node_parser cfl_parse_boolean_factor;
 cfl_node_parser cfl_parse_boolean_term;
 cfl_node_parser cfl_parse_function_factor;
 cfl_node_parser cfl_parse_expression;
-cfl_node_parser cfl_parse_program;
 
-cfl_node* cfl_parse_file(char* filename);
+cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block);
+
+cfl_program* cfl_parse_file(char* filename);
 
 #endif

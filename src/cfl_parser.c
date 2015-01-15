@@ -295,7 +295,7 @@ cfl_node* cfl_parse_expression(
     return result;
 }
 
-cfl_node* cfl_parse_file(char* filename)
+cfl_program* cfl_parse_file(char* filename)
 {
     FILE* f = fopen(filename, "rb");
 
@@ -354,9 +354,7 @@ cfl_node* cfl_parse_file(char* filename)
         return 0;
     }
 
-    cfl_token_list* ending_position;
-
-    cfl_node* result = cfl_parse_program(&ending_position, head.next, 0);
+    cfl_program* result = cfl_parse_program(head.next, 0);
 
     cfl_delete_token_list(head.next);
 

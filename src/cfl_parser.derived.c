@@ -617,34 +617,33 @@ cfl_node* cfl_parse_let(
     return cfl_let_transform(name, argument_head.next, definition, body);
 }
 
-typedef struct cfl_program_list_t {
-    cfl_node* name;
-    cfl_list_node* arguments;
-    cfl_node* definition;
-    struct cfl_program_list_t* next;
-} cfl_program_list;
-
-static void cfl_delete_program_list(cfl_program_list* list)
+static cfl_definition_list* cfl_create_definition_list_node(
+        cfl_node* name,
+        cfl_list_node* arguments,
+        cfl_node* definition)
 {
-    while(list)
+    cfl_definition_list* result = cfl_parser_malloc(sizeof(cfl_definition_list));
+
+    if(!result)
     {
-        cfl_program_list* temp = list;
+        cfl_free_node(name);
+        cfl_delete_list_nodes(arguments);
+        cfl_free_node(definition);
 
-        list = list->next;
-
-        cfl_free_node(temp->name);
-        cfl_delete_list_nodes(temp->arguments);
-        cfl_free_node(temp->definition);
-        free(temp);
+        return 0;
     }
+
+    result->name = name;
+    result->arguments = arguments;
+    result->definition = definition;
+    result->type = 0;
+
+    return result;
 }
 
-cfl_node* cfl_parse_program(
-        cfl_token_list** end,
-        cfl_token_list* position,
-        cfl_token_list* block)
+cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 {
-    cfl_program_list head;
+    cfl_definition_list head;
     head.next = 0;
 
     bool semi = false;
@@ -666,7 +665,7 @@ cfl_node* cfl_parse_program(
                 cfl_parse_error_expected("statement", "\";\"",
                                          position->start, position->end);
 
-                cfl_delete_program_list(head.next);
+                cfl_free_definition_list(head.next);
             }
             else
                 cfl_parse_error_partial_program();
@@ -676,25 +675,19 @@ cfl_node* cfl_parse_program(
 
         position = pos;
 
-        cfl_program_list* new_statement =
-            cfl_parser_malloc(sizeof(cfl_program_list));
+        cfl_definition_list* new_definition = cfl_create_definition_list_node(
+                name, argument_head.next, definition);
 
-        if(!new_statement)
+        if(!new_definition)
         {
-            cfl_free_node(name);
-            cfl_delete_list_nodes(argument_head.next);
-            cfl_free_node(definition);
-            cfl_delete_program_list(head.next);
+            cfl_free_definition_list(head.next);
 
             return 0;
         }
 
-        new_statement->name = name;
-        new_statement->arguments = argument_head.next;
-        new_statement->definition = definition;
-        new_statement->next = head.next;
+        new_definition->next = head.next;
 
-        head.next = new_statement;
+        head.next = new_definition;
 
         if(position != block && !cfl_token_string_compare(position, ";", 1))
         {
@@ -710,7 +703,7 @@ cfl_node* cfl_parse_program(
     {
         cfl_parse_error_partial_program();
 
-        cfl_delete_program_list(head.next);
+        cfl_free_definition_list(head.next);
 
         return 0;
     }
@@ -718,7 +711,7 @@ cfl_node* cfl_parse_program(
     {
         cfl_parse_error_missing_main();
 
-        cfl_delete_program_list(head.next);
+        cfl_free_definition_list(head.next);
 
         return 0;
     }
@@ -726,12 +719,12 @@ cfl_node* cfl_parse_program(
     {
         cfl_parse_error_main_has_arguments();
 
-        cfl_delete_program_list(head.next);
+        cfl_free_definition_list(head.next);
 
         return 0;
     }
 
-    cfl_program_list* temp = head.next;
+    cfl_definition_list* temp = head.next;
 
     head.next = temp->next;
 
@@ -740,28 +733,10 @@ cfl_node* cfl_parse_program(
     cfl_free_node(temp->name);
     free(temp);
 
-    while(head.next)
-    {
-        temp = head.next;
+    cfl_program* result = cfl_parser_malloc(sizeof(cfl_program));
 
-        head.next = temp->next;
+    result->definitions = head.next;
+    result->main = body;
 
-        body = cfl_let_transform(temp->name,
-                                 temp->arguments,
-                                 temp->definition,
-                                 body);
-
-        free(temp);
-
-        if(!body)
-        {
-            cfl_delete_program_list(head.next);
-
-            return 0;
-        }
-    }
-
-    *end = position;
-
-    return body;
+    return result;
 }
