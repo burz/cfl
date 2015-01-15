@@ -2,7 +2,7 @@
 #define _CFL_PROGRAM_H_
 
 #include "cfl_ast.h"
-#include "cfl_type.h"
+#include "cfl_type.types.h"
 
 typedef struct cfl_definition_list_t {
     cfl_node* name;

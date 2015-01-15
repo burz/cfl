@@ -1,4 +1,5 @@
 #include "cfl_program.h"
+#include "cfl_type.h"
 
 #include <stdio.h>
 
@@ -34,14 +35,14 @@ void cfl_free_program(cfl_program* program)
 
 static void cfl_print_definitions(cfl_definition_list* definitions)
 {
-    if(!definitions)
-        return;
+    while(definitions)
+    {
+        printf("%s ::= ", (char*) definitions->name->data);
 
-    printf("%s ::= ", (char*) definitions->name->data);
+        cfl_print_node(definitions->definition);
 
-    cfl_print_node(definitions->definition);
-
-    cfl_print_definitions(definitions->next);
+        definitions = definitions->next;
+    }
 }
 
 void cfl_print_program(cfl_program* program)
@@ -55,14 +56,14 @@ void cfl_print_program(cfl_program* program)
 
 static void cfl_print_definition_types(cfl_definition_list* definitions)
 {
-    if(!definitions)
-        return;
+    while(definitions)
+    {
+        printf("%s => ", (char*) definitions->name->data);
 
-    printf("%s => ", (char*) definitions->name->data);
+        cfl_print_type(definitions->type);
 
-    cfl_print_type(definitions->type);
-
-    cfl_print_definition_types(definitions->next);
+        definitions = definitions->next;
+    }
 }
 
 void cfl_print_program_type(cfl_program* program)

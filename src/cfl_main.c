@@ -19,7 +19,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    cfl_node* node;
     cfl_program* program;
 
     if(argc > 2)
@@ -37,25 +36,21 @@ int main(int argc, char* argv[])
         }
         else if(argc > 2 && !strcmp(argv[1], "-type"))
         {
-            node = cfl_parse_file(argv[2]);
+            program = cfl_parse_file(argv[2]);
 
-            if(!node)
+            if(!program)
                 return 1;
 
-            cfl_type* type = cfl_typecheck(node);
-
-            if(!type)
+            if(!cfl_typecheck(program))
             {
-                cfl_free_node(node);
+                cfl_free_program(program);
 
                 return 1;
             }
 
-            cfl_print_type(type);
+            cfl_print_program_type(program);
 
-            cfl_free_type(type);
-
-            cfl_free_node(node);
+            cfl_free_program(program);
         }
         else
         {
@@ -67,32 +62,28 @@ int main(int argc, char* argv[])
     }
     else
     {
-        node = cfl_parse_file(argv[1]);
+        program = cfl_parse_file(argv[1]);
 
-        if(!node)
+        if(!program)
             return 1;
 
-        cfl_type* type = cfl_typecheck(node);
-
-        if(!type)
+        if(!cfl_typecheck(program))
         {
-            cfl_free_node(node);
+            cfl_free_program(program);
 
             return 1;
         }
 
-        cfl_free_type(type);
-
-        if(!cfl_evaluate(node))
+        if(!cfl_evaluate(program))
         {
-            cfl_free_node(node);
+            cfl_free_program(program);
 
             return 1;
         }
 
-        cfl_print_node(node);
+        cfl_print_node(program->main);
 
-        cfl_free_node(node);
+        cfl_free_program(program);
     }
 
     return 0;

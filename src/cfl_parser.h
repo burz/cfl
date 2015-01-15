@@ -3,6 +3,7 @@
 
 #include "cfl_ast.h"
 #include "cfl_program.h"
+#include "cfl_parser.types.h"
 
 #define MAX_INTEGER_STRING_LENGTH 11
 
@@ -24,22 +25,12 @@ bool cfl_is_whitespace(char x);
 bool cfl_is_number(char x);
 bool cfl_is_letter(char x);
 
-typedef struct cfl_token_list_t {
-    char* start;
-    char* end;
-    struct cfl_token_list_t* next;
-} cfl_token_list;
-
 cfl_token_list* cfl_create_token_list_node(char* start, unsigned int length);
 bool cfl_generate_token_list(cfl_token_list* head, char* start, char* end);
 void cfl_print_token_list(cfl_token_list* list);
 void cfl_delete_token_list(cfl_token_list* list);
 
 bool cfl_token_string_compare(cfl_token_list* position, char* string, int length);
-
-typedef cfl_node* cfl_node_parser(cfl_token_list** end,
-                                  cfl_token_list* position,
-                                  cfl_token_list* block);
 
 cfl_node_parser cfl_parse_parentheses;
 
