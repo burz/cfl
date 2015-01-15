@@ -1303,12 +1303,87 @@ static cfl_type* cfl_run_hidden_typecheck(
     return final_result;
 }
 
+unsigned int cfl_generate_global_hypotheses(
+        cfl_type_equation_chain* equation_head,
+        cfl_type_hypothesis_chain* hypothesis_head)
+{
+    cfl_type_hypothesis_chain* hypothesis =
+            cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
+
+    if(!hypothesis)
+        return 0;
+
+    unsigned int id = next_id++;
+
+    hypothesis->name = "random";
+    hypothesis->id = id;
+    hypothesis->next = hypothesis_head->next;
+
+    hypothesis_head->next = hypothesis;
+
+    cfl_type* integer_left = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!integer_left)
+        return 0;
+
+    cfl_create_type_integer(integer_left);
+
+    cfl_type* integer_right = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!integer_right)
+    {
+        cfl_free_type(integer_left);
+
+        return 0;
+    }
+
+    cfl_create_type_integer(integer_right);
+
+    cfl_type* arrow = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!arrow)
+    {
+        cfl_free_type(integer_left);
+        cfl_free_type(integer_right);
+
+        return 0;
+    }
+
+    cfl_create_type_arrow(arrow, integer_left, integer_right);
+
+    cfl_type* variable = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!variable)
+    {
+        cfl_free_type(arrow);
+
+        return 0;
+    }
+
+    cfl_create_type_variable(variable, id);
+
+    if(!cfl_add_equation(equation_head, variable, arrow))
+    {
+        cfl_free_type(arrow);
+        cfl_free_type(variable);
+
+        return 0;
+    }
+
+    return 1;
+}
+
 unsigned int cfl_setup_definitions(
         cfl_type_equation_chain* equation_head,
         cfl_type_hypothesis_chain* hypothesis_head,
         cfl_definition_list* definitions)
 {
-    unsigned int hypothesis_count = 0;
+    unsigned int hypothesis_count = cfl_generate_global_hypotheses(equation_head,
+                                                                   hypothesis_head);
+
+    if(!hypothesis_count)
+        return 0;
+
     cfl_definition_list* pos = definitions;
 
     while(pos)

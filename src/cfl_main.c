@@ -74,6 +74,8 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+        cfl_initialize_eval();
+
         if(!cfl_evaluate_program(program))
         {
             cfl_free_program(program);

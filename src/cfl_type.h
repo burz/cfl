@@ -43,6 +43,10 @@ cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* equation_hea
                                            cfl_type_hypothesis_chain* hypothesis_head,
                                            cfl_node* node);
 
+unsigned int cfl_generate_global_hypotheses(
+        cfl_type_equation_chain* equation_head,
+        cfl_type_hypothesis_chain* hypothesis_head);
+
 unsigned int cfl_setup_definitions(cfl_type_equation_chain* equation_head,
                                    cfl_type_hypothesis_chain* hypothesis_head,
                                    cfl_definition_list* definitions);

@@ -1,7 +1,9 @@
 #include "cfl_eval.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 void* cfl_eval_malloc(size_t size)
 {
@@ -14,6 +16,11 @@ void* cfl_eval_malloc(size_t size)
     }
 
     return result;
+}
+
+void cfl_initialize_eval(void)
+{
+    srand(time(0));
 }
 
 static bool cfl_complex_variable_contains(cfl_node* node, char* variable)
@@ -113,6 +120,11 @@ bool cfl_complex_substitute(cfl_node* target, cfl_node* variable, cfl_node* valu
     return true;
 }
 
+int cfl_evaluate_global_function_random(int value)
+{
+    return rand() % (value + 1);
+}
+
 bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
 {
     if(node->type == CFL_NODE_VARIABLE)
@@ -122,16 +134,19 @@ bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
        while(pos && strcmp(pos->name->data, node->data))
             pos = pos->next;
 
-        cfl_node* result = cfl_copy_new_node(pos->definition);
+        if(pos)
+        {
+            cfl_node* result = cfl_copy_new_node(pos->definition);
 
-        if(!result)
-            return false;
+            if(!result)
+                return false;
 
-        cfl_delete_node(node);
+            cfl_delete_node(node);
 
-        *node = *result;
+            *node = *result;
 
-        free(result);
+            free(result);
+        }
     }
     else if(node->type == CFL_NODE_LIST)
     {
@@ -276,6 +291,17 @@ bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
         if(!cfl_evaluate(node->children[0], definitions) ||
            !cfl_evaluate(node->children[1], definitions))
             return false;
+
+        if(node->children[0]->type == CFL_NODE_VARIABLE &&
+           !strcmp(node->children[0]->data, "random"))
+        {
+            int result = cfl_evaluate_global_function_random(
+                    *((int*) node->children[1]->data));
+
+            cfl_reinitialize_node_integer(node, result);
+
+            return true;
+        }
 
         if(!cfl_complex_substitute(node->children[0]->children[1],
                                    node->children[0]->children[0],
