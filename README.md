@@ -26,52 +26,78 @@ To output the return type of a file run
 
 ## Example
 
-The mergesort algorithm can be written in cfl as
+The quicksort algorithm can be written in cfl as
 ```
-compare x y = if x > y then -1 else if x == y then 0 else 1;
+split x xs l r = case xs of
+      []       -> (l, r)
+    | (y : ys) -> let (l', r') = split x ys l r in if y <= x
+        then (y : l', r')
+        else (l', y : r');
 
-combine x y = case x of
-      []       -> y
-    | (z : zs) -> case y of
-          []       -> x
-        | (w : ws) -> let r = compare z w in if r <= 0
-            then w : z : combine zs ws
-            else z : w : combine zs ws; 
+quicksort x = case x of
+      []       -> []
+    | (y : ys) -> let (l, r) = split y ys [] []
+        in quicksort l ++ y : quicksort r;
 
-mergesort x = let mergesort' x l r = case x of
-      []       -> combine (mergesort l) (mergesort r)
-    | (z : zs) -> case zs of
-          []       -> x
-        | (w : ws) -> mergesort' ws (z : l) (w : r)
-in mergesort' x [] []; 
+random_list x l = if x == 0 then [] else random l : random_list (x - 1) l;
 
-main = mergesort [4, 23, -34, 3]
+main = quicksort $ random_list 100 500
 ```
-Note that every cfl program must end with a `main` and global defintions are followed by
-a semicolon.
+Note that every cfl program must end with a `main` and global definitions are followed by
+a semicolon. `random x` is a globally defined function that returns a random integer
+between `0` and `x`.
+
+Running `./cfl -ast` will output
+```
+split ::= function ~F0 -> (let rec split x = (function xs -> (function l -> (function r -> (case (xs) of [] -> ((l, r)) | (y : ys) -> ((function (l', r') -> (if (((y) < (x)) || ((y) == (x))) then (((y) : (l'), r')) else ((l', (y) : (r'))))) (((((split) (x)) (ys)) (l)) (r))))))) in ((split) (~F0)))
+quicksort ::= function ~F1 -> (let rec quicksort x = (case (x) of [] -> ([]) | (y : ys) -> ((function (l, r) -> (((quicksort) (l)) ++ ((y) : ((quicksort) (r))))) (((((split) (y)) (ys)) ([])) ([])))) in ((quicksort) (~F1)))
+random_list ::= function ~F2 -> (let rec random_list x = (function l -> (if ((x) == (0)) then ([]) else (((random) (l)) : (((random_list) ((x) + ((-1) * (1)))) (l))))) in ((random_list) (~F2)))
+main ::= (quicksort) (((random_list) (100)) (500))
+```
+
+Running `./cfl -type` will output
+```
+split => (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))
+quicksort => ([Integer] -> [Integer])
+random_list => (Integer -> (Integer -> [Integer]))
+main => [Integer]
+```
+
+Running `./cfl` will output something like
+```
+[0, 1, 3, 8, 14, 15, 16, 17, 25, 32, 37, 38, 40, 46, 61, 61, 64, 77, 80, 106, 108, 110, 111, 113, 121, 127, 134, 134, 137, 144, 149, 151, 158, 160, 165, 177, 179, 180, 188, 192, 196, 200, 201, 202, 212, 216, 218, 220, 223, 230, 236, 239, 239, 244, 251, 253, 265, 269, 281, 294, 301, 304, 308, 315, 323, 332, 334, 356, 359, 372, 373, 374, 375, 375, 383, 385, 387, 392, 393, 397, 398, 399, 402, 412, 420, 425, 431, 433, 438, 440, 441, 445, 452, 454, 459, 474, 482, 488, 489, 495]
+```
 
 ## Expressions
 
+### Basic types
+
+The basic types of cfl are bools (`true` or `false`), integers (`0, 1, -1, ...`), and
+characters (`'q'`).
+
 ### Boolean Operations
 
-We allow conjunction (&&), disjunction (||), and negation (!) expressions.
+cfl allows conjunction (&&), disjunction (||), and negation (!) expressions.
 
 ### Integer Operations
 
 The operations of addition (+), subtraction (-), multiplication (*), division (/),
 and modulus (%) evaluate to integer values. On the other hand, the comparison
-operators of equality (==), less-than (<), less-than-or-equal (<=), greater-than
-(>), and greater-than-or-equal (>=) all evaluate to boolean values.
+operators of equality (==), inequality (!=), less-than (<), less-than-or-equal (<=),
+greater-than (>), and greater-than-or-equal (>=) all evaluate to boolean values.
 
 ### Functional Operations
 
-We allow the creation of anonymous functions via `function x -> e` where `e` is some
+cfl allows the creation of anonymous functions via `function x -> e` where `e` is some
 expression, and `x` is the argument to the function. We can create multiple argument
 anonymous functions via `function x -> function y -> e` where `x` is
 the first argument and `y` is the second, etc.
 
 To apply a function `f` simply use `f e` where `e` is the expression for the first
-argument, or `f e1 e2` for the first argument `e1` and second argument `e2`.
+argument, or `f e1 e2` for the first argument `e1` and second argument `e2`. Similary
+one can use `f $ x` to apply the entire right side of the `$` to `f`.
+
+Finally, one can compose two functions `f . g`.
 
 ### If Expressions
 
@@ -87,6 +113,17 @@ and
 ```
 let f x y = if x = 0 then 0 else y + f (x - 1) y in f 3 4
 ```
+
+### Tuple Expressions
+
+Tuples of arbitrary size can be created via `(true, false, [0], 1, [false])`.
+
+Anything but a function name can be matched to a tuple in `let` statements, for instance
+```
+let (x, y) = (1, 2) in x + y
+let f (x, y) = x + y
+```
+are both valid.
 
 ### List Expressions
 
@@ -105,3 +142,8 @@ Finally, we can match on lists via a case expression via
 ```
 case e1 of [] -> e2 | (x : xs) -> e3
 ```
+
+### String Expressions
+
+Strings are implemented as lists of characters. To create a string one can simply
+write the quotation enclosed string, i.e. `"hello world!"`.
