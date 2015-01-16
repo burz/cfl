@@ -846,6 +846,9 @@ cfl_type* cfl_generate_type_equation_chain(
             {
                 cfl_free_type(temp_type0);
 
+                if(result)
+                    cfl_free_type(result);
+
                 hypothesis_chain_node = hypothesis_head->next;
 
                 hypothesis_head->next = hypothesis_chain_node->next;
@@ -1298,7 +1301,7 @@ static cfl_type* cfl_run_hidden_typecheck(
     cfl_type* final_result = cfl_substitute_type(equation_head, result);
 
     cfl_delete_type_equation_chain_until(equation_head, position);
-    free(result);
+    cfl_free_type(result);
 
     return final_result;
 }
