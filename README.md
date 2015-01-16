@@ -26,6 +26,13 @@ To output the return type of a file run
 
 ## Example
 
+Obligatory hello world:
+```
+main = "hello world!"
+```
+Note that every cfl program must end with a `main` and global definitions are followed by
+a semicolon.
+
 The quicksort algorithm can be written in cfl as
 ```
 split x xs l r = case xs of
@@ -39,13 +46,12 @@ quicksort x = case x of
     | (y : ys) -> let (l, r) = split y ys [] []
         in quicksort l ++ y : quicksort r;
 
+// random x is a globally defined function returning a random integer
+// between 0 and x inclusive
 random_list x l = if x == 0 then [] else random l : random_list (x - 1) l;
 
 main = quicksort $ random_list 100 500
 ```
-Note that every cfl program must end with a `main` and global definitions are followed by
-a semicolon. `random x` is a globally defined function that returns a random integer
-between `0` and `x`.
 
 Running `./cfl -ast` will output
 ```
@@ -98,6 +104,11 @@ argument, or `f e1 e2` for the first argument `e1` and second argument `e2`. Sim
 one can use `f $ x` to apply the entire right side of the `$` to `f`.
 
 Finally, one can compose two functions `f . g`.
+```
+g a = if a then 5 else 4;
+f b = b == 5;
+main = f . g $ true
+```
 
 ### If Expressions
 
@@ -105,7 +116,7 @@ Use `if e1 then e2 else e3`.
 
 ### Let Expressions
 
-We allow let expressions to define constants and functions (possibly recursive) via
+cfl allows let expressions to define constants and functions (possibly recursive) via
 ```
 let x = 4 in x + 54
 ```
@@ -121,7 +132,7 @@ Tuples of arbitrary size can be created via `(true, false, [0], 1, [false])`.
 Anything but a function name can be matched to a tuple in `let` statements, for instance
 ```
 let (x, y) = (1, 2) in x + y
-let f (x, y) = x + y
+let f (x, y) = x + y in f 0 1
 ```
 are both valid.
 
@@ -131,12 +142,10 @@ You can create empty lists `[]` or lists with values `[1, 2, 3, 4]`. You can pus
 values onto a list via
 ```
 5 : [4, 5, 6]
-  => [5, 4, 5, 6] 
 ```
 You can also concatenate lists
 ```
 [1, 2] ++ [3, 4]
-  => [1, 2, 3, 4]
 ```
 Finally, we can match on lists via a case expression via
 ```
@@ -145,5 +154,6 @@ case e1 of [] -> e2 | (x : xs) -> e3
 
 ### String Expressions
 
-Strings are implemented as lists of characters. To create a string one can simply
-write the quotation enclosed string, i.e. `"hello world!"`.
+Strings are implemented as lists of characters, therefore characters can be pushed onto
+strings and two strings can be concatenated. To create a string one can simply write the
+quotation enclosed string, i.e. `"hello world!"`.
