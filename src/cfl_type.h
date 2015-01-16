@@ -32,6 +32,13 @@ void cfl_free_type(cfl_type* node);
 
 void cfl_print_type(cfl_type* node);
 
+void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain);
+void cfl_delete_type_equations(cfl_type_equations* equations);
+
+bool cfl_is_equation_present(cfl_type_equations* equations,
+                             cfl_type* left,
+                             cfl_type* right);
+
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right);
 int cfl_add_equation_from_copies(cfl_type_equation_chain* head,
                                  cfl_type* left,
@@ -57,8 +64,6 @@ int cfl_close_type_equation_chain(cfl_type_equation_chain* head);
 int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain);
 
 cfl_type* cfl_substitute_type(cfl_type_equation_chain* head, cfl_type* node);
-
-void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain);
 
 bool cfl_typecheck(cfl_program* program);
 

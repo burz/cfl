@@ -26,3 +26,18 @@ unsigned long long cfl_hash_type(cfl_type* type)
     else
         return 0;
 }
+
+void cfl_delete_type_equations(cfl_type_equations* equations)
+{
+    cfl_delete_type_equation_chain(equations->equation_head.next);
+
+    free(equations->equation_hash);
+}
+
+bool cfl_is_equation_present(
+        cfl_type_equations* equations,
+        cfl_type* left,
+        cfl_type* right)
+{
+    return false;
+}
