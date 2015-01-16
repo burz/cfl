@@ -25,6 +25,8 @@ int cfl_compare_type(cfl_type* left, cfl_type* right);
 
 int cfl_copy_type(cfl_type* target, cfl_type* node);
 
+unsigned long long cfl_hash_type(cfl_type* type);
+
 void cfl_delete_type(cfl_type* node);
 void cfl_free_type(cfl_type* node);
 

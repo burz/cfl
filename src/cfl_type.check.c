@@ -8,6 +8,7 @@ extern void cfl_reset_type_generator(void);
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right)
 {
+printf("%llu   --- %llu\n", cfl_hash_type(left), cfl_hash_type(right));
     int found = 0;
     int found_reverse = 0;
 
