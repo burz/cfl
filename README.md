@@ -83,14 +83,15 @@ characters (`'q'`).
 
 ### Boolean Operations
 
-cfl allows conjunction (&&), disjunction (||), and negation (!) expressions.
+cfl allows conjunction (`&&`), disjunction (`||`), and negation (`!`) expressions.
 
 ### Integer Operations
 
-The operations of addition (+), subtraction (-), multiplication (*), division (/),
-and modulus (%) evaluate to integer values. On the other hand, the comparison
-operators of equality (==), inequality (!=), less-than (<), less-than-or-equal (<=),
-greater-than (>), and greater-than-or-equal (>=) all evaluate to boolean values.
+The operations of addition (`+`), subtraction (`-`), multiplication (`*`), division
+(`/`), and modulus (`%`) evaluate to integer values. On the other hand, the comparison
+operators of equality (`==`), inequality (`!=`), less-than (`<`), less-than-or-equal
+(`<=`), greater-than (`>`), and greater-than-or-equal (`>=`) all evaluate to boolean
+values.
 
 ### Functional Operations
 
