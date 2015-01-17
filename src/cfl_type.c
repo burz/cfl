@@ -66,20 +66,32 @@ void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output)
 int cfl_compare_type(cfl_type* left, cfl_type* right)
 {
     if(left->type != right->type)
-        return 1;
+    {
+        if(left->type > right->type)
+            return -1;
+        else
+            return 1;
+    }
 
     if(left->type == CFL_TYPE_VARIABLE)
     {
-        if(left->id != right->id)
+        if(left->id > right->id)
+            return -1;
+        else if(left->id == right->id)
+            return 0;
+        else
             return 1;
     }
     else if(left->type == CFL_TYPE_LIST)
         return cfl_compare_type(left->input, right->input);
     else if(left->type == CFL_TYPE_ARROW)
     {
-        if(cfl_compare_type(left->input, right->input) ||
-           cfl_compare_type(left->output, right->output))
-            return 1;
+        int result = cfl_compare_type(left->input, right->input);
+
+        if(result)
+            return result;
+
+        return cfl_compare_type(left->output, right->output);
     }
     else if(left->type == CFL_TYPE_TUPLE)
     {
@@ -88,9 +100,13 @@ int cfl_compare_type(cfl_type* left, cfl_type* right)
 
         int i = 0;
         for( ; i < left->id; ++i)
-            if(cfl_compare_type(((cfl_type**) left->input)[i],
-                                ((cfl_type**) right->input)[i]))
-                return 1;
+        {
+            int result = cfl_compare_type(((cfl_type**) left->input)[i],
+                                          ((cfl_type**) right->input)[i]);
+
+            if(result)
+                return result;
+        }
     }
 
     return 0;
