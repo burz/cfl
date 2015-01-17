@@ -26,4 +26,6 @@ int cfl_add_type_equations_from_copies(cfl_type_equations* equations,
 
 bool cfl_close_type_equations(cfl_type_equations* equations);
 
+bool cfl_are_type_equations_consistent(cfl_type_equations* equations);
+
 #endif

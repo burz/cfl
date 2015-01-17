@@ -4,13 +4,9 @@
 #include "cfl_ast.h"
 #include "cfl_program.h"
 #include "cfl_type.types.h"
+#include "cfl_type.error.h"
 #include "cfl_type.equation.h"
-
-void cfl_reset_type_error_flag(void);
-bool cfl_get_type_error_flag(void);
-void cfl_type_error_undefined_variable(char* name);
-void cfl_type_error_bad_definition(char* name);
-void cfl_type_error_failure(void);
+#include "cfl_type.generate.h"
 
 void cfl_create_type_variable(cfl_type* node, unsigned int id);
 void cfl_create_type_bool(cfl_type* node);
@@ -37,22 +33,6 @@ int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* ri
 int cfl_add_equation_from_copies(cfl_type_equation_chain* head,
                                  cfl_type* left,
                                  cfl_type* right);
-
-unsigned int cfl_lookup_hypothesis(cfl_type_hypothesis_chain* chain, char* name);
-
-void cfl_remove_n_hypotheses(cfl_type_hypothesis_chain* hypothesis_head, unsigned int n);
-
-cfl_type* cfl_generate_type_equation_chain(cfl_type_equation_chain* equation_head,
-                                           cfl_type_hypothesis_chain* hypothesis_head,
-                                           cfl_node* node);
-
-unsigned int cfl_generate_global_hypotheses(
-        cfl_type_equation_chain* equation_head,
-        cfl_type_hypothesis_chain* hypothesis_head);
-
-unsigned int cfl_setup_definitions(cfl_type_equation_chain* equation_head,
-                                   cfl_type_hypothesis_chain* hypothesis_head,
-                                   cfl_definition_list* definitions);
 
 int cfl_close_type_equation_chain(cfl_type_equation_chain* head);
 int cfl_ensure_type_equation_chain_consistency(cfl_type_equation_chain* chain);

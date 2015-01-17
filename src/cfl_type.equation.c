@@ -1,4 +1,3 @@
-#include "cfl_type.equation.h"
 #include "cfl_type.h"
 
 extern void* cfl_type_malloc(size_t size);
@@ -535,6 +534,95 @@ bool cfl_close_type_equations(cfl_type_equations* equations)
 
                 pos = pos->next;
             }
+        }
+    }
+
+    return true;
+}
+
+bool cfl_are_type_equations_consistent(cfl_type_equations* equations)
+{
+    int i = 0;
+    for( ; i < equations->equation_hash_table_length; ++i)
+    {
+        cfl_type_hash_element* pos = equations->hash_table[i].next;
+
+        while(pos)
+        {
+            if(pos->type->type == CFL_TYPE_BOOL)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_BOOL)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+            else if(pos->type->type == CFL_TYPE_INTEGER)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_INTEGER)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+            else if(pos->type->type == CFL_TYPE_CHAR)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_CHAR)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+            else if(pos->type->type == CFL_TYPE_LIST)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_LIST)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+            else if(pos->type->type == CFL_TYPE_TUPLE)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_TUPLE)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+            else if(pos->type->type == CFL_TYPE_ARROW)
+            {
+                cfl_type_list_element* list_pos = pos->typed_head.next;
+
+                while(list_pos)
+                {
+                    if(list_pos->type->type != CFL_TYPE_ARROW)
+                        return false;
+
+                    list_pos = list_pos->next;
+                }
+            }
+
+            pos = pos->next;
         }
     }
 
