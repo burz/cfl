@@ -18,12 +18,6 @@ typedef struct cfl_type_t {
     void* output;
 } cfl_type;
 
-typedef struct cfl_type_equation_chain_t {
-    cfl_type* left;
-    cfl_type* right;
-    struct cfl_type_equation_chain_t* next;
-} cfl_type_equation_chain;
-
 typedef struct cfl_type_list_element_t {
     cfl_type* type;
     struct cfl_type_list_element_t* next;

@@ -148,7 +148,7 @@ static unsigned int cfl_generate_hypotheses(
 static bool cfl_generate_type_equation_chain_given_variable(
         cfl_type** variable_type,
         cfl_type** node_type,
-        cfl_type_equation_chain* equation_head,
+        cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head,
         cfl_node* variable,
         cfl_node* node)
@@ -157,7 +157,7 @@ static bool cfl_generate_type_equation_chain_given_variable(
                                                            hypothesis_head,
                                                            variable);
 
-   *node_type = cfl_generate_type_equation_chain(equation_head,
+   *node_type = cfl_generate_type_equation_chain(equations,
                                                  hypothesis_head,
                                                  node);
 
@@ -170,7 +170,7 @@ static bool cfl_generate_type_equation_chain_given_variable(
 }
 
 cfl_type* cfl_generate_type_equation_chain(
-        cfl_type_equation_chain* equation_head,
+        cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head,
         cfl_node* node)
 {
@@ -267,7 +267,7 @@ cfl_type* cfl_generate_type_equation_chain(
                     return 0;
                 }
 
-                child_type0 = cfl_generate_type_equation_chain(equation_head,
+                child_type0 = cfl_generate_type_equation_chain(equations,
                                                                hypothesis_head,
                                                                pos->node);
 
@@ -279,7 +279,7 @@ cfl_type* cfl_generate_type_equation_chain(
                     return 0;
                 }
 
-                if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+                if(!cfl_add_type_equations(equations, child_type0, temp_type1))
                 {
                     cfl_free_type(temp_type0);
                     cfl_free_type(temp_type1);
@@ -314,7 +314,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 {
                     id0 = next_id++;
 
-                    child_type0 = cfl_generate_type_equation_chain(equation_head,
+                    child_type0 = cfl_generate_type_equation_chain(equations,
                                                                    hypothesis_head,
                                                                    node->children[i]);
 
@@ -334,7 +334,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
                     cfl_create_type_variable(temp_type0, id0);
 
-                    if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+                    if(!cfl_add_type_equations(equations, child_type0, temp_type0))
                     {
                         cfl_free_type(child_type0);
                         free(temp_type0);
@@ -381,7 +381,7 @@ cfl_type* cfl_generate_type_equation_chain(
         case CFL_NODE_FUNCTION:
             if(!cfl_generate_type_equation_chain_given_variable(&temp_type0,
                                                                 &child_type1,
-                                                                equation_head,
+                                                                equations,
                                                                 hypothesis_head,
                                                                 node->children[0],
                                                                 node->children[1]))
@@ -400,14 +400,14 @@ cfl_type* cfl_generate_type_equation_chain(
             break;
         case CFL_NODE_AND:
         case CFL_NODE_OR:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -430,7 +430,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_bool(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -450,7 +450,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_bool(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type1, temp_type0))
             {
                 cfl_free_type(child_type1);
                 cfl_free_type(temp_type0);
@@ -467,7 +467,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_NOT:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
@@ -485,7 +485,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_bool(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(temp_type0);
@@ -504,14 +504,14 @@ cfl_type* cfl_generate_type_equation_chain(
         case CFL_NODE_ADD:
         case CFL_NODE_MULTIPLY:
         case CFL_NODE_DIVIDE:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -534,7 +534,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_integer(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -554,7 +554,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_integer(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type1, temp_type0))
             {
                 cfl_free_type(child_type1);
                 cfl_free_type(temp_type0);
@@ -572,14 +572,14 @@ cfl_type* cfl_generate_type_equation_chain(
             break;
         case CFL_NODE_EQUAL:
         case CFL_NODE_LESS:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -602,7 +602,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_integer(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -622,7 +622,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_integer(temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type1, temp_type0))
             {
                 cfl_free_type(child_type1);
                 cfl_free_type(temp_type0);
@@ -639,14 +639,14 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_APPLICATION:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -684,7 +684,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_arrow(temp_type1, child_type1, temp_type0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type1))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(temp_type1);
@@ -701,14 +701,14 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_IF:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -719,7 +719,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            child_type2 = cfl_generate_type_equation_chain(equation_head,
+            child_type2 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[2]);
 
@@ -752,7 +752,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            if(!cfl_add_equation(equation_head, child_type1, child_type2))
+            if(!cfl_add_type_equations(equations, child_type1, child_type2))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -774,7 +774,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_bool(temp_type1);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type1))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(temp_type0);
@@ -796,7 +796,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type1, id0);
 
-            if(!cfl_add_equation(equation_head, temp_type0, temp_type1))
+            if(!cfl_add_type_equations(equations, temp_type0, temp_type1))
             {
                 cfl_free_type(temp_type0);
                 cfl_free_type(temp_type1);
@@ -838,13 +838,13 @@ cfl_type* cfl_generate_type_equation_chain(
 
             hypothesis_head->next = hypothesis_chain_node;
 
-            result = cfl_generate_type_equation_chain(equation_head,
+            result = cfl_generate_type_equation_chain(equations,
                                                       hypothesis_head,
                                                       node->children[3]);
 
             if(!cfl_generate_type_equation_chain_given_variable(&temp_type1,
                                                                 &child_type0,
-                                                                equation_head,
+                                                                equations,
                                                                 hypothesis_head,
                                                                 node->children[1],
                                                                 node->children[2]))
@@ -902,7 +902,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_arrow(temp_type2, temp_type1, child_type0);
 
-            if(!cfl_add_equation(equation_head, temp_type0, temp_type2))
+            if(!cfl_add_type_equations(equations, temp_type0, temp_type2))
             {
                 cfl_free_type(temp_type0);
                 cfl_free_type(temp_type2);
@@ -913,14 +913,14 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_PUSH:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -945,7 +945,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -996,7 +996,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            if(!cfl_add_equation(equation_head, child_type1, temp_type1))
+            if(!cfl_add_type_equations(equations, child_type1, temp_type1))
             {
                 cfl_free_type(child_type1);
                 cfl_free_type(temp_type1);
@@ -1007,14 +1007,14 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_CONCATENATE:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
             if(!child_type0)
                 break;
 
-            child_type1 = cfl_generate_type_equation_chain(equation_head,
+            child_type1 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -1073,7 +1073,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type1))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(child_type1);
@@ -1102,7 +1102,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 return 0;
             }
 
-            if(!cfl_add_equation(equation_head, child_type1, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type1, temp_type0))
             {
                 cfl_free_type(result);
                 cfl_free_type(child_type1);
@@ -1113,7 +1113,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             break;
         case CFL_NODE_CASE:
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[0]);
 
@@ -1133,7 +1133,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(temp_type0);
@@ -1141,7 +1141,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 return 0;
             }
 
-            child_type0 = cfl_generate_type_equation_chain(equation_head,
+            child_type0 = cfl_generate_type_equation_chain(equations,
                                                            hypothesis_head,
                                                            node->children[1]);
 
@@ -1161,7 +1161,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id1);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type0))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type0))
             {
                 cfl_free_type(child_type0);
                 cfl_free_type(temp_type0);
@@ -1182,7 +1182,7 @@ cfl_type* cfl_generate_type_equation_chain(
             hypothesis_head->next = hypothesis_chain_node;
 
             bool success = cfl_generate_type_equation_chain_given_variable(
-                    &temp_type0, &child_type0, equation_head,
+                    &temp_type0, &child_type0, equations,
                     hypothesis_head, node->children[2], node->children[4]);
 
             hypothesis_head->next = hypothesis_chain_node->next;
@@ -1204,7 +1204,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type1, id1);
 
-            if(!cfl_add_equation(equation_head, child_type0, temp_type1))
+            if(!cfl_add_type_equations(equations, child_type0, temp_type1))
             {
                 cfl_free_type(temp_type0);
 
@@ -1233,7 +1233,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
             cfl_create_type_variable(temp_type0, id0);
 
-            if(!cfl_add_equation(equation_head, temp_type1, temp_type0))
+            if(!cfl_add_type_equations(equations, temp_type1, temp_type0))
             {
                 cfl_free_type(temp_type0);
                 cfl_free_type(temp_type1);

@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 extern void* cfl_type_malloc(size_t size);
+extern void cfl_reset_type_generator(void);
 
 void cfl_create_type_variable(cfl_type* node, unsigned int id)
 {
@@ -303,4 +304,73 @@ void cfl_print_type(cfl_type* node)
     cfl_print_type_inner(node);
 
     printf("\n");
+}
+
+bool cfl_typecheck(
+        cfl_program* program,
+        unsigned int equation_hash_table_length)
+{
+    cfl_reset_type_error_flag();
+    cfl_reset_type_generator();
+
+    cfl_type_equations equations;
+
+    if(!cfl_initialize_type_equations(&equations, equation_hash_table_length))
+        return false;
+
+    cfl_type_hypothesis_chain hypothesis_head;
+    hypothesis_head.next = 0;
+
+    unsigned int definition_hypothesis_count = 0;
+
+    if(program->definitions)
+    {
+        definition_hypothesis_count = cfl_setup_definitions(&equations,
+                                                            &hypothesis_head,
+                                                            program->definitions);
+
+        if(!definition_hypothesis_count)
+        {
+            cfl_delete_type_equations(&equations);
+
+            return false;
+        }
+    }
+
+    cfl_type* result = cfl_generate_type_equation_chain(&equations,
+                                                        &hypothesis_head,
+                                                        program->main);
+
+    cfl_remove_n_hypotheses(&hypothesis_head, definition_hypothesis_count);
+
+    if(!result)
+    {
+        cfl_delete_type_equations(&equations);
+
+        return false;
+    }
+
+    if(!cfl_close_type_equations(&equations))
+    {
+        cfl_delete_type_equations(&equations);
+        cfl_free_type(result);
+
+        return false;
+    }
+
+    if(!cfl_are_type_equations_consistent(&equations))
+    {
+        cfl_type_error_failure();
+
+        cfl_delete_type_equations(&equations);
+        cfl_free_type(result);
+
+        return false;
+    }
+
+    program->type = result;
+
+    cfl_delete_type_equations(&equations);
+
+    return true;
 }

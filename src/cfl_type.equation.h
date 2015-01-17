@@ -6,10 +6,9 @@
 
 unsigned long long cfl_hash_type(cfl_type* type);
 
-void cfl_delete_type_list(cfl_type_list_element* list_head);
-
-bool cfl_create_type_equations(cfl_type_equations* equations,
-                               unsigned int equation_hash_map_length);
+bool cfl_initialize_type_equations(cfl_type_equations* equations,
+                                   unsigned int equation_hash_table_length);
+cfl_type_equations* cfl_copy_type_equations(cfl_type_equations* equations);
 void cfl_delete_type_equations(cfl_type_equations* equations);
 
 int cfl_add_type_equation(cfl_type_equations* equations,
@@ -27,5 +26,7 @@ int cfl_add_type_equations_from_copies(cfl_type_equations* equations,
 bool cfl_close_type_equations(cfl_type_equations* equations);
 
 bool cfl_are_type_equations_consistent(cfl_type_equations* equations);
+
+bool cfl_simplify_type(cfl_type_equations* equations, cfl_type* node);
 
 #endif

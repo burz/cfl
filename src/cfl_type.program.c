@@ -6,63 +6,8 @@
 extern void* cfl_type_malloc(size_t size);
 extern unsigned int cfl_type_get_next_id(void);
 
-static void cfl_delete_type_equation_chain_until(
-        cfl_type_equation_chain* equation_head,
-        cfl_type_equation_chain* block)
-{
-    while(equation_head->next != block)
-    {
-        cfl_type_equation_chain* temp = equation_head->next;
-
-        equation_head->next = temp->next;
-
-        cfl_free_type(temp->left);
-        cfl_free_type(temp->right);
-        free(temp);
-    }
-}
-
-static cfl_type* cfl_run_hidden_typecheck(
-        cfl_type_equation_chain* equation_head,
-        cfl_type_hypothesis_chain* hypothesis_head,
-        char* name,
-        cfl_node* node)
-{
-    cfl_type_equation_chain* position = equation_head->next;
-
-    cfl_type* result = cfl_generate_type_equation_chain(equation_head,
-                                                        hypothesis_head,
-                                                        node);
-
-    if(!result)
-        return 0;
-
-    if(!cfl_close_type_equation_chain(equation_head))
-    {
-        cfl_free_type(result);
-
-        return 0;
-    }
-
-    if(!cfl_ensure_type_equation_chain_consistency(equation_head->next))
-    {
-        cfl_type_error_bad_definition(name);
-
-        cfl_free_type(result);
-
-        return 0;
-    }
-
-    cfl_type* final_result = cfl_substitute_type(equation_head, result);
-
-    cfl_delete_type_equation_chain_until(equation_head, position);
-    cfl_free_type(result);
-
-    return final_result;
-}
-
 unsigned int cfl_generate_global_hypotheses(
-        cfl_type_equation_chain* equation_head,
+        cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head)
 {
     cfl_type_hypothesis_chain* hypothesis =
@@ -120,7 +65,7 @@ unsigned int cfl_generate_global_hypotheses(
 
     cfl_create_type_variable(variable, id);
 
-    if(!cfl_add_equation(equation_head, variable, arrow))
+    if(!cfl_add_type_equations(equations, variable, arrow))
     {
         cfl_free_type(arrow);
         cfl_free_type(variable);
@@ -131,12 +76,70 @@ unsigned int cfl_generate_global_hypotheses(
     return 1;
 }
 
+static cfl_type* cfl_run_hidden_typecheck(
+        cfl_type_equations* equations,
+        cfl_type_hypothesis_chain* hypothesis_head,
+        char* name,
+        cfl_node* node)
+{
+    cfl_type_equations* equations_copy = cfl_copy_type_equations(equations);
+
+    if(!equations_copy)
+        return 0;
+
+    cfl_type* result = cfl_generate_type_equation_chain(equations_copy,
+                                                        hypothesis_head,
+                                                        node);
+
+    if(!result)
+    {
+        cfl_delete_type_equations(equations_copy);
+        free(equations_copy);
+
+        return 0;
+    }
+
+    if(!cfl_close_type_equations(equations_copy))
+    {
+        cfl_delete_type_equations(equations_copy);
+        free(equations_copy);
+        cfl_free_type(result);
+
+        return 0;
+    }
+
+    if(!cfl_are_type_equations_consistent(equations_copy))
+    {
+        cfl_type_error_bad_definition(name);
+
+        cfl_delete_type_equations(equations_copy);
+        free(equations_copy);
+        cfl_free_type(result);
+
+        return 0;
+    }
+
+    if(!cfl_simplify_type(equations_copy, result))
+    {
+        cfl_delete_type_equations(equations_copy);
+        free(equations_copy);
+        cfl_free_type(result);
+
+        return 0;
+    }
+
+    cfl_delete_type_equations(equations_copy);
+    free(equations_copy);
+
+    return result;
+}
+
 unsigned int cfl_setup_definitions(
-        cfl_type_equation_chain* equation_head,
+        cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head,
         cfl_definition_list* definitions)
 {
-    unsigned int hypothesis_count = cfl_generate_global_hypotheses(equation_head,
+    unsigned int hypothesis_count = cfl_generate_global_hypotheses(equations,
                                                                    hypothesis_head);
 
     if(!hypothesis_count)
@@ -146,7 +149,7 @@ unsigned int cfl_setup_definitions(
 
     while(pos)
     {
-        pos->type = cfl_run_hidden_typecheck(equation_head,
+        pos->type = cfl_run_hidden_typecheck(equations,
                                              hypothesis_head,
                                              pos->name->data,
                                              pos->definition);
@@ -207,7 +210,7 @@ unsigned int cfl_setup_definitions(
 
         cfl_create_type_variable(variable, id);
 
-        if(!cfl_add_equation(equation_head, result, variable))
+        if(!cfl_add_type_equations(equations, result, variable))
         {
             cfl_free_type(result);
             cfl_free_type(variable);

@@ -5,22 +5,22 @@ extern void* cfl_type_malloc(size_t size);
 unsigned long long cfl_hash_type(cfl_type* type)
 {
     if(type->type == CFL_TYPE_VARIABLE)
-        return type->id;
+        return 2 * type->id;
     else if(type->type == CFL_TYPE_BOOL)
-        return 2;
-    else if(type->type == CFL_TYPE_INTEGER)
         return 3;
-    else if(type->type == CFL_TYPE_CHAR)
+    else if(type->type == CFL_TYPE_INTEGER)
         return 5;
+    else if(type->type == CFL_TYPE_CHAR)
+        return 7;
     else if(type->type == CFL_TYPE_LIST)
-        return 7 * cfl_hash_type(type->input);
+        return 9 * cfl_hash_type(type->input);
     else if(type->type == CFL_TYPE_TUPLE)
     {
-        unsigned long long sum = 0;
+        unsigned long long product = 1;
         int i = 0;
         for( ; i < type->id; ++i)
-            sum += cfl_hash_type(((cfl_type**) type->input)[i]);
-        return 11 * sum;
+            product *= cfl_hash_type(((cfl_type**) type->input)[i]);
+        return 11 * product;
     }
     else if(type->type == CFL_TYPE_ARROW)
         return 13 * cfl_hash_type(type->input) *
@@ -29,11 +29,217 @@ unsigned long long cfl_hash_type(cfl_type* type)
         return 0;
 }
 
-bool cfl_create_type_equations(
+static void cfl_delete_type_list(cfl_type_list_element* list_head)
+{
+    while(list_head->next)
+    {
+        cfl_type_list_element* list_pos = list_head->next;
+
+        list_head->next = list_pos->next;
+
+        cfl_free_type(list_pos->type);
+
+        free(list_pos);
+    }
+}
+
+static cfl_type_list_element* cfl_copy_type_list(cfl_type_list_element* list)
+{
+    cfl_type_list_element new_list;
+    cfl_type_list_element* pos = &new_list;
+
+    while(list)
+    {
+        pos->next = cfl_type_malloc(sizeof(cfl_type_list_element));
+
+        if(!pos->next)
+        {
+            cfl_delete_type_list(&new_list);
+
+            return 0;
+        }
+
+        pos->next->type = cfl_type_malloc(sizeof(cfl_type));
+
+        if(!pos->next->type)
+        {
+            free(pos->next);
+
+            pos->next = 0;
+
+            cfl_delete_type_list(&new_list);
+
+            return 0;
+        }
+
+        if(!cfl_copy_type(pos->next->type, list->type))
+        {
+            free(pos->next->type);
+            free(pos->next);
+
+            pos->next = 0;
+
+            cfl_delete_type_list(&new_list);
+
+            return 0;
+        }
+
+        pos = pos->next;
+        list = list->next;
+    }
+
+    pos->next = 0;
+
+    return new_list.next;
+}
+
+static void cfl_delete_type_hash(cfl_type_hash_element* hash_head)
+{
+    while(hash_head->next)
+    {
+        cfl_type_hash_element* temp = hash_head->next;
+
+        hash_head->next = temp->next;
+
+        cfl_free_type(temp->type);
+        cfl_delete_type_list(&temp->variable_head);
+        cfl_delete_type_list(&temp->typed_head);
+
+        free(temp);
+    }
+}
+
+static cfl_type_hash_element* cfl_copy_type_hash(cfl_type_hash_element* hash)
+{
+    cfl_type_hash_element new_hash;
+    cfl_type_hash_element* pos = &new_hash;
+
+    while(hash)
+    {
+        pos->next = cfl_type_malloc(sizeof(cfl_type_hash_element));
+
+        if(!pos->next)
+        {
+            cfl_delete_type_hash(&new_hash);
+
+            return 0;
+        }
+
+        pos->next->type = cfl_type_malloc(sizeof(cfl_type));
+
+        if(!pos->next->type)
+        {
+            free(pos->next);
+
+            pos->next = 0;
+
+            cfl_delete_type_hash(&new_hash);
+
+            return 0;
+        }
+
+        if(!cfl_copy_type(pos->next->type, hash->type))
+        {
+            free(pos->next->type);
+            free(pos->next);
+
+            pos->next = 0;
+
+            cfl_delete_type_hash(&new_hash);
+
+            return 0;
+        }
+
+        if(hash->variable_head.next)
+        {
+            pos->next->variable_head.next = cfl_copy_type_list(hash->variable_head.next);
+
+            if(!pos->next->variable_head.next)
+            {
+                free(pos->next->type);
+                free(pos->next);
+
+                pos->next = 0;
+
+                cfl_delete_type_hash(&new_hash);
+
+                return 0;
+            }
+        }
+        else
+            pos->next->variable_head.next = 0;
+
+        if(hash->typed_head.next)
+        {
+            pos->next->typed_head.next = cfl_copy_type_list(hash->typed_head.next);
+
+            if(!pos->next->typed_head.next)
+            {
+                cfl_delete_type_list(&pos->next->typed_head);
+                free(pos->next->type);
+                free(pos->next);
+
+                pos->next = 0;
+
+                cfl_delete_type_hash(&new_hash);
+
+                return 0;
+            }
+        }
+        else
+            pos->next->typed_head.next = 0;
+
+        pos = pos->next;
+        hash = hash->next;
+    }
+
+    pos->next = 0;
+
+    return new_hash.next;
+}
+
+cfl_type_equations* cfl_copy_type_equations(cfl_type_equations* equations)
+{
+    cfl_type_equations* result = cfl_type_malloc(sizeof(cfl_type_equations));
+
+    if(!result)
+        return 0;
+
+    if(!cfl_initialize_type_equations(result, equations->equation_hash_table_length))
+    {
+        free(result);
+
+        return 0;
+    }
+
+    int i = 0;
+    for( ; i < equations->equation_hash_table_length; ++i)
+    {
+        if(!equations->hash_table[i].next)
+        {
+            result->hash_table[i].next = 0;
+
+            continue;
+        }
+
+        result->hash_table[i].next = cfl_copy_type_hash(equations->hash_table[i].next);
+
+        if(!result->hash_table[i].next)
+        {
+            cfl_delete_type_equations(result);
+
+            return 0;
+        }
+    }
+
+    return result;
+}
+
+bool cfl_initialize_type_equations(
         cfl_type_equations* equations,
         unsigned int equation_hash_table_length)
 {
-    equations->hash_table = cfl_type_malloc(sizeof(cfl_type_hash_element*) *
+    equations->hash_table = cfl_type_malloc(sizeof(cfl_type_hash_element) *
                                             equation_hash_table_length);
 
     if(!equations->hash_table)
@@ -48,20 +254,6 @@ bool cfl_create_type_equations(
     return true;
 }
 
-void cfl_delete_type_list(cfl_type_list_element* list_head)
-{
-    while(list_head->next)
-    {
-        cfl_type_list_element* list_pos = list_head->next;
-
-        list_head->next = list_pos->next;
-
-        cfl_free_type(list_pos->type);
-
-        free(list_pos);
-    }
-}
-
 void cfl_delete_type_equations(cfl_type_equations* equations)
 {
     int i = 0;
@@ -74,8 +266,8 @@ void cfl_delete_type_equations(cfl_type_equations* equations)
 
             cfl_free_type(pos->type);
 
-            cfl_delete_type_list(pos->variable_head.next);
-            cfl_delete_type_list(pos->typed_head.next);
+            cfl_delete_type_list(&pos->variable_head);
+            cfl_delete_type_list(&pos->typed_head);
 
             free(pos);
         }
@@ -122,6 +314,8 @@ int cfl_add_type_equation(
 
                     return -1;
                 }
+
+                list_pos = list_pos->next;
             }
 
             cfl_type_list_element* new_list_element =
@@ -625,6 +819,62 @@ bool cfl_are_type_equations_consistent(cfl_type_equations* equations)
             pos = pos->next;
         }
     }
+
+    return true;
+}
+
+bool cfl_simplify_type(cfl_type_equations* equations, cfl_type* node)
+{
+    if(node->type == CFL_TYPE_BOOL ||
+       node->type == CFL_TYPE_INTEGER ||
+       node->type == CFL_TYPE_CHAR)
+        return true;
+    else if(node->type == CFL_TYPE_LIST)
+        return cfl_simplify_type(equations, node->input);
+    else if(node->type == CFL_TYPE_TUPLE)
+    {
+        int i = 0;
+        for( ; i < node->id; ++i)
+            if(!cfl_simplify_type(equations, ((cfl_type**) node->input)[i]))
+                return false;
+
+        return true;
+    }
+    else if(node->type == CFL_TYPE_ARROW)
+    {
+        return cfl_simplify_type(equations, node->input) &&
+               cfl_simplify_type(equations, node->output);
+    }
+
+    unsigned int best_id = node->id;
+    unsigned long long hash = cfl_hash_type(node);
+    cfl_type_hash_element* pos =
+            equations->hash_table[hash % equations->equation_hash_table_length].next;
+
+    while(pos)
+    {
+        int result = cfl_compare_type(node, pos->type);
+
+        if(result > 0)
+            break;
+        else if(!result)
+        {
+            if(!pos->typed_head.next)
+            {
+                if(pos->variable_head.next &&
+                   pos->variable_head.next->type->id < best_id)
+                    best_id = pos->variable_head.next->type->id;
+            }
+            else if(!cfl_copy_type(node, pos->typed_head.next->type))
+                return false;
+            else
+                return cfl_simplify_type(equations, node);
+        }
+
+        pos = pos->next;
+    }
+
+    node->id = best_id;
 
     return true;
 }

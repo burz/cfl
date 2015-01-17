@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define EQUATION_HASH_TABLE_LENGTH 503
+
 static char usage[] = "USAGE: cfl filename\n"
                       "           -ast filename\n"
                       "           -type filename";
@@ -41,7 +43,7 @@ int main(int argc, char* argv[])
             if(!program)
                 return 1;
 
-            if(!cfl_typecheck(program))
+            if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
             {
                 cfl_free_program(program);
 
@@ -67,7 +69,7 @@ int main(int argc, char* argv[])
         if(!program)
             return 1;
 
-        if(!cfl_typecheck(program))
+        if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
         {
             cfl_free_program(program);
 
