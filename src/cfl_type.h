@@ -4,6 +4,7 @@
 #include "cfl_ast.h"
 #include "cfl_program.h"
 #include "cfl_type.types.h"
+#include "cfl_type.equation.h"
 
 void cfl_reset_type_error_flag(void);
 bool cfl_get_type_error_flag(void);
@@ -25,18 +26,12 @@ int cfl_compare_type(cfl_type* left, cfl_type* right);
 
 int cfl_copy_type(cfl_type* target, cfl_type* node);
 
-unsigned long long cfl_hash_type(cfl_type* type);
-
 void cfl_delete_type(cfl_type* node);
 void cfl_free_type(cfl_type* node);
 
 void cfl_print_type(cfl_type* node);
 
 void cfl_delete_type_equation_chain(cfl_type_equation_chain* chain);
-
-bool cfl_create_type_equations(cfl_type_equations* equations,
-                               const unsigned int equation_hash_map_length);
-void cfl_delete_type_equations(cfl_type_equations* equations);
 
 int cfl_add_equation(cfl_type_equation_chain* head, cfl_type* left, cfl_type* right);
 int cfl_add_equation_from_copies(cfl_type_equation_chain* head,
