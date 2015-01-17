@@ -1,5 +1,7 @@
 #include "cfl_type.h"
 
+extern void* cfl_type_malloc(size_t size);
+
 unsigned long long cfl_hash_type(cfl_type* type)
 {
     if(type->type == CFL_TYPE_VARIABLE)
@@ -27,17 +29,51 @@ unsigned long long cfl_hash_type(cfl_type* type)
         return 0;
 }
 
-void cfl_delete_type_equations(cfl_type_equations* equations)
+bool cfl_create_type_equations(
+        cfl_type_equations* equations,
+        const unsigned int equation_hash_set_length)
 {
-    cfl_delete_type_equation_chain(equations->equation_head.next);
+    equations->hash_set = cfl_type_malloc(sizeof(cfl_type_equation_chain) *
+                                          equation_hash_set_length);
 
-    free(equations->equation_hash);
+    if(!equations->hash_set)
+        return false;
+
+    equations->equation_hash_set_length = equation_hash_set_length;
+
+    int i = 0;
+    for( ; i < equation_hash_set_length; ++i)
+        equations->hash_set[i].next = 0;
+
+    return true;
 }
 
-bool cfl_is_equation_present(
-        cfl_type_equations* equations,
-        cfl_type* left,
-        cfl_type* right)
+void cfl_delete_type_equations(cfl_type_equations* equations)
 {
-    return false;
+    int i = 0;
+    for( ; i < equations->equation_hash_set_length; ++i)
+    {
+        while(equations->hash_set[i].next)
+        {
+            cfl_type_hash_element* pos = equations->hash_set[i].next;
+
+            equations->hash_set[i].next = pos->next;
+
+            cfl_free_type(pos->type);
+
+            while(pos->set.next)
+            {
+                cfl_type_set_element* set_pos = pos->set.next;
+
+                pos->set.next = set_pos->next;
+
+                cfl_free_type(set_pos->type);
+                free(set_pos);
+            }
+
+            free(pos);
+        }
+    }
+
+    free(equations->hash_set);
 }

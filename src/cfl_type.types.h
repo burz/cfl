@@ -24,15 +24,20 @@ typedef struct cfl_type_equation_chain_t {
     struct cfl_type_equation_chain_t* next;
 } cfl_type_equation_chain;
 
-typedef struct cfl_type_equation_chain_list_t {
-    cfl_type_equation_chain* link;
-    struct cfl_type_equation_chain_list_t* next;
-} cfl_type_equation_chain_list;
+typedef struct cfl_type_map_element_t {
+    cfl_type* type;
+    struct cfl_type_map_element_t* next;
+} cfl_type_set_element;
+
+typedef struct cfl_type_hash_element_t {
+    cfl_type* type;
+    cfl_type_set_element set;
+    struct cfl_type_hash_element_t* next;
+} cfl_type_hash_element;
 
 typedef struct {
-    cfl_type_equation_chain equation_head;
-    unsigned int equation_hash_length;
-    cfl_type_equation_chain_list** equation_hash;
+    unsigned int equation_hash_set_length;
+    cfl_type_hash_element* hash_set;
 } cfl_type_equations;
 
 typedef struct cfl_type_hypothesis_chain_t {
