@@ -368,9 +368,17 @@ bool cfl_typecheck(
         return false;
     }
 
-    program->type = result;
+    if(!cfl_simplify_type(&equations, result))
+    {
+        cfl_delete_type_equations(&equations);
+        cfl_free_type(result);
+
+        return false;
+    }
 
     cfl_delete_type_equations(&equations);
+
+    program->type = result;
 
     return true;
 }

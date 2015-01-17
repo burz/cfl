@@ -1,30 +1,53 @@
 #include "cfl_type.h"
 
+#define NUMBER_OF_PRIMES 16
+
 extern void* cfl_type_malloc(size_t size);
+
+static int cfl_primes[] = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53 };
+
+static unsigned long long cfl_long_power(unsigned long long x, unsigned long long p)
+{
+    if(p == 0)
+        return 1;
+
+    if(p % 2)
+    {
+        unsigned long long x2 = cfl_long_power(x, (p - 1) / 2);
+
+        return x * x2 * x2;
+    }
+    else
+    {
+        unsigned long long x2 = cfl_long_power(x, p / 2);
+
+        return x2 * x2;
+    }
+}
 
 unsigned long long cfl_hash_type(cfl_type* type)
 {
     if(type->type == CFL_TYPE_VARIABLE)
-        return 2 * type->id;
+        return cfl_long_power(cfl_primes[15], type->id);
     else if(type->type == CFL_TYPE_BOOL)
-        return 3;
+        return cfl_primes[11];
     else if(type->type == CFL_TYPE_INTEGER)
-        return 5;
+        return cfl_primes[10];
     else if(type->type == CFL_TYPE_CHAR)
-        return 7;
+        return cfl_primes[0];
     else if(type->type == CFL_TYPE_LIST)
-        return 9 * cfl_hash_type(type->input);
+        return cfl_long_power(cfl_primes[12], cfl_hash_type(type->input));
     else if(type->type == CFL_TYPE_TUPLE)
     {
         unsigned long long product = 1;
         int i = 0;
         for( ; i < type->id; ++i)
             product *= cfl_hash_type(((cfl_type**) type->input)[i]);
-        return 11 * product;
+        return cfl_long_power(cfl_primes[9], product);
     }
     else if(type->type == CFL_TYPE_ARROW)
-        return 13 * cfl_hash_type(type->input) *
-                    cfl_hash_type(type->output);
+        return cfl_long_power(cfl_primes[14], cfl_hash_type(type->input)) *
+               cfl_long_power(cfl_primes[13], cfl_hash_type(type->output));
     else
         return 0;
 }
