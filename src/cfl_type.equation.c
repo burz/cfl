@@ -31,49 +31,64 @@ unsigned long long cfl_hash_type(cfl_type* type)
 
 bool cfl_create_type_equations(
         cfl_type_equations* equations,
-        const unsigned int equation_hash_set_length)
+        const unsigned int equation_hash_table_length)
 {
-    equations->hash_set = cfl_type_malloc(sizeof(cfl_type_equation_chain) *
-                                          equation_hash_set_length);
+    equations->hash_table = cfl_type_malloc(sizeof(cfl_type_outer_hash_element*) *
+                                            equation_hash_table_length);
 
-    if(!equations->hash_set)
+    if(!equations->hash_table)
         return false;
 
-    equations->equation_hash_set_length = equation_hash_set_length;
+    equations->equation_hash_table_length = equation_hash_table_length;
 
     int i = 0;
-    for( ; i < equation_hash_set_length; ++i)
-        equations->hash_set[i].next = 0;
+    for( ; i < equation_hash_table_length; ++i)
+        equations->hash_table[i] = 0;
 
     return true;
 }
 
 void cfl_delete_type_equations(cfl_type_equations* equations)
 {
-    int i = 0;
-    for( ; i < equations->equation_hash_set_length; ++i)
-    {
-        while(equations->hash_set[i].next)
+    int i = 0, j;
+    for( ; i < equations->equation_hash_table_length; ++i)
+        while(equations->hash_table[i])
         {
-            cfl_type_hash_element* pos = equations->hash_set[i].next;
+            cfl_type_outer_hash_element* outer_pos = equations->hash_table[i];
 
-            equations->hash_set[i].next = pos->next;
+            equations->hash_table[i] = outer_pos->next;
 
-            cfl_free_type(pos->type);
+            cfl_free_type(outer_pos->type);
 
-            while(pos->set.next)
-            {
-                cfl_type_set_element* set_pos = pos->set.next;
+            for(j = 0; j < equations->equation_hash_table_length; ++j)
+                while(outer_pos->hash_table[j])
+                {
+                    cfl_type_hash_element* inner_pos = outer_pos->hash_table[j];
 
-                pos->set.next = set_pos->next;
+                    outer_pos->hash_table[j] = inner_pos->next;
 
-                cfl_free_type(set_pos->type);
-                free(set_pos);
-            }
+                    cfl_free_type(inner_pos->type);
 
-            free(pos);
+                    free(inner_pos);
+                }
+
+            free(outer_pos->hash_table);
+            free(outer_pos);
         }
-    }
 
-    free(equations->hash_set);
+    free(equations->hash_table);
+}
+
+int cfl_add_type_equation(
+        cfl_type_equations* equations,
+        cfl_type* left,
+        cfl_type* right)
+{
+    unsigned long long left_hash = cfl_hash_type(left) %
+                                   equations->equation_hash_table_length;
+
+    unsigned long long right_hash = cfl_hash_type(right) %
+                                    equations->equation_hash_table_length;
+
+    return 0;
 }
