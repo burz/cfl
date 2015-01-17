@@ -598,7 +598,7 @@ static int cfl_close_type_equations_iteration(
     {
         while(pos)
         {
-            if(!pos->type == CFL_TYPE_LIST)
+            if(pos->type->type != CFL_TYPE_LIST)
             {
                 cfl_type_error_failure();
 
@@ -630,7 +630,7 @@ static int cfl_close_type_equations_iteration(
     {
         while(pos)
         {
-            if(!pos->type == CFL_TYPE_TUPLE || element->type->id != pos->type->id)
+            if(pos->type->type != CFL_TYPE_TUPLE || element->type->id != pos->type->id)
             {
                 cfl_type_error_failure();
 
@@ -644,7 +644,7 @@ static int cfl_close_type_equations_iteration(
             {
                  result = cfl_add_type_equations_from_copies(
                         equations, ((cfl_type**) element->type->input)[i],
-                                   ((cfl_type**) element->type->input)[i]);
+                                   ((cfl_type**) pos->type->input)[i]);
 
                 if(!result)
                     return 0;
@@ -668,7 +668,7 @@ static int cfl_close_type_equations_iteration(
     {
         while(pos)
         {
-            if(!pos->type == CFL_TYPE_ARROW)
+            if(pos->type->type != CFL_TYPE_ARROW)
             {
                 cfl_type_error_failure();
 
