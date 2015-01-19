@@ -4,128 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 
-void* cfl_eval_malloc(size_t size)
-{
-    void* result = malloc(size);
+extern void* cfl_eval_malloc(size_t size);
 
-    if(!result)
-    {
-        fprintf(stderr, "MEMORY ERROR: Ran out of memory "
-                        "during evaluation\n");
-    }
-
-    return result;
-}
-
-void cfl_initialize_eval(void)
-{
-    srand(time(0));
-}
-
-static bool cfl_complex_variable_contains(cfl_node* node, char* variable)
-{
-    if(node->type == CFL_NODE_VARIABLE)
-        return !strcmp(node->data, variable);
-
-    int i = 0;
-    for( ; i < node->number_of_children; ++i)
-        if(cfl_complex_variable_contains(node->children[i], variable))
-            return true;
-
-    return false;
-}
-
-bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value)
-{
-    int i;
-    cfl_list_node* pos;
-
-    switch(target->type)
-    {
-        case CFL_NODE_VARIABLE:
-            if(!strcmp(target->data, variable))
-            {
-                cfl_node* result = cfl_copy_new_node(value);
-
-                if(!result)
-                    return false;
-
-                cfl_delete_node(target);
-
-                *target = *result;
-
-                free(result);
-            }
-            break;
-        case CFL_NODE_LIST:
-            pos = target->data;
-            for( ; pos; pos = pos->next)
-                if(!cfl_substitute(pos->node, variable, value))
-                    return false;
-            break;
-        case CFL_NODE_FUNCTION:
-            if(!cfl_complex_variable_contains(target->children[0], variable))
-                if(!cfl_substitute(target->children[1], variable, value))
-                    return false;
-            break;
-        case CFL_NODE_LET_REC:
-            if(strcmp(target->children[0]->data, variable))
-            {
-                if(!cfl_complex_variable_contains(target->children[1], variable))
-                {
-                    if(!cfl_substitute(target->children[2], variable, value) ||
-                       !cfl_substitute(target->children[3], variable, value))
-                        return false;
-                }
-                else if(!cfl_substitute(target->children[3], variable, value))
-                    return false;
-            }
-            break;
-        case CFL_NODE_CASE:
-            if(!cfl_substitute(target->children[0], variable, value) ||
-               !cfl_substitute(target->children[1], variable, value))
-                return false;
-
-            if(!cfl_complex_variable_contains(target->children[2], variable) &&
-               strcmp(target->children[3]->data, variable))
-                    if(!cfl_substitute(target->children[4], variable, value))
-                        return false;
-            break;
-        default:
-            for(i = 0; i < target->number_of_children; ++i)
-                if(!cfl_substitute(target->children[i], variable, value))
-                    return false;
-            break;
-    }
-
-    return true;
-}
-
-bool cfl_complex_substitute(cfl_node* target, cfl_node* variable, cfl_node* value)
-{
-    if(variable->type == CFL_NODE_VARIABLE)
-    {
-        if(*((char*) variable->data) == '_')
-            return true;
-
-        return cfl_substitute(target, variable->data, value);
-    }
-
-    int i = 0;
-    for( ; i < variable->number_of_children; ++i)
-        if(!cfl_complex_substitute(target, variable->children[i], value->children[i]))
-            return false;
-
-    return true;
-}
-
-int cfl_evaluate_global_function_random(int value)
-{
-    return rand() % (value + 1);
-}
-
-bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
+static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* definitions)
 {
     if(node->type == CFL_NODE_VARIABLE)
     {
@@ -595,7 +478,13 @@ bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
     return true;
 }
 
-bool cfl_evaluate_program(cfl_program* program, bool multithreaded)
+bool cfl_eval(
+        cfl_node* node,
+        cfl_definition_list* definitions,
+        bool multithreaded)
 {
-    return cfl_eval(program->main, program->definitions, multithreaded);
+    if(multithreaded)
+        return cfl_evaluate_multithreaded(node, definitions);
+    else
+        return cfl_evaluate(node, definitions);
 }

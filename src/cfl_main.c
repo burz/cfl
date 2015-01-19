@@ -10,7 +10,8 @@
 
 static char usage[] = "USAGE: cfl filename\n"
                       "           -ast filename\n"
-                      "           -type filename";
+                      "           -type filename\n"
+                      "           -single filename";
 
 int main(int argc, char* argv[])
 {
@@ -54,6 +55,33 @@ int main(int argc, char* argv[])
 
             cfl_free_program(program);
         }
+        else if(argc > 2 && !strcmp(argv[1], "-single"))
+        {
+            program = cfl_parse_file(argv[2]);
+
+            if(!program)
+                return 1;
+
+            if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
+            {
+                cfl_free_program(program);
+
+                return 1;
+            }
+
+            cfl_initialize_eval();
+
+            if(!cfl_evaluate_program(program, false))
+            {
+                cfl_free_program(program);
+
+                return 1;
+            }
+
+            cfl_print_node(program->main);
+
+            cfl_free_program(program);
+        }
         else
         {
             fprintf(stderr, "ERROR: unrecognized option \"%s\"\n%s\n",
@@ -78,7 +106,7 @@ int main(int argc, char* argv[])
 
         cfl_initialize_eval();
 
-        if(!cfl_evaluate_program(program))
+        if(!cfl_evaluate_program(program, true))
         {
             cfl_free_program(program);
 

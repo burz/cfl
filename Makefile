@@ -22,6 +22,21 @@ FILES = \
     cfl_type.generate.o \
     cfl_type.program.o
 
+ifneq ($(OS), Windows_NT)
+    UNAME = $(shell uname -s)
+    ifeq ($(UNAME), Linux)
+        FILES += cfl_eval.posix.o
+    else
+        ifeq ($(UNAME), Darwin)
+            FILES += cfl_eval.posix.o
+        else
+            FILES += cfl_eval.generic.c
+        endif
+    endif
+else
+    FILES += cfl_eval.generic.c
+endif
+
 all: cfl
 
 cfl: cfl_main.o $(FILES)

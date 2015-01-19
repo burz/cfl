@@ -13,6 +13,10 @@ int cfl_evaluate_global_function_random(int value);
 
 bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions);
 
-bool cfl_evaluate_program(cfl_program* program);
+bool cfl_eval(cfl_node* node,
+              cfl_definition_list* definitions,
+              bool multithread);
+
+bool cfl_evaluate_program(cfl_program* program, bool multithread);
 
 #endif
