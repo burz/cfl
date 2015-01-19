@@ -6,7 +6,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define MAX_THREADS 3
+#define MAX_THREADS 6
 
 extern void* cfl_eval_malloc(size_t size);
 
@@ -107,6 +107,57 @@ static bool cfl_wait_for_parallel_termination(pthread_t* thread)
     return result;
 }
 
+static bool cfl_is_basic_type(cfl_node* node)
+{
+    if(node->type == CFL_NODE_BOOL ||
+       node->type == CFL_NODE_INTEGER ||
+       node->type == CFL_NODE_CHAR ||
+       node->type == CFL_NODE_FUNCTION)
+        return true;
+
+    return false;
+}
+
+static bool cfl_evaluate_binary_children(cfl_node* node, cfl_definition_list* definitions)
+{
+    if(node->children[0]->type == CFL_NODE_VARIABLE)
+        return cfl_evaluate_multithreaded(node->children[0], definitions) &&
+               cfl_evaluate_multithreaded(node->children[0], definitions);
+    else if(node->children[1]->type == CFL_NODE_VARIABLE)
+        return cfl_evaluate_multithreaded(node->children[0], definitions) &&
+               cfl_evaluate_multithreaded(node->children[0], definitions);
+    else if(!cfl_is_basic_type(node->children[0]))
+    {
+        if(!cfl_is_basic_type(node->children[1]))
+        {
+            if(cfl_can_multithread())
+            {
+                pthread_t thread;
+                cfl_evaluate_thread_argument argument;
+                argument.node = node->children[0];
+                argument.definitions = definitions;
+
+                if(!cfl_evaluate_in_parallel(&thread, &argument))
+                    return false;
+
+                bool success = cfl_evaluate_multithreaded(node->children[1], definitions);
+
+                if(!cfl_wait_for_parallel_termination(&thread) || !success)
+                    return false;
+            }
+            else
+                return cfl_evaluate_multithreaded(node->children[0], definitions) &&
+                       cfl_evaluate_multithreaded(node->children[1], definitions);
+        }
+        else
+            return cfl_evaluate_multithreaded(node->children[0], definitions);
+    }
+    else if(!cfl_is_basic_type(node->children[1]))
+        return cfl_evaluate_multithreaded(node->children[1], definitions);
+
+    return true;
+}
+
 static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* definitions)
 {
     if(node->type == CFL_NODE_VARIABLE)
@@ -203,23 +254,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_ADD)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         int result = *((int*) node->children[0]->data) +
@@ -230,23 +265,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_MULTIPLY)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         int result = *((int*) node->children[0]->data) *
@@ -257,23 +276,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_DIVIDE)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         if(*((int*) node->children[1]->data) == 0)
@@ -291,23 +294,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_EQUAL)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         bool result = *((int*) node->children[0]->data) ==
@@ -318,23 +305,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_LESS)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         bool result = *((int*) node->children[0]->data) <
@@ -345,23 +316,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_APPLICATION)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[0];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[1], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         if(node->children[0]->type == CFL_NODE_VARIABLE &&
@@ -541,23 +496,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_PUSH)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         cfl_node* list_node = node->children[1];
@@ -593,23 +532,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
     }
     else if(node->type == CFL_NODE_CONCATENATE)
     {
-        if(cfl_can_multithread())
-        {
-            pthread_t thread;
-            cfl_evaluate_thread_argument argument;
-            argument.node = node->children[1];
-            argument.definitions = definitions;
-
-            if(!cfl_evaluate_in_parallel(&thread, &argument))
-                return false;
-
-            bool success = cfl_evaluate_multithreaded(node->children[0], definitions);
-
-            if(!cfl_wait_for_parallel_termination(&thread) || !success)
-                return false;
-        }
-        else if(!cfl_evaluate_multithreaded(node->children[0], definitions) ||
-                !cfl_evaluate_multithreaded(node->children[1], definitions))
+        if(!cfl_evaluate_binary_children(node, definitions))
             return false;
 
         cfl_node* list_node = node->children[0];
