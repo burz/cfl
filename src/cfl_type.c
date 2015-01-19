@@ -1,6 +1,7 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 extern void* cfl_type_malloc(size_t size);
 extern void cfl_reset_type_generator(void);

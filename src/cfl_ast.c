@@ -1,6 +1,8 @@
 #include "cfl_ast.h"
+#include "cfl_malloc.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 char* reserved_words[] = { "true", "false", "function",
@@ -24,7 +26,7 @@ cfl_node* cfl_create_new_node_variable(char* string)
 
     if(!node->data)
     {
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -49,7 +51,7 @@ cfl_node* cfl_create_new_node_variable_n(int string_length, char* string)
 
     if(!node->data)
     {
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -74,7 +76,7 @@ cfl_node* cfl_create_new_node_bool(bool value)
 
     if(!node->data)
     {
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -97,7 +99,7 @@ cfl_node* cfl_create_new_node_integer(int value)
 
     if(!node->data)
     {
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -120,7 +122,7 @@ cfl_node* cfl_create_new_node_char(char value)
 
     if(!node->data)
     {
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -151,7 +153,7 @@ cfl_node* cfl_create_new_node_function(cfl_node* argument, cfl_node* body)
     {
         cfl_free_node(argument);
         cfl_free_node(body);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -171,7 +173,7 @@ void cfl_delete_list_nodes(cfl_list_node* list)
         list = list->next;
 
         cfl_free_node(temp->node);
-        free(temp);
+        cfl_free(temp);
     }
 }
 
@@ -205,9 +207,9 @@ cfl_node* cfl_create_new_node_tuple(
         {
             int i = 0;
             for( ; i < number_of_children; ++i)
-                free(children[i]);
+                cfl_free(children[i]);
 
-            free(children);
+            cfl_free(children);
         }
 
         return 0;
@@ -242,7 +244,7 @@ cfl_node* cfl_create_new_node_and(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -274,7 +276,7 @@ cfl_node* cfl_create_new_node_or(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -304,7 +306,7 @@ cfl_node* cfl_create_new_node_not(cfl_node* child)
     if(!node->children)
     {
         cfl_free_node(child);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -335,7 +337,7 @@ cfl_node* cfl_create_new_node_add(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -367,7 +369,7 @@ cfl_node* cfl_create_new_node_multiply(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -399,7 +401,7 @@ cfl_node* cfl_create_new_node_divide(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -431,7 +433,7 @@ cfl_node* cfl_create_new_node_equal(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -463,7 +465,7 @@ cfl_node* cfl_create_new_node_less(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -497,7 +499,7 @@ cfl_node* cfl_create_new_node_application(
     {
         cfl_free_node(function);
         cfl_free_node(argument);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -534,7 +536,7 @@ cfl_node* cfl_create_new_node_if(
         cfl_free_node(condition);
         cfl_free_node(then_node);
         cfl_free_node(else_node);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -575,7 +577,7 @@ cfl_node* cfl_create_new_node_let_rec(
         cfl_free_node(argument);
         cfl_free_node(procedure);
         cfl_free_node(body);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -609,7 +611,7 @@ cfl_node* cfl_create_new_node_push(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -641,7 +643,7 @@ cfl_node* cfl_create_new_node_concatenate(cfl_node* left, cfl_node* right)
     {
         cfl_free_node(left);
         cfl_free_node(right);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -684,7 +686,7 @@ cfl_node* cfl_create_new_node_case(
         cfl_free_node(head);
         cfl_free_node(tail);
         cfl_free_node(nonempty);
-        free(node);
+        cfl_free(node);
 
         return 0;
     }
@@ -725,7 +727,7 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
 
         if(!start->node)
         {
-            free(start);
+            cfl_free(start);
 
             return 0;
         }
@@ -748,7 +750,7 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
                     start = start->next;
 
                     cfl_free_node(target_pos->node);
-                    free(target_pos);
+                    cfl_free(target_pos);
                 }
 
                 return 0;
@@ -758,7 +760,7 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
 
             if(!target_pos->next->node)
             {
-                free(target_pos->next);
+                cfl_free(target_pos->next);
 
                 target_pos->next = 0;
 
@@ -769,11 +771,11 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
                     start = start->next;
 
                     cfl_free_node(target_pos->node);
-                    free(target_pos);
+                    cfl_free(target_pos);
                 }
 
-                free(start->node);
-                free(start);
+                cfl_free(start->node);
+                cfl_free(start);
 
                 return 0;
             }
@@ -805,7 +807,7 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
 
             if(!target->children)
             {
-                free(target);
+                cfl_free(target);
 
                 return 0;
             }
@@ -821,10 +823,10 @@ cfl_node* cfl_copy_new_node(cfl_node* node)
                     int j = 0;
 
                     for( ; j < i; ++j)
-                        free(target->children[j]);
+                        cfl_free(target->children[j]);
 
-                    free(target->children);
-                    free(target);
+                    cfl_free(target->children);
+                    cfl_free(target);
 
                     return 0;
                 }
@@ -898,11 +900,11 @@ void cfl_delete_node(cfl_node* node)
                 pos = pos->next;
 
                 cfl_free_node(temp->node);
-                free(temp);
+                cfl_free(temp);
             }
         }
         else
-            free(node->data);
+            cfl_free(node->data);
     }
 
     if(node->number_of_children)
@@ -912,7 +914,7 @@ void cfl_delete_node(cfl_node* node)
         for( ; i < node->number_of_children; ++i)
             cfl_free_node(node->children[i]);
 
-        free(node->children);
+        cfl_free(node->children);
     }
 }
 
@@ -920,7 +922,7 @@ void cfl_free_node(cfl_node* node)
 {
     cfl_delete_node(node);
 
-    free(node);
+    cfl_free(node);
 }
 
 static bool cfl_is_bound_in(char* name, cfl_node* node)

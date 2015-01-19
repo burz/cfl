@@ -1,6 +1,7 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 extern void* cfl_type_malloc(size_t size);

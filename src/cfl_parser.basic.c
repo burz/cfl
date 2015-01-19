@@ -1,5 +1,7 @@
 #include "cfl_parser.h"
 
+#include <stdlib.h>
+
 extern void* cfl_parser_malloc(size_t size);
 
 cfl_node* cfl_parse_parentheses(

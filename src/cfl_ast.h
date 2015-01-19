@@ -4,7 +4,6 @@
 #include "cfl_ast.types.h"
 
 #include <stdbool.h>
-#include <stdlib.h>
 
 #define MAX_IDENTIFIER_LENGTH 100
 #define NUMBER_OF_RESERVED_WORDS 10

@@ -1,3 +1,4 @@
+#include "cfl_malloc.h"
 #include "cfl_parser.h"
 #include "cfl_program.h"
 #include "cfl_type.h"
@@ -22,6 +23,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    if(!cfl_initialize_malloc())
+        return 1;
+
     cfl_program* program;
 
     if(argc > 2)
@@ -31,29 +35,34 @@ int main(int argc, char* argv[])
             program = cfl_parse_file(argv[2]);
 
             if(!program)
+            {
+                cfl_cleanup_malloc();
+
                 return 1;
+            }
 
             cfl_print_program(program);
-
-            cfl_free_program(program);
         }
         else if(argc > 2 && !strcmp(argv[1], "-type"))
         {
             program = cfl_parse_file(argv[2]);
 
             if(!program)
+            {
+                cfl_cleanup_malloc();
+
                 return 1;
+            }
 
             if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
             {
                 cfl_free_program(program);
+                cfl_cleanup_malloc();
 
                 return 1;
             }
 
             cfl_print_program_type(program);
-
-            cfl_free_program(program);
         }
         else if(argc > 2 && !strcmp(argv[1], "-single"))
         {
@@ -65,27 +74,38 @@ int main(int argc, char* argv[])
             if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
             {
                 cfl_free_program(program);
+                cfl_cleanup_malloc();
 
                 return 1;
             }
 
-            cfl_initialize_eval();
+            if(!cfl_initialize_eval())
+            {
+                cfl_free_program(program);
+                cfl_cleanup_malloc();
+
+                return 1;
+            }
 
             if(!cfl_evaluate_program(program, false))
             {
                 cfl_free_program(program);
+                cfl_cleanup_eval();
+                cfl_cleanup_malloc();
 
                 return 1;
             }
 
-            cfl_print_node(program->main);
+            cfl_cleanup_eval();
 
-            cfl_free_program(program);
+            cfl_print_node(program->main);
         }
         else
         {
             fprintf(stderr, "ERROR: unrecognized option \"%s\"\n%s\n",
                             argv[1], usage);
+
+            cfl_cleanup_malloc();
 
             return 1;
         }
@@ -100,23 +120,35 @@ int main(int argc, char* argv[])
         if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
         {
             cfl_free_program(program);
+            cfl_cleanup_malloc();
 
             return 1;
         }
 
-        cfl_initialize_eval();
+        if(!cfl_initialize_eval())
+        {
+            cfl_free_program(program);
+            cfl_cleanup_malloc();
+
+            return 1;
+        }
 
         if(!cfl_evaluate_program(program, true))
         {
             cfl_free_program(program);
+            cfl_cleanup_eval();
+            cfl_cleanup_malloc();
 
             return 1;
         }
 
-        cfl_print_node(program->main);
+        cfl_cleanup_eval();
 
-        cfl_free_program(program);
+        cfl_print_node(program->main);
     }
+
+    cfl_free_program(program);
+    cfl_cleanup_malloc();
 
     return 0;
 }

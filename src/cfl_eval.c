@@ -18,11 +18,6 @@ void* cfl_eval_malloc(size_t size)
     return result;
 }
 
-void cfl_initialize_eval(void)
-{
-    srand(time(0));
-}
-
 static bool cfl_complex_variable_contains(cfl_node* node, char* variable)
 {
     if(node->type == CFL_NODE_VARIABLE)

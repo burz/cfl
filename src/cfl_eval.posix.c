@@ -1,12 +1,63 @@
 #include "cfl_eval.h"
+#include "cfl_malloc.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
 
+#define MAX_THREADS 3
+
 extern void* cfl_eval_malloc(size_t size);
+
+static pthread_mutex_t cfl_eval_mutex;
+static int available_threads = MAX_THREADS;
+
+bool cfl_initialize_eval(void)
+{
+    srand(time(0));
+
+    if(pthread_mutex_init(&cfl_eval_mutex, 0))
+    {
+        fprintf(stderr, "Error: could not create an evaluation mutex\n");
+
+        return false;
+    }
+
+    return true;
+}
+
+void cfl_cleanup_eval(void)
+{
+    pthread_mutex_destroy(&cfl_eval_mutex);
+}
+
+static bool cfl_can_multithread(void)
+{
+    bool result = false;
+
+    pthread_mutex_lock(&cfl_eval_mutex);
+
+    if(available_threads)
+    {
+        --available_threads;
+
+        result = true;
+    }
+
+    pthread_mutex_unlock(&cfl_eval_mutex);
+
+    return result;
+}
+
+static void cfl_increment_available_threads(void)
+{
+    pthread_mutex_lock(&cfl_eval_mutex);
+
+    ++available_threads;
+
+    pthread_mutex_unlock(&cfl_eval_mutex);
+}
 
 static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* definitions)
 {
@@ -28,7 +79,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
 
             *node = *result;
 
-            free(result);
+            cfl_free(result);
         }
     }
     else if(node->type == CFL_NODE_LIST)
@@ -196,13 +247,13 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
 
         cfl_node* result = node->children[0]->children[1];
 
-        free(node->children[0]->children);
-        free(node->children[0]);
-        free(node->children);
+        cfl_free(node->children[0]->children);
+        cfl_free(node->children[0]);
+        cfl_free(node->children);
 
         *node = *result;
 
-        free(result);
+        cfl_free(result);
 
         return cfl_evaluate(node, definitions);
     }
@@ -223,8 +274,8 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
 
             *node = *temp[1];
 
-            free(temp[1]);
-            free(temp);
+            cfl_free(temp[1]);
+            cfl_free(temp);
         }
         else
         {
@@ -238,8 +289,8 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
 
             *node = *temp[2];
 
-            free(temp[2]);
-            free(temp);
+            cfl_free(temp[2]);
+            cfl_free(temp);
         }
     }
     else if(node->type == CFL_NODE_LET_REC)
@@ -331,7 +382,7 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
             cfl_free_node(temp0);
             cfl_free_node(node->children[0]);
             cfl_free_node(node->children[3]);
-            free(node->children);
+            cfl_free(node->children);
             node->number_of_children = 0;
 
             return false;
@@ -342,11 +393,11 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
         temp0 = node->children[3];
 
         cfl_free_node(node->children[0]);
-        free(node->children);
+        cfl_free(node->children);
 
         *node = *temp0;
 
-        free(temp0);
+        cfl_free(temp0);
 
         return cfl_evaluate(node, definitions);
     }
@@ -381,11 +432,11 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
 
         ((cfl_list_node*) list_node->data)->node = node->children[0];
 
-        free(node->children);
+        cfl_free(node->children);
 
         *node = *list_node;
 
-        free(list_node);
+        cfl_free(list_node);
     }
     else if(node->type == CFL_NODE_CONCATENATE)
     {
@@ -409,12 +460,12 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
             pos->next = node->children[1]->data;
         }
 
-        free(node->children[1]);
-        free(node->children);
+        cfl_free(node->children[1]);
+        cfl_free(node->children);
 
         *node = *list_node;
 
-        free(list_node);
+        cfl_free(list_node);
     }
     else if(node->type == CFL_NODE_CASE)
     {
@@ -436,23 +487,23 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
             if(!cfl_complex_substitute(node->children[4], node->children[2], head) ||
                !cfl_substitute(node->children[4], node->children[3]->data, tail))
             {
-                free(tail);
+                cfl_free(tail);
 
                 return false;
             }
 
             cfl_node* temp = node->children[4];
 
-            free(tail);
+            cfl_free(tail);
             cfl_free_node(node->children[0]);
             cfl_free_node(node->children[1]);
             cfl_free_node(node->children[2]);
             cfl_free_node(node->children[3]);
-            free(node->children);
+            cfl_free(node->children);
 
             *node = *temp;
 
-            free(temp);
+            cfl_free(temp);
 
             return cfl_evaluate(node, definitions);
         }
@@ -467,11 +518,11 @@ static bool cfl_evaluate_multithreaded(cfl_node* node, cfl_definition_list* defi
             cfl_free_node(node->children[2]);
             cfl_free_node(node->children[3]);
             cfl_free_node(node->children[4]);
-            free(node->children);
+            cfl_free(node->children);
 
             *node = *temp;
 
-            free(temp);
+            cfl_free(temp);
         }
     }
 

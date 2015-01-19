@@ -1,6 +1,7 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 bool cfl_type_error;
 

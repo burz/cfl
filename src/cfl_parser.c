@@ -1,6 +1,7 @@
 #include "cfl_parser.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 extern void cfl_reset_parser_error_flag(void);

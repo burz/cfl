@@ -22,19 +22,27 @@ FILES = \
     cfl_type.generate.o \
     cfl_type.program.o
 
+GENERIC_FILES = \
+    cfl_malloc.generic.o \
+    cfl_eval.generic.o
+
+POSIX_FILES = \
+    cfl_malloc.posix.o \
+    cfl_eval.posix.o
+
 ifneq ($(OS), Windows_NT)
     UNAME = $(shell uname -s)
     ifeq ($(UNAME), Linux)
-        FILES += cfl_eval.posix.o
+        FILES += $(POSIX_FILES)
     else
         ifeq ($(UNAME), Darwin)
-            FILES += cfl_eval.posix.o
+            FILES += $(POSIX_FILES)
         else
-            FILES += cfl_eval.generic.c
+            FILES += $(GENERIC_FILES)
         endif
     endif
 else
-    FILES += cfl_eval.generic.c
+    FILES += $(GENERIC_FILES)
 endif
 
 all: cfl

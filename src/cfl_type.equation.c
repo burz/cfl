@@ -1,5 +1,7 @@
 #include "cfl_type.h"
 
+#include <stdlib.h>
+
 #define NUMBER_OF_PRIMES 16
 
 extern void* cfl_type_malloc(size_t size);

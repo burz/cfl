@@ -1,5 +1,7 @@
 #include "cfl_parser.h"
 
+#include <stdlib.h>
+
 extern void* cfl_parser_malloc(size_t size);
 
 bool cfl_parse_binary_operation(cfl_token_list** end,

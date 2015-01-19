@@ -2,6 +2,7 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void cfl_free_definition_list(cfl_definition_list* list)
 {

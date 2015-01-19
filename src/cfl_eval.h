@@ -4,7 +4,8 @@
 #include "cfl_ast.h"
 #include "cfl_program.h"
 
-void cfl_initialize_eval(void);
+bool cfl_initialize_eval(void);
+void cfl_cleanup_eval(void);
 
 bool cfl_substitute(cfl_node* target, char* variable, cfl_node* value);
 bool cfl_complex_substitute(cfl_node* target, cfl_node* variable, cfl_node* value);

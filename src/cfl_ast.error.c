@@ -1,4 +1,5 @@
 #include "cfl_ast.h"
+#include "cfl_malloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +18,7 @@ bool cfl_get_ast_error_flag(void)
 
 void* cfl_ast_malloc(size_t size)
 {
-    void* result = malloc(size);
+    void* result = cfl_malloc(size);
 
     if(!result)
     {
