@@ -896,6 +896,9 @@ cfl_program* cfl_parse_program(cfl_token_list* position, cfl_token_list* block)
 
     definition_list_pos->next = 0;
 
+    if(position != block && !cfl_token_string_compare(position, ";", 1))
+        position = position->next;
+
     if(position != block)
     {
         cfl_parse_error_partial_program();

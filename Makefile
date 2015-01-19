@@ -34,9 +34,11 @@ ifneq ($(OS), Windows_NT)
     UNAME = $(shell uname -s)
     ifeq ($(UNAME), Linux)
         FILES += $(POSIX_FILES)
+        LIBS += -lpthread
     else
         ifeq ($(UNAME), Darwin)
             FILES += $(POSIX_FILES)
+            LIBS += -lpthread
         else
             FILES += $(GENERIC_FILES)
         endif
@@ -48,7 +50,7 @@ endif
 all: cfl
 
 cfl: cfl_main.o $(FILES)
-	$(CC) -o cfl $^
+	$(CC) -o cfl $^ $(LIBS)
 
 clean:
 	rm -f *.o

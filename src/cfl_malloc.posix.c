@@ -1,7 +1,6 @@
 #include "cfl_malloc.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <pthread.h>
 
 static pthread_mutex_t cfl_memory_mutex;

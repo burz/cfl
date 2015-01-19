@@ -1,4 +1,5 @@
 #include "cfl_eval.h"
+#include "cfl_malloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,7 @@
 
 void* cfl_eval_malloc(size_t size)
 {
-    void* result = malloc(size);
+    void* result = cfl_malloc(size);
 
     if(!result)
     {
