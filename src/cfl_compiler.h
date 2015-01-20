@@ -5,6 +5,8 @@ extern "C" {
 #include "cfl_program.h"
 }
 
-bool cfl_compile(cfl_program* program, char* destination_file);
+#include <string>
+
+bool cfl_compile(cfl_program* program, std::string& destination_file);
 
 #endif
