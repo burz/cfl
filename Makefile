@@ -15,12 +15,13 @@ FILES = \
     cfl_parser.basic.o \
     cfl_parser.operator.o \
     cfl_parser.derived.o \
-    cfl_eval.o \
     cfl_type.o \
     cfl_type.error.o \
     cfl_type.equation.o \
     cfl_type.generate.o \
-    cfl_type.program.o
+    cfl_type.program.o \
+    cfl_eval.o \
+    cfl_compiler.o
 
 all: cfl
 
