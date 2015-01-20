@@ -5,8 +5,31 @@ extern "C" {
 #include "cfl_program.h"
 }
 
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/IRBuilder.h"
+
 #include <string>
 
-bool cfl_compile(cfl_program* program, std::string& destination_file);
+class cfl_Compiler
+{
+  private:
+    llvm::LLVMContext& global_context;
+    llvm::IRBuilder<>* builder;
+    llvm::Module* top_module;
+    llvm::Value* cfl_error_division_by_zero_string;
+
+    llvm::Value* compile_node_bool(cfl_node* node);
+
+    std::string compile_node_and(cfl_node* node, llvm::BasicBlock* block);
+
+    std::string compile_node(cfl_node* node, llvm::BasicBlock* block);
+
+    bool compile_program(cfl_program* program, llvm::BasicBlock* main_entry);
+  public:
+    cfl_Compiler(void);
+
+    bool compile(cfl_program* program, std::string& destination_file);
+};
 
 #endif
