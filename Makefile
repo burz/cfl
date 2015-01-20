@@ -9,8 +9,8 @@ LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
 LLVMLIBS = $(shell llvm-config --libs)
 
-LIBS = -L. $(LLVMLIBS)
-FLAGS = $(LLVMFLAGS)
+LIBS = $(LLVMLIBS)
+FLAGS = $(INCL) $(LLVMFLAGS)
 
 LDFLAGS = $(LLVMLDFLAGS) $(LIBS)
 
@@ -36,12 +36,18 @@ all: libcfl.a cfl
 libcfl.a: $(CFILES)
 	ar cr libcfl.a $(CFILES)
 
-cfl: $(SRCDIR)/cfl_main.cpp libcfl.a
-	$(CCPP) $(CFLAGS) $(SRCDIR)/cfl_compiler.cpp $(FLAGS)
-	$(CCPP) -o cfl $< cfl_compiler.o -lcfl $(LDFLAGS)
+CPPFILES = cfl_compiler.opp
+
+cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
+	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
+
+cfl: cfl-core
 
 clean:
-	rm -f *.o *.a
+	rm -f *.o *.opp *.a
 
 %.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $^ $(INCL)
+
+%.opp: $(SRCDIR)/%.cpp
+	$(CCPP) $(CFLAGS) -o $*.opp $^ $(FLAGS)

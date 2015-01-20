@@ -1,7 +1,8 @@
 *.o
 *.a
+*.opp
 *.dSYM
 
 *.cfl
 
-cfl
+cfl-core
