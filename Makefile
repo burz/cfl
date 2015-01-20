@@ -3,11 +3,11 @@ CCPP = clang++
 CFLAGS = -c -g -Wall
 
 SRCDIR = src
-INCL = -I$(SRCDIR)
+INCL = -Iinlcude
 
 LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
-LLVMLIBS = $(shell llvm-config --libs)
+LLVMLIBS = $(shell llvm-config --libs core)
 
 LIBS = $(LLVMLIBS)
 FLAGS = $(INCL) $(LLVMFLAGS)
@@ -31,7 +31,7 @@ CFILES = \
     cfl_type.program.o \
     cfl_eval.o
 
-all: libcfl.a cfl
+all: libcfl.a cfl-core
 
 libcfl.a: $(CFILES)
 	ar cr libcfl.a $(CFILES)
@@ -40,8 +40,6 @@ CPPFILES = cfl_compiler.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
 	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
-
-cfl: cfl-core
 
 clean:
 	rm -f *.o *.opp *.a

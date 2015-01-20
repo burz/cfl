@@ -21,11 +21,11 @@ class cfl_Compiler
 
     llvm::Value* compile_node_bool(cfl_node* node);
 
-    std::string compile_node_and(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_and(cfl_node* node, llvm::BasicBlock* block);
 
-    std::string compile_node(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node(cfl_node* node, llvm::BasicBlock* block);
 
-    bool compile_program(cfl_program* program, llvm::BasicBlock* main_entry);
+    bool compile_program(cfl_program* program);
   public:
     cfl_Compiler(void);
 
