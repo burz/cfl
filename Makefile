@@ -5,13 +5,13 @@ CFLAGS = -c -g -Wall
 SRCDIR = src
 INCL = -I$(SRCDIR)
 
-LLVMFLAGS = $(shell llvm-config --cflags)
+LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
 LLVMLIBS = $(shell llvm-config --libs)
 
 LIBS = -L. $(LLVMLIBS)
+FLAGS = $(LLVMFLAGS)
 
-FLAGS = $(INCL) $(LLVMFLAGS)
 LDFLAGS = $(LLVMLDFLAGS) $(LIBS)
 
 CFILES = \
@@ -44,4 +44,4 @@ clean:
 	rm -f *.o *.a
 
 %.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $^ $(FLAGS)
+	$(CC) $(CFLAGS) $^ $(INCL)
