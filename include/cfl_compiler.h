@@ -20,6 +20,7 @@ class cfl_Compiler
     llvm::Value* cfl_error_division_by_zero_string;
     llvm::Constant* global_puts;
     llvm::Constant* global_printf;
+    llvm::Function* print_def;
 
     llvm::Value* compile_node_bool(cfl_node* node);
     llvm::Value* compile_node_integer(cfl_node* node);
@@ -37,6 +38,7 @@ class cfl_Compiler
     llvm::Value* compile_node(cfl_node* node, llvm::BasicBlock* block);
 
     void setup_global_defs(void);
+    void generate_print_function(cfl_program* program);
     bool compile_program(cfl_program* program);
   public:
     cfl_Compiler(void);

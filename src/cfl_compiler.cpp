@@ -10,32 +10,23 @@ cfl_Compiler::cfl_Compiler(void)
 
 llvm::Value* cfl_Compiler::compile_node_bool(cfl_node* node)
 {
-    llvm::Constant* value;
+    bool value = *((bool*) node->data);
 
-    if(*((bool*) node->data))
-        value = llvm::ConstantInt::getTrue(global_context);
-    else
-        value = llvm::ConstantInt::getFalse(global_context);
-
-    return value;
+    return builder->getInt1(value);
 }
 
 llvm::Value* cfl_Compiler::compile_node_integer(cfl_node* node)
 {
     int value = *((int*) node->data);
 
-    llvm::Type* integer_type = builder->getInt32Ty();
-
-    return llvm::ConstantInt::get(integer_type, value);
+    return builder->getInt32(value);
 }
 
 llvm::Value* cfl_Compiler::compile_node_char(cfl_node* node)
 {
     char value = *((char*) node->data);
 
-    llvm::Type* char_type = builder->getInt8Ty();
-
-    return llvm::ConstantInt::get(char_type, value);
+    return builder->getInt8(value);
 }
 
 llvm::Value* cfl_Compiler::compile_node_and(cfl_node* node, llvm::BasicBlock* block)
@@ -132,9 +123,7 @@ llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::BasicBlock* block)
 void cfl_Compiler::setup_global_defs(void)
 {
     std::vector<llvm::Type*> puts_args;
-
     puts_args.push_back(builder->getInt8Ty()->getPointerTo());
-
     llvm::ArrayRef<llvm::Type*> puts_args_ref(puts_args);
 
     llvm::FunctionType* puts_type =
@@ -146,15 +135,120 @@ void cfl_Compiler::setup_global_defs(void)
         builder->CreateGlobalStringPtr("EVALUATION ERROR: Division by zero");
 
     std::vector<llvm::Type*> printf_args;
-
     printf_args.push_back(builder->getInt8Ty()->getPointerTo());
-
     llvm::ArrayRef<llvm::Type*> printf_args_ref(printf_args);
 
     llvm::FunctionType* printf_type =
         llvm::FunctionType::get(builder->getInt32Ty(), printf_args_ref, true);
 
     global_printf = top_module->getOrInsertFunction("printf", printf_type);
+}
+
+void cfl_Compiler::generate_print_function(cfl_program* program)
+{
+    if(program->type->type == CFL_TYPE_BOOL)
+    {
+        std::vector<llvm::Type*> print_args;
+        print_args.push_back(builder->getInt1Ty());
+        llvm::ArrayRef<llvm::Type*> print_args_ref(print_args);
+
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), print_args_ref, false);
+
+        print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_bool", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_bool_entry", print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        llvm::BasicBlock* print_true = llvm::BasicBlock::Create(
+            global_context, "__print_bool_true", print_def);
+
+        llvm::BasicBlock* print_false = llvm::BasicBlock::Create(
+            global_context, "__print_bool_false", print_def);
+
+        llvm::BasicBlock* print_end = llvm::BasicBlock::Create(
+            global_context, "__print_bool_end", print_def);
+
+        llvm::Value* true_string = builder->CreateGlobalStringPtr("true");
+        llvm::Value* false_string = builder->CreateGlobalStringPtr("false");
+
+        builder->CreateCondBr(print_def->arg_begin()++, print_true, print_false);
+
+        builder->SetInsertPoint(print_true);
+        builder->CreateCall(global_puts, true_string);
+        builder->CreateBr(print_end);
+
+        builder->SetInsertPoint(print_false);
+        builder->CreateCall(global_puts, false_string);
+
+        builder->SetInsertPoint(print_end);
+        builder->CreateRetVoid();
+    }
+    else if(program->type->type == CFL_TYPE_INTEGER)
+    {
+        std::vector<llvm::Type*> print_args;
+        print_args.push_back(builder->getInt32Ty());
+        llvm::ArrayRef<llvm::Type*> print_args_ref(print_args);
+
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), print_args_ref, false);
+
+        print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_int", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_int_entry", print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        llvm::Value* format_string = builder->CreateGlobalStringPtr("%d\n");
+
+        builder->CreateCall2(global_printf, format_string, print_def->arg_begin()++);
+        builder->CreateRetVoid();
+    }
+    else if(program->type->type == CFL_TYPE_CHAR)
+    {
+        std::vector<llvm::Type*> print_args;
+        print_args.push_back(builder->getInt8Ty());
+        llvm::ArrayRef<llvm::Type*> print_args_ref(print_args);
+
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), print_args_ref, false);
+
+        print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_char", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_char_entry", print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        llvm::Value* format_string = builder->CreateGlobalStringPtr("'%c'\n");
+
+        builder->CreateCall2(global_printf, format_string, print_def->arg_begin()++);
+        builder->CreateRetVoid();
+    }
+    else
+    {
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), false);
+
+        print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_generic", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_generic_entry", print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        llvm::Value* success_string = builder->CreateGlobalStringPtr("Success.");
+
+        builder->CreateCall(global_puts, success_string);
+        builder->CreateRetVoid();
+    }
 }
 
 bool cfl_Compiler::compile_program(cfl_program* program)
@@ -172,12 +266,16 @@ bool cfl_Compiler::compile_program(cfl_program* program)
 
     setup_global_defs();
 
+    generate_print_function(program);
+
+    builder->SetInsertPoint(main_entry);
+
     llvm::Value* result = compile_node(program->main, main_entry);
 
     if(!result)
         return false;
 
-    builder->CreateCall(global_puts, cfl_error_division_by_zero_string);
+    builder->CreateCall(print_def, result);
     builder->CreateRet(llvm::ConstantInt::get(builder->getInt32Ty(), 0));
 
     return true;

@@ -2,6 +2,7 @@
 *.a
 *.opp
 *.ll
+*.s
 *.dSYM
 
 *.cfl
