@@ -19,10 +19,20 @@ class cfl_Compiler
     llvm::Module* top_module;
     llvm::Value* cfl_error_division_by_zero_string;
     llvm::Constant* global_puts;
+    llvm::Constant* global_printf;
 
     llvm::Value* compile_node_bool(cfl_node* node);
+    llvm::Value* compile_node_integer(cfl_node* node);
+    llvm::Value* compile_node_char(cfl_node* node);
 
     llvm::Value* compile_node_and(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_or(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_not(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_add(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_multiply(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_divide(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_equal(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_less(cfl_node* node, llvm::BasicBlock* block);
 
     llvm::Value* compile_node(cfl_node* node, llvm::BasicBlock* block);
 
