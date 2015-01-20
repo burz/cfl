@@ -110,7 +110,9 @@ int main(int argc, char* argv[])
 
         std::string output_file = "lol.ll";
 
-        if(!cfl_compile(program, output_file))
+        cfl_Compiler compiler;
+
+        if(!compiler.compile(program, output_file))
             return false;
 
         cfl_free_program(program);
