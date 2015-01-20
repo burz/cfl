@@ -1,3 +1,11 @@
 #!/bin/bash
 
-./cfl-core $@
+if [ "$2" == "" ]
+then
+    FILENAME="${1%.*}"
+    ./cfl-core $@ &> $FILENAME.ll
+    llvm-as -o $FILENAME $FILENAME.ll
+    chmod +x $FILENAME
+else
+    ./cfl-core $@
+fi

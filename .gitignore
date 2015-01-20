@@ -1,6 +1,7 @@
 *.o
 *.a
 *.opp
+*.ll
 *.dSYM
 
 *.cfl

@@ -3,7 +3,7 @@ CCPP = clang++
 CFLAGS = -c -g -Wall
 
 SRCDIR = src
-INCL = -Iinlcude
+INCL = -Iinclude
 
 LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
