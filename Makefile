@@ -1,9 +1,17 @@
-CC = gcc
+CC = clang
 CFLAGS = -c -g -Wall
 
 SRCDIR = src
-
 INCL = -I$(SRCDIR)
+
+LLVMFLAGS = $(shell llvm-config --cflags)
+LLVMLDFLAGS = $(shell llvm-config --ldflags)
+LLVMLIBS = $(shell llvm-config --libs)
+
+LIBS = $(LLVMLIBS)
+
+FLAGS = $(INCL) $(LLVMFLAGS)
+LDFLAGS = $(LLVMLDFLAGS) $(LIBS)
 
 FILES = \
     cfl_ast.o \
@@ -26,10 +34,10 @@ FILES = \
 all: cfl
 
 cfl: cfl_main.o $(FILES)
-	$(CC) -o cfl $^
+	$(CC) -o cfl $^ $(LDFLAGS)
 
 clean:
 	rm -f *.o
 
 %.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $^ $(INCL)
+	$(CC) $(CFLAGS) $^ $(FLAGS)
