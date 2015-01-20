@@ -15,7 +15,8 @@ extern "C" {
 static char usage[] = "USAGE: cfl filename\n"
                       "           -ast filename\n"
                       "           -type filename\n"
-                      "           -eval filename";
+                      "           -eval filename\n"
+                      "           -jit filename";
 
 int main(int argc, char* argv[])
 {

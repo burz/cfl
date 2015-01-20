@@ -2,10 +2,22 @@
 
 if [ "$2" == "" ]
 then
-    FILENAME="${1%.*}"
-    ./cfl-core $@ &> $FILENAME.ll
-    llvm-as -o $FILENAME $FILENAME.ll
-    chmod +x $FILENAME
+    if ["$1" == ""]
+    then
+        ./cfl-core
+    else
+        FILENAME="${1%.*}"
+        ./cfl-core $@ &> $FILENAME.ll
+        llvm-as -o $FILENAME $FILENAME.ll
+        chmod +x $FILENAME
+    fi
 else
-    ./cfl-core $@
+    if [ "$1" == "-jit" ]
+    then
+        FILENAME="${2%.*}"
+        ./cfl-core $2 &> $FILENAME.ll
+        lli $FILENAME.ll
+    else
+        ./cfl-core $@
+    fi
 fi
