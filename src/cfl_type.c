@@ -149,6 +149,8 @@ int cfl_copy_type(cfl_type* target, cfl_type* node)
 
             break;
         case CFL_TYPE_TUPLE:
+            input = 0;
+
             if(node->id)
             {
                 input = cfl_type_malloc(sizeof(cfl_type*) * node->id);

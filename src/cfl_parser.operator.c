@@ -65,7 +65,7 @@ cfl_node* cfl_parse_and(
 
     cfl_node* result = cfl_create_new_node_and(left, right);
 
-    if(!result);
+    if(!result)
         return 0;
 
     return result;
