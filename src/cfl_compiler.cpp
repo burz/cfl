@@ -1,5 +1,7 @@
 #include "cfl_compiler.h"
 
+#include <iostream>
+
 cfl_Compiler::cfl_Compiler(void)
     : global_context(llvm::getGlobalContext())
 {
@@ -7,6 +9,7 @@ cfl_Compiler::cfl_Compiler(void)
 
 llvm::Value* cfl_Compiler::compile_node_bool(cfl_node* node)
 {
+std::cout<<"here\n";
     llvm::Value* value;
 
     if(*((bool*) node->data))
@@ -17,41 +20,28 @@ llvm::Value* cfl_Compiler::compile_node_bool(cfl_node* node)
     return value;
 }
 
-std::string cfl_Compiler::compile_node_and(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_and(cfl_node* node, llvm::BasicBlock* block)
 {
-    llvm::Value* left = compile_node_bool(node->children[0]);
-    llvm::Value* right = compile_node_bool(node->children[1]);
+    llvm::Value* left = compile_node(node->children[0], block);
+    llvm::Value* right = compile_node(node->children[1], block);
 
-    std::string and_label = "and";
+    llvm::Value* and_value = builder->CreateAnd(left, right, "and_value");
 
-    llvm::Value* and_value = builder->CreateAdd(left, right, and_label);
-
-    std::string and_result = "and_result";
-
-    llvm::LoadInst* load = builder->CreateLoad(and_value, and_result);
-
-    block->getInstList().push_back(load);
-
-    return and_result;
+    return builder->CreateLoad(and_value, "and");
 }
 
-std::string cfl_Compiler::compile_node(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::BasicBlock* block)
 {
-    return compile_node_and(node, block);
+    if(node->type == CFL_NODE_BOOL)
+        return compile_node_bool(node);
+    else if(node->type == CFL_NODE_AND)
+        return compile_node_and(node, block);
+
+    return 0;
 }
 
-bool cfl_Compiler::compile_program(cfl_program* program, llvm::BasicBlock* main_entry)
+bool cfl_Compiler::compile_program(cfl_program* program)
 {
-    compile_node_and(program->main, main_entry);
-
-    return true;
-}
-
-bool cfl_Compiler::compile(cfl_program* program, std::string& destination_file)
-{
-    builder = new llvm::IRBuilder<>(global_context);
-    top_module = new llvm::Module("top", global_context);
-
     llvm::FunctionType* main_type = llvm::FunctionType::get(
         builder->getInt32Ty(), false);
 
@@ -66,7 +56,20 @@ bool cfl_Compiler::compile(cfl_program* program, std::string& destination_file)
     cfl_error_division_by_zero_string =
         builder->CreateGlobalStringPtr("EVALUATION ERROR: Division by zero\n");
 
-    if(!compile_program(program, main_entry))
+    llvm::Value* result = compile_node(program->main, main_entry);
+
+    if(!result)
+        return false;
+
+    return true;
+}
+
+bool cfl_Compiler::compile(cfl_program* program, std::string& destination_file)
+{
+    builder = new llvm::IRBuilder<>(global_context);
+    top_module = new llvm::Module("top", global_context);
+
+    if(!compile_program(program))
     {
         delete builder;
         delete top_module;
