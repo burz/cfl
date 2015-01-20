@@ -1,4 +1,5 @@
 CC = clang
+CCPP = clang++
 CFLAGS = -c -g -Wall
 
 SRCDIR = src
@@ -8,12 +9,12 @@ LLVMFLAGS = $(shell llvm-config --cflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
 LLVMLIBS = $(shell llvm-config --libs)
 
-LIBS = $(LLVMLIBS)
+LIBS = -L. $(LLVMLIBS)
 
 FLAGS = $(INCL) $(LLVMFLAGS)
 LDFLAGS = $(LLVMLDFLAGS) $(LIBS)
 
-FILES = \
+CFILES = \
     cfl_ast.o \
     cfl_ast.error.o \
     cfl_program.o \
@@ -28,16 +29,19 @@ FILES = \
     cfl_type.equation.o \
     cfl_type.generate.o \
     cfl_type.program.o \
-    cfl_eval.o \
-    cfl_compiler.o
+    cfl_eval.o
 
-all: cfl
+all: libcfl.a cfl
 
-cfl: cfl_main.o $(FILES)
-	$(CC) -o cfl $^ $(LDFLAGS)
+libcfl.a: $(CFILES)
+	ar cr libcfl.a $(CFILES)
+
+cfl: $(SRCDIR)/cfl_main.cpp libcfl.a
+	$(CCPP) $(CFLAGS) $(SRCDIR)/cfl_compiler.cpp $(FLAGS)
+	$(CCPP) -o cfl $< cfl_compiler.o -lcfl $(LDFLAGS)
 
 clean:
-	rm -f *.o
+	rm -f *.o *.a
 
 %.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $^ $(FLAGS)

@@ -1,3 +1,4 @@
+extern "C" {
 #include "cfl_parser.h"
 #include "cfl_program.h"
 #include "cfl_type.h"
@@ -5,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+}
 
 #define EQUATION_HASH_TABLE_LENGTH 503
 
