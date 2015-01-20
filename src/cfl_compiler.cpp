@@ -29,70 +29,105 @@ llvm::Value* cfl_Compiler::compile_node_char(cfl_node* node)
     return builder->getInt8(value);
 }
 
-llvm::Value* cfl_Compiler::compile_node_and(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_and(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateAnd(left, right, "and");
 }
 
-llvm::Value* cfl_Compiler::compile_node_or(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_or(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateOr(left, right, "or");
 }
 
-llvm::Value* cfl_Compiler::compile_node_not(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_not(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* child = compile_node(node->children[0], block);
+    llvm::Value* child = compile_node(node->children[0], parent);
 
     return builder->CreateNot(child, "not");
 }
 
-llvm::Value* cfl_Compiler::compile_node_add(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_add(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateAdd(left, right, "add");
 }
 
-llvm::Value* cfl_Compiler::compile_node_multiply(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_multiply(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateMul(left, right, "multiply");
 }
 
-llvm::Value* cfl_Compiler::compile_node_divide(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_divide(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateSDiv(left, right, "divide");
 }
 
-llvm::Value* cfl_Compiler::compile_node_equal(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_equal(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateICmpEQ(left, right, "equal");
 }
 
-llvm::Value* cfl_Compiler::compile_node_less(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_less(cfl_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], block);
-    llvm::Value* right = compile_node(node->children[1], block);
+    llvm::Value* left = compile_node(node->children[0], parent);
+    llvm::Value* right = compile_node(node->children[1], parent);
 
     return builder->CreateICmpSLT(left, right, "less");
 }
 
-llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::BasicBlock* block)
+llvm::Value* cfl_Compiler::compile_node_if(cfl_node* node, llvm::Function* parent)
+{
+    llvm::Value* condition = compile_node(node->children[0], parent);
+
+    llvm::BasicBlock* if_true = llvm::BasicBlock::Create(
+        global_context, "__if_true", parent);
+    llvm::BasicBlock* if_false = llvm::BasicBlock::Create(
+        global_context, "__if_false", parent);
+    llvm::BasicBlock* if_end = llvm::BasicBlock::Create(
+        global_context, "__if_end", parent);
+
+    builder->CreateCondBr(condition, if_true, if_false);
+
+    builder->SetInsertPoint(if_true);
+
+    llvm::Value* then_value = compile_node(node->children[1], parent);
+
+    builder->CreateBr(if_end);
+
+    builder->SetInsertPoint(if_false);
+
+    llvm::Value* else_value = compile_node(node->children[2], parent);
+
+    builder->CreateBr(if_end);
+
+    builder->SetInsertPoint(if_end);
+
+    llvm::PHINode* phi = builder->CreatePHI(then_value->getType(), 2, "if_result");
+
+    phi->addIncoming(then_value, if_true);
+    phi->addIncoming(else_value, if_false);
+
+    return phi;
+}
+
+llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::Function* parent)
 {
     if(node->type == CFL_NODE_BOOL)
         return compile_node_bool(node);
@@ -101,21 +136,23 @@ llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::BasicBlock* block)
     else if(node->type == CFL_NODE_CHAR)
         return compile_node_char(node);
     else if(node->type == CFL_NODE_AND)
-        return compile_node_and(node, block);
+        return compile_node_and(node, parent);
     else if(node->type == CFL_NODE_OR)
-        return compile_node_or(node, block);
+        return compile_node_or(node, parent);
     else if(node->type == CFL_NODE_NOT)
-        return compile_node_not(node, block);
+        return compile_node_not(node, parent);
     else if(node->type == CFL_NODE_ADD)
-        return compile_node_add(node, block);
+        return compile_node_add(node, parent);
     else if(node->type == CFL_NODE_MULTIPLY)
-        return compile_node_multiply(node, block);
+        return compile_node_multiply(node, parent);
     else if(node->type == CFL_NODE_DIVIDE)
-        return compile_node_divide(node, block);
+        return compile_node_divide(node, parent);
     else if(node->type == CFL_NODE_EQUAL)
-        return compile_node_equal(node, block);
+        return compile_node_equal(node, parent);
     else if(node->type == CFL_NODE_LESS)
-        return compile_node_less(node, block);
+        return compile_node_less(node, parent);
+    else if(node->type == CFL_NODE_IF)
+        return compile_node_if(node, parent);
 
     return 0;
 }
@@ -163,12 +200,10 @@ void cfl_Compiler::generate_print_function(cfl_program* program)
 
         builder->SetInsertPoint(print_entry);
 
-        llvm::BasicBlock* print_true = llvm::BasicBlock::Create(
-            global_context, "__print_bool_true", print_def);
-
         llvm::BasicBlock* print_false = llvm::BasicBlock::Create(
             global_context, "__print_bool_false", print_def);
-
+        llvm::BasicBlock* print_true = llvm::BasicBlock::Create(
+            global_context, "__print_bool_true", print_def);
         llvm::BasicBlock* print_end = llvm::BasicBlock::Create(
             global_context, "__print_bool_end", print_def);
 
@@ -183,6 +218,7 @@ void cfl_Compiler::generate_print_function(cfl_program* program)
 
         builder->SetInsertPoint(print_false);
         builder->CreateCall(global_puts, false_string);
+        builder->CreateBr(print_end);
 
         builder->SetInsertPoint(print_end);
         builder->CreateRetVoid();
@@ -270,7 +306,7 @@ bool cfl_Compiler::compile_program(cfl_program* program)
 
     builder->SetInsertPoint(main_entry);
 
-    llvm::Value* result = compile_node(program->main, main_entry);
+    llvm::Value* result = compile_node(program->main, main_def);
 
     if(!result)
         return false;

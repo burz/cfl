@@ -26,16 +26,18 @@ class cfl_Compiler
     llvm::Value* compile_node_integer(cfl_node* node);
     llvm::Value* compile_node_char(cfl_node* node);
 
-    llvm::Value* compile_node_and(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_or(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_not(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_add(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_multiply(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_divide(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_equal(cfl_node* node, llvm::BasicBlock* block);
-    llvm::Value* compile_node_less(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_and(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_or(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_not(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_add(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_multiply(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_divide(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_equal(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_less(cfl_node* node, llvm::Function* parent);
 
-    llvm::Value* compile_node(cfl_node* node, llvm::BasicBlock* block);
+    llvm::Value* compile_node_if(cfl_node* node, llvm::Function* parent);
+
+    llvm::Value* compile_node(cfl_node* node, llvm::Function* parent);
 
     void setup_global_defs(void);
     void generate_print_function(cfl_program* program);
