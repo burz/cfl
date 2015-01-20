@@ -8,11 +8,14 @@ extern "C" {
 #include <string.h>
 }
 
+#include "cfl_compiler.h"
+
 #define EQUATION_HASH_TABLE_LENGTH 503
 
 static char usage[] = "USAGE: cfl filename\n"
                       "           -ast filename\n"
-                      "           -type filename";
+                      "           -type filename\n"
+                      "           -eval filename";
 
 int main(int argc, char* argv[])
 {
@@ -56,6 +59,33 @@ int main(int argc, char* argv[])
 
             cfl_free_program(program);
         }
+        else if(argc > 2 && !strcmp(argv[1], "-eval"))
+        {
+            program = cfl_parse_file(argv[2]);
+
+            if(!program)
+                return 1;
+
+            if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
+            {
+                cfl_free_program(program);
+
+                return 1;
+            }
+
+            cfl_initialize_eval();
+
+            if(!cfl_evaluate_program(program))
+            {
+                cfl_free_program(program);
+
+                return 1;
+            }
+
+            cfl_print_node(program->main);
+
+            cfl_free_program(program);
+        }
         else
         {
             fprintf(stderr, "ERROR: unrecognized option \"%s\"\n%s\n",
@@ -78,16 +108,10 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        cfl_initialize_eval();
+        std::string output_file = "lol.ll";
 
-        if(!cfl_evaluate_program(program))
-        {
-            cfl_free_program(program);
-
-            return 1;
-        }
-
-        cfl_print_node(program->main);
+        if(!cfl_compile(program, output_file))
+            return false;
 
         cfl_free_program(program);
     }
