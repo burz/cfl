@@ -35,6 +35,7 @@ CFILES = \
     cfl_type.o \
     cfl_type.error.o \
     cfl_type.equation.o \
+    cfl_type.hypothesis.o \
     cfl_type.generate.o \
     cfl_type.program.o \
     cfl_type.typed_program.o \

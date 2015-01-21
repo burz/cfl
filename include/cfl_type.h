@@ -6,6 +6,7 @@
 #include "cfl_type.types.h"
 #include "cfl_type.error.h"
 #include "cfl_type.equation.h"
+#include "cfl_type.hypothesis.h"
 #include "cfl_type.generate.h"
 #include "cfl_type.program.h"
 #include "cfl_type.typed_program.h"
