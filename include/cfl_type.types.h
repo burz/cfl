@@ -41,4 +41,10 @@ typedef struct cfl_type_hypothesis_chain_t {
     struct cfl_type_hypothesis_chain_t* next;
 } cfl_type_hypothesis_chain;
 
+typedef struct cfl_hypothesis_load_list_t {
+    cfl_type* left;
+    cfl_type* right;
+    struct cfl_hypothesis_load_list_t* next;
+} cfl_hypothesis_load_list;
+
 #endif

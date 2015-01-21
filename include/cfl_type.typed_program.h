@@ -11,9 +11,11 @@ cfl_typed_node* cfl_generate_typed_node(cfl_type_equations* equations,
 
 bool cfl_simplify_typed_node(cfl_type_equations* equations, cfl_typed_node* node);
 
-cfl_typed_definition_list* cfl_generate_definition_types(cfl_type_hypothesis_chain* hypothesis_head,
-                                                         cfl_definition_list* definitions,
-                                                         unsigned int equation_hash_table_length);
+cfl_typed_definition_list* cfl_generate_definition_types(
+        cfl_type_hypothesis_chain* hypothesis_head,
+        cfl_hypothesis_load_list* load_list,
+        cfl_definition_list* definitions,
+        unsigned int equation_hash_table_length);
 
 cfl_typed_program* cfl_generate_typed_program(cfl_program* program,
                                               unsigned int equation_hash_table_length);
