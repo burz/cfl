@@ -272,11 +272,11 @@ static void cfl_print_typed_node_inner(cfl_typed_node* node)
             cfl_print_typed_node_inner(node->children[0]);
             printf(") of [] -> (");
             cfl_print_typed_node_inner(node->children[1]);
-            printf(") | (");
+            printf(") | ((");
             cfl_print_typed_node_inner(node->children[2]);
-            printf(" : ");
+            printf(") : (");
             cfl_print_typed_node_inner(node->children[3]);
-            printf(") -> (");
+            printf(")) -> (");
             cfl_print_typed_node_inner(node->children[4]);
             printf(") :: ");
             break;
