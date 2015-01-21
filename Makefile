@@ -40,7 +40,7 @@ CFILES = \
     cfl_type.typed_program.o \
     cfl_eval.o
 
-cfl: libcfl.a $(MAIN)
+cfl: $(MAIN)
 
 all: libcfl.a cfl-core-c cfl-core
 
