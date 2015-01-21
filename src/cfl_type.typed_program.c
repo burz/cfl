@@ -861,6 +861,29 @@ cfl_typed_node* cfl_generate_typed_node(
 
 bool cfl_simplify_typed_node(cfl_type_equations* equations, cfl_typed_node* node)
 {
+    if(!cfl_simplify_type(equations, node->resulting_type))
+        return false;
+
+    if(node->node_type == CFL_NODE_LIST)
+    {
+        cfl_typed_node_list* pos = node->data;
+
+        while(pos)
+        {
+            if(!cfl_simplify_typed_node(equations, pos->node))
+                return false;
+
+            pos = pos->next;
+        }
+    }
+    else
+    {
+        int i = 0;
+        for( ; i < node->number_of_children; ++i)
+            if(!cfl_simplify_typed_node(equations, node->children[i]))
+                return false;
+    }
+
     return true;
 }
 
