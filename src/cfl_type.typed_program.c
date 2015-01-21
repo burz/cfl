@@ -531,6 +531,67 @@ cfl_typed_node* cfl_generate_typed_node(
         return cfl_generate_typed_node_for_binary_expression(
             equations, hypothesis_head, definitions, &cfl_create_new_type_bool,
             &cfl_create_new_type_bool, node);
+    else if(node->type == CFL_NODE_NOT)
+    {
+        cfl_typed_node* typed_child = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[0]);
+
+        if(!typed_child)
+            return 0;
+
+        free(node->children[0]);
+        free(node->children);
+
+        node->number_of_children = 0;
+
+        cfl_type* child_type = cfl_copy_new_type(typed_child->resulting_type);
+
+        if(!child_type)
+        {
+            cfl_free_typed_node(typed_child);
+
+            return 0;
+        }
+
+        cfl_type* boolean = cfl_create_new_type_bool();
+
+        if(!boolean)
+        {
+            cfl_free_type(child_type);
+            cfl_free_typed_node(typed_child);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, child_type, boolean))
+        {
+            cfl_free_typed_node(typed_child);
+
+            return 0;
+        }
+
+        boolean = cfl_create_new_type_bool();
+
+        if(!boolean)
+        {
+            cfl_free_typed_node(typed_child);
+
+            return 0;
+        }
+
+        cfl_typed_node** children = cfl_type_malloc(sizeof(cfl_typed_node*));
+
+        if(!children)
+        {
+            cfl_free_typed_node(typed_child);
+
+            return 0;
+        }
+
+        children[0] = typed_child;
+
+        return cfl_create_typed_node(CFL_NODE_NOT, boolean, 1, 0, children);
+    }
     else if(node->type == CFL_NODE_ADD || node->type == CFL_NODE_MULTIPLY ||
             node->type == CFL_NODE_DIVIDE)
         return cfl_generate_typed_node_for_binary_expression(
