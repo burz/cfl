@@ -8,7 +8,7 @@ extern void* cfl_type_malloc(size_t size);
 extern unsigned int cfl_type_get_next_id(void);
 extern void cfl_reset_type_generator(void);
 
-static unsigned int cfl_lookup_variable(
+static cfl_type* cfl_lookup_variable(
         cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypotheses,
         cfl_typed_definition_list* definitions,
@@ -17,10 +17,20 @@ static unsigned int cfl_lookup_variable(
     while(hypotheses)
     {
         if(!strcmp(name, hypotheses->name))
-            return hypotheses->id;
+            return cfl_create_new_type_variable(hypotheses->id);
 
         hypotheses = hypotheses->next;
     }
+
+    while(definitions)
+    {
+        if(!strcmp(name, definitions->name))
+            return cfl_copy_new_type(definitions->definition->resulting_type);
+
+        definitions = definitions->next;
+    }
+
+    cfl_type_error_undefined_variable(name);
 
     return 0;
 }
@@ -173,19 +183,10 @@ cfl_typed_node* cfl_generate_typed_node(
 {
     if(node->type == CFL_NODE_VARIABLE)
     {
-        unsigned int id = cfl_lookup_variable(equations,
-                                              hypothesis_head->next,
-                                              definitions,
-                                              node->data);
-
-        if(!id)
-        {
-            cfl_type_error_undefined_variable(node->data);
-
-            return 0;
-        }
-
-        cfl_type* type = cfl_create_new_type_variable(id);
+        cfl_type* type = cfl_lookup_variable(equations,
+                                             hypothesis_head->next,
+                                             definitions,
+                                             node->data);
 
         if(!type)
             return 0;
@@ -969,6 +970,8 @@ cfl_typed_definition_list* cfl_generate_definition_types(
         unsigned int equation_hash_table_length)
 {
     cfl_typed_definition_list definition_head;
+    definition_head.next = 0;
+
     cfl_typed_definition_list* pos = &definition_head;
 
     while(definitions)
@@ -1013,7 +1016,7 @@ cfl_typed_program* cfl_generate_typed_program(
 
     if(program->definitions)
     {
-        cfl_typed_definition_list* typed_definitions =  cfl_generate_definition_types(
+        typed_definitions =  cfl_generate_definition_types(
             &hypothesis_head, program->definitions, equation_hash_table_length);
 
         if(!typed_definitions)
