@@ -701,6 +701,160 @@ cfl_typed_node* cfl_generate_typed_node(
 
         return cfl_create_typed_node(CFL_NODE_APPLICATION, result_type, 2, 0, children);
     }
+    else if(node->type == CFL_NODE_IF)
+    {
+        cfl_typed_node* typed_condition = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[0]);
+
+        if(!typed_condition)
+            return 0;
+
+        cfl_type* condition_type = cfl_copy_new_type(typed_condition->resulting_type);
+
+        if(!condition_type)
+        {
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        cfl_type* boolean = cfl_create_new_type_bool();
+
+        if(!boolean)
+        {
+            cfl_free_type(condition_type);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, condition_type, boolean))
+        {
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_then = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[1]);
+
+        if(!typed_then)
+        {
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        cfl_type* then_type = cfl_copy_new_type(typed_then->resulting_type);
+
+        if(!then_type)
+        {
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        unsigned int id = cfl_type_get_next_id();
+
+        cfl_type* result_type = cfl_create_new_type_variable(id);
+
+        if(!result_type)
+        {
+            cfl_free_type(then_type);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, then_type, result_type))
+        {
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_else = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[2]);
+
+        if(!typed_else)
+        {
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        free(node->children[0]);
+        free(node->children[1]);
+        free(node->children[2]);
+        free(node->children);
+
+        node->number_of_children = 0;
+
+        cfl_type* else_type = cfl_copy_new_type(typed_else->resulting_type);
+
+        if(!else_type)
+        {
+            cfl_free_typed_node(typed_else);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        result_type = cfl_create_new_type_variable(id);
+
+        if(!result_type)
+        {
+            cfl_free_type(else_type);
+            cfl_free_typed_node(typed_else);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, else_type, result_type))
+        {
+            cfl_free_typed_node(typed_else);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        result_type = cfl_create_new_type_variable(id);
+
+        if(!result_type)
+        {
+            cfl_free_typed_node(typed_else);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        cfl_typed_node** children = cfl_type_malloc(sizeof(cfl_typed_node*) * 3);
+
+        if(!children)
+        {
+            cfl_free_type(result_type);
+            cfl_free_typed_node(typed_else);
+            cfl_free_typed_node(typed_then);
+            cfl_free_typed_node(typed_condition);
+
+            return 0;
+        }
+
+        children[0] = typed_condition;
+        children[1] = typed_then;
+        children[2] = typed_else;
+
+        return cfl_create_typed_node(CFL_NODE_IF, result_type, 3, 0, children);
+    }
 
     return 0;
 }
