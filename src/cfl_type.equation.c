@@ -298,13 +298,6 @@ void cfl_delete_type_equations(cfl_type_equations* equations)
     free(equations->hash_table);
 }
 
-void cfl_free_type_equations(cfl_type_equations* equations)
-{
-    cfl_delete_type_equations(equations);
-
-    free(equations);
-}
-
 int cfl_add_type_equation(
         cfl_type_equations* equations,
         cfl_type* left,

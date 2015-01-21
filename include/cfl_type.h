@@ -8,6 +8,7 @@
 #include "cfl_type.equation.h"
 #include "cfl_type.generate.h"
 #include "cfl_type.program.h"
+#include "cfl_type.typed_program.h"
 
 cfl_type* cfl_create_new_type_variable(unsigned int id);
 cfl_type* cfl_create_new_type_bool(void);
@@ -38,6 +39,7 @@ int cfl_compare_type(cfl_type* left, cfl_type* right);
 void cfl_delete_type(cfl_type* node);
 void cfl_free_type(cfl_type* node);
 
+void cfl_print_type_inner(cfl_type* node);
 void cfl_print_type(cfl_type* node);
 
 bool cfl_typecheck(cfl_program* program, unsigned int equation_hash_table_length);

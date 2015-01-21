@@ -5,6 +5,66 @@
 extern void* cfl_type_malloc(size_t size);
 extern void cfl_reset_type_generator(void);
 
+cfl_type* cfl_create_new_type_variable(unsigned int id)
+{
+    cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!result)
+        return 0;
+
+    result->type = CFL_TYPE_VARIABLE;
+    result->id = id;
+    result->input = 0;
+    result->output = 0;
+
+    return result;
+}
+
+cfl_type* cfl_create_new_type_bool(void)
+{
+    cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!result)
+        return 0;
+
+    result->type = CFL_TYPE_BOOL;
+    result->id = 0;
+    result->input = 0;
+    result->output = 0;
+
+    return result;
+}
+
+cfl_type* cfl_create_new_type_integer(void)
+{
+    cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!result)
+        return 0;
+
+    result->type = CFL_TYPE_INTEGER;
+    result->id = 0;
+    result->input = 0;
+    result->output = 0;
+
+    return result;
+}
+
+cfl_type* cfl_create_new_type_char(void)
+{
+    cfl_type* result = cfl_type_malloc(sizeof(cfl_type));
+
+    if(!result)
+        return 0;
+
+    result->type = CFL_TYPE_CHAR;
+    result->id = 0;
+    result->input = 0;
+    result->output = 0;
+
+    return result;
+}
+
 void cfl_create_type_variable(cfl_type* node, unsigned int id)
 {
     node->type = CFL_TYPE_VARIABLE;
@@ -256,7 +316,7 @@ void cfl_free_type(cfl_type* node)
     free(node);
 }
 
-static void cfl_print_type_inner(cfl_type* node)
+void cfl_print_type_inner(cfl_type* node)
 {
     int i;
 
