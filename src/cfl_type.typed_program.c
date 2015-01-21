@@ -64,6 +64,155 @@ static void cfl_pop_hypothesis(cfl_type_hypothesis_chain* hypothesis_head)
     free(temp);
 }
 
+static bool cfl_generate_typed_node_for_complex_variable(
+        unsigned int* added_hypotheses,
+        cfl_typed_node** typed_node,
+        cfl_type_equations* equations,
+        cfl_type_hypothesis_chain* hypothesis_head,
+        cfl_typed_definition_list* definitions,
+        cfl_node* node)
+{
+    *added_hypotheses = 0;
+
+    if(node->type == CFL_NODE_TUPLE)
+    {
+        cfl_typed_node** children =
+            cfl_type_malloc(sizeof(cfl_typed_node*) * node->number_of_children);
+
+        if(!children)
+            return false;
+
+        cfl_type** child_types =
+            cfl_type_malloc(sizeof(cfl_type*) * node->number_of_children);
+
+        if(!child_types)
+        {
+            free(children);
+
+            return false;
+        }
+
+        int i = 0;
+        for( ; i < node->number_of_children; ++i)
+        {
+            unsigned int added;
+
+            if(!cfl_generate_typed_node_for_complex_variable(
+                    &added, &children[i], equations, hypothesis_head,
+                    definitions, node->children[i]))
+            {
+                int j = 0;
+                for( ; j < i; ++j)
+                {
+                    cfl_free_typed_node(children[j]);
+                    cfl_free_type(child_types[j]);
+                }
+
+                free(children);
+                free(child_types);
+
+                for( ; i < node->number_of_children; ++i)
+                    cfl_free_node(node->children[i]);
+
+                free(node->children);
+
+                node->number_of_children = 0;
+
+                for(i = 0; i < *added_hypotheses; ++i)
+                    cfl_pop_hypothesis(hypothesis_head);
+
+                return false;
+            }
+
+            child_types[i] = cfl_copy_new_type(children[i]->resulting_type);
+
+            if(!child_types[i])
+            {
+                int j = 0;
+                for( ; j < i; ++j)
+                {
+                    cfl_free_typed_node(children[j]);
+                    cfl_free_type(child_types[j]);
+                }
+
+                free(children[i]);
+                free(children);
+                free(child_types);
+
+                for( ; i < node->number_of_children; ++i)
+                    cfl_free_node(node->children[i]);
+
+                free(node->children);
+
+                node->number_of_children = 0;
+
+                for(i = 0; i < *added_hypotheses; ++i)
+                    cfl_pop_hypothesis(hypothesis_head);
+
+                return false;
+            }
+
+            *added_hypotheses += added;
+
+            free(node->children[i]);
+        }
+
+        free(node->children);
+
+        unsigned int number_of_children = node->number_of_children;
+
+        node->number_of_children = 0;
+
+        cfl_type* tuple =
+            cfl_create_new_type_tuple(number_of_children, child_types);
+
+        if(!tuple)
+        {
+            for(i = 0; i < number_of_children; ++i)
+            {
+                cfl_free_typed_node(children[i]);
+                cfl_free_type(child_types[i]);
+            }
+
+            free(children);
+            free(child_types);
+
+            return false;
+        }
+
+        *typed_node = cfl_create_typed_node(
+            CFL_NODE_TUPLE, tuple, number_of_children, 0, children);
+    }
+    else
+    {
+        unsigned int id = cfl_type_get_next_id();
+
+        cfl_type* variable = cfl_create_new_type_variable(id);
+
+        *typed_node =
+            cfl_create_typed_node(CFL_NODE_VARIABLE, variable, 0, node->data, 0);
+
+        if(!*typed_node)
+            return false;
+
+        if(strcmp(node->data, "_"))
+        {
+            if(!cfl_push_hypothesis(hypothesis_head, (*typed_node)->data, id))
+            {
+                cfl_free_typed_node(*typed_node);
+
+                return false;
+            }
+
+            ++(*added_hypotheses);
+        }
+
+        node->data = 0;
+    }
+
+    return true;
+}
+
 static cfl_typed_node* cfl_generate_typed_node_for_binary_expression(
         cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head,
@@ -444,30 +593,27 @@ cfl_typed_node* cfl_generate_typed_node(
     }
     else if(node->type == CFL_NODE_FUNCTION)
     {
-        unsigned int id = cfl_type_get_next_id();
+        unsigned int added_hypotheses;
+        cfl_typed_node* typed_variable;
 
-        if(!cfl_push_hypothesis(hypothesis_head, node->children[0]->data, id))
+        if(!cfl_generate_typed_node_for_complex_variable(
+                &added_hypotheses, &typed_variable, equations, hypothesis_head,
+                definitions, node->children[0]))
             return 0;
 
         cfl_typed_node* typed_result = cfl_generate_typed_node(
             equations, hypothesis_head, definitions, node->children[1]);
 
-        cfl_pop_hypothesis(hypothesis_head);
+        int i = 0;
+        for( ; i < added_hypotheses; ++i)
+            cfl_pop_hypothesis(hypothesis_head);
 
         if(!typed_result)
-            return 0;
-
-        cfl_type* variable_type = cfl_create_new_type_variable(id);
-
-        if(!variable_type)
         {
-            cfl_free_typed_node(typed_result);
+            cfl_free_typed_node(typed_variable);
 
             return 0;
         }
-
-        cfl_typed_node* typed_variable = cfl_create_typed_node(
-            CFL_NODE_VARIABLE, variable_type, 0, node->children[0]->data, 0);
 
         free(node->children[0]);
         free(node->children[1]);
@@ -475,14 +621,8 @@ cfl_typed_node* cfl_generate_typed_node(
 
         node->number_of_children = 0;
 
-        if(!typed_variable)
-        {
-            cfl_free_typed_node(typed_result);
-
-            return 0;
-        }
-
-        variable_type = cfl_create_new_type_variable(id);
+        cfl_type* variable_type =
+            cfl_copy_new_type(typed_variable->resulting_type);
 
         if(!variable_type)
         {
@@ -873,40 +1013,22 @@ cfl_typed_node* cfl_generate_typed_node(
         if(!typed_function)
             return 0;
 
-        unsigned int argument_id = cfl_type_get_next_id();
-
-        cfl_type* argument_type = cfl_create_new_type_variable(argument_id);
-
-        if(!argument_type)
-        {
-            cfl_free_typed_node(typed_function);
-
-            return 0;
-        }
-
-        cfl_typed_node* typed_argument = cfl_create_typed_node(
-            CFL_NODE_VARIABLE, argument_type, 0, node->children[1]->data, 0);
-
-        node->children[1]->data = 0;
-
-        if(!typed_argument)
-        {
-            cfl_free_typed_node(typed_function);
-
-            return 0;
-        }
-
         if(!cfl_push_hypothesis(hypothesis_head, typed_function->data, function_id))
         {
-            cfl_free_typed_node(typed_argument);
             cfl_free_typed_node(typed_function);
 
             return 0;
         }
 
-        if(!cfl_push_hypothesis(hypothesis_head, typed_argument->data, argument_id))
+        unsigned int added_hypotheses;
+        cfl_typed_node* typed_argument;
+
+        if(!cfl_generate_typed_node_for_complex_variable(
+                &added_hypotheses, &typed_argument, equations, hypothesis_head,
+                definitions, node->children[1]))
         {
-            cfl_free_typed_node(typed_argument);
+            cfl_pop_hypothesis(hypothesis_head);
+
             cfl_free_typed_node(typed_function);
 
             return 0;
@@ -915,7 +1037,9 @@ cfl_typed_node* cfl_generate_typed_node(
         cfl_typed_node* typed_def = cfl_generate_typed_node(
             equations, hypothesis_head, definitions, node->children[2]);
 
-        cfl_pop_hypothesis(hypothesis_head);
+        int i = 0;
+        for( ; i < added_hypotheses; ++i)
+            cfl_pop_hypothesis(hypothesis_head);
 
         if(!typed_def)
         {
@@ -949,7 +1073,7 @@ cfl_typed_node* cfl_generate_typed_node(
 
         node->number_of_children = 0;
 
-        argument_type = cfl_create_new_type_variable(argument_id);
+        cfl_type* argument_type = cfl_copy_new_type(typed_argument->resulting_type);
 
         if(!argument_type)
         {
