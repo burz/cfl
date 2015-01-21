@@ -202,6 +202,96 @@ cfl_typed_node* cfl_generate_typed_node(
 
         return cfl_create_typed_node(CFL_NODE_LIST, list_type, 0, typed_list.next, 0);
     }
+    else if(node->type == CFL_NODE_TUPLE)
+    {
+        cfl_typed_node** children =
+            cfl_type_malloc(sizeof(cfl_typed_node*) * node->number_of_children);
+
+        if(!children)
+            return 0;
+
+        cfl_type** children_types =
+            cfl_type_malloc(sizeof(cfl_type*) * node->number_of_children);
+
+        if(!children_types)
+        {
+            free(children);
+
+            return 0;
+        }
+
+        int i = 0;
+        for( ; i < node->number_of_children; ++i)
+        {
+            children[i] = cfl_generate_typed_node(
+                equations, hypothesis_head, definitions, node->children[i]);
+
+            if(!children[i])
+            {
+                int j = 0;
+                for( ; j < i; ++j)
+                {
+                    cfl_free_typed_node(children[j]);
+                    cfl_free_type(children_types[j]);
+                }
+
+                for(++i; i < node->number_of_children; ++i)
+                    cfl_free_node(node->children[i]);
+
+                free(node->children);
+
+                node->number_of_children = 0;
+
+                return 0;
+            }
+
+            children_types[i] = cfl_copy_new_type(children[i]->resulting_type);
+
+            if(!children_types[i])
+            {
+                int j = 0;
+                for( ; j < i; ++j)
+                {
+                    cfl_free_typed_node(children[j]);
+                    cfl_free_type(children_types[j]);
+                }
+
+                cfl_free_typed_node(children[i]);
+
+                for(++i; i < node->number_of_children; ++i)
+                    cfl_free_node(node->children[i]);
+
+                free(node->children);
+
+                node->number_of_children = 0;
+
+                return 0;
+            }
+
+            free(node->children[i]);
+        }
+
+        free(node->children);
+
+        cfl_type* tuple_type =
+                cfl_create_new_type_tuple(node->number_of_children, children_types);
+
+        if(!tuple_type)
+        {
+            int i = 0;
+            for( ; i < node->number_of_children; ++i)
+                cfl_free_typed_node(children[i]);
+
+            free(children);
+        }
+
+        unsigned int number_of_children = node->number_of_children;
+
+        node->number_of_children = 0;
+
+        return cfl_create_typed_node(
+            CFL_NODE_TUPLE, tuple_type, number_of_children, 0, children);
+    }
 
     return 0;
 }
