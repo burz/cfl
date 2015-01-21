@@ -5,6 +5,13 @@ CFLAGS = -c -g -Wall
 SRCDIR = src
 INCL = -Iinclude
 
+LLVM = $(shell llvm-config 2> /dev/null; echo $$?)
+ifeq ($(LLVM), 127)
+    MAIN = llvm-not-found cfl-core-c
+else
+    MAIN = cfl-core
+endif
+
 LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
 LLVMLIBS = $(shell llvm-config --libs core)
@@ -33,10 +40,18 @@ CFILES = \
     cfl_type.typed_program.o \
     cfl_eval.o
 
-all: libcfl.a cfl-core
+cfl: libcfl.a $(MAIN)
+
+all: libcfl.a cfl-core-c cfl-core
 
 libcfl.a: $(CFILES)
 	ar cr libcfl.a $(CFILES)
+
+llvm-not-found:
+	@echo "LLVM not found. Building eval-only C version..."
+
+cfl-core-c: cfl_main.o libcfl.a
+	$(CC) -o cfl-core-c $< -L. -lcfl
 
 CPPFILES = cfl_compiler.opp
 
