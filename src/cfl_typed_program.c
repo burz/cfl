@@ -289,6 +289,21 @@ static void cfl_print_typed_node_inner(cfl_typed_node* node)
 
 void cfl_print_typed_program(cfl_typed_program* program)
 {
+    cfl_typed_definition_list* pos = program->definitions;
+
+    while(pos)
+    {
+        printf("%s ::> ", pos->name);
+
+        cfl_print_typed_node_inner(pos->definition);            
+
+        printf("\n");
+
+        pos = pos->next;
+    }
+
+    printf("main ::> ");
+
     cfl_print_typed_node_inner(program->main);
 
     printf("\n");
