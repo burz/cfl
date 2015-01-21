@@ -601,6 +601,106 @@ cfl_typed_node* cfl_generate_typed_node(
         return cfl_generate_typed_node_for_binary_expression(
             equations, hypothesis_head, definitions, &cfl_create_new_type_integer,
             &cfl_create_new_type_bool, node);
+    else if(node->type == CFL_NODE_APPLICATION)
+    {
+        cfl_typed_node* typed_argument = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[1]);
+
+        if(!typed_argument)
+            return 0;
+
+        cfl_type* argument_type = cfl_copy_new_type(typed_argument->resulting_type);
+
+        if(!argument_type)
+        {
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        unsigned int id = cfl_type_get_next_id();
+
+        cfl_type* result_type = cfl_create_new_type_variable(id);
+
+        if(!result_type)
+        {
+            cfl_free_type(argument_type);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        cfl_type* arrow = cfl_create_new_type_arrow(argument_type, result_type);
+
+        if(!arrow)
+        {
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_function = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[0]);
+
+        if(!typed_function)
+        {
+            cfl_free_type(arrow);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        free(node->children[0]);
+        free(node->children[1]);
+        free(node->children);
+
+        node->number_of_children = 0;
+
+        cfl_type* function_type = cfl_copy_new_type(typed_function->resulting_type);
+
+        if(!function_type)
+        {
+            cfl_free_typed_node(typed_function);
+            cfl_free_type(arrow);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, function_type, arrow))
+        {
+            cfl_free_typed_node(typed_function);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        result_type = cfl_create_new_type_variable(id);
+
+        if(!result_type)
+        {
+            cfl_free_type(argument_type);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        cfl_typed_node** children = cfl_type_malloc(sizeof(cfl_typed_node*) * 2);
+
+        if(!children)
+        {
+            cfl_free_type(result_type);
+            cfl_free_typed_node(typed_function);
+            cfl_free_typed_node(typed_argument);
+
+            return 0;
+        }
+
+        children[0] = typed_function;
+        children[1] = typed_argument;
+
+        return cfl_create_typed_node(CFL_NODE_APPLICATION, result_type, 2, 0, children);
+    }
 
     return 0;
 }
