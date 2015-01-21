@@ -56,6 +56,19 @@ void cfl_free_typed_node(cfl_typed_node* node)
     free(node);
 }
 
+void cfl_free_typed_node_list(cfl_typed_node_list* list)
+{
+    while(list)
+    {
+        cfl_typed_node_list* temp = list;
+
+        list = list->next;
+
+        cfl_free_typed_node(temp->node);
+        free(temp);
+    }
+}
+
 void cfl_free_typed_definition_list(cfl_typed_definition_list* list)
 {
     while(list)
