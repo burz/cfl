@@ -9,6 +9,17 @@
 #include "cfl_type.generate.h"
 #include "cfl_type.program.h"
 
+cfl_type* cfl_create_new_type_variable(unsigned int id);
+cfl_type* cfl_create_new_type_bool(void);
+cfl_type* cfl_create_new_type_integer(void);
+cfl_type* cfl_create_new_type_char(void);
+cfl_type* cfl_create_new_type_list(cfl_type* content);
+cfl_type* cfl_create_new_type_tuple(unsigned int number_of_children, cfl_type** children);
+cfl_type* cfl_create_new_type_arrow(cfl_type* input, cfl_type* output);
+
+cfl_type* cfl_copy_new_type(cfl_type* node);
+
+// deprecated functions
 void cfl_create_type_variable(cfl_type* node, unsigned int id);
 void cfl_create_type_bool(cfl_type* node);
 void cfl_create_type_integer(cfl_type* node);
@@ -19,9 +30,10 @@ void cfl_create_type_tuple(cfl_type* node,
                            cfl_type** children);
 void cfl_create_type_arrow(cfl_type* node, cfl_type* input, cfl_type* output);
 
-int cfl_compare_type(cfl_type* left, cfl_type* right);
-
 int cfl_copy_type(cfl_type* target, cfl_type* node);
+// end deprecated functions
+
+int cfl_compare_type(cfl_type* left, cfl_type* right);
 
 void cfl_delete_type(cfl_type* node);
 void cfl_free_type(cfl_type* node);

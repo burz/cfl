@@ -25,6 +25,7 @@ class cfl_Compiler
     llvm::Value* compile_node_bool(cfl_node* node);
     llvm::Value* compile_node_integer(cfl_node* node);
     llvm::Value* compile_node_char(cfl_node* node);
+    llvm::Value* compile_node_list(cfl_node* node);
 
     llvm::Value* compile_node_and(cfl_node* node, llvm::Function* parent);
     llvm::Value* compile_node_or(cfl_node* node, llvm::Function* parent);

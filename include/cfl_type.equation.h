@@ -10,6 +10,7 @@ bool cfl_initialize_type_equations(cfl_type_equations* equations,
                                    unsigned int equation_hash_table_length);
 cfl_type_equations* cfl_copy_type_equations(cfl_type_equations* equations);
 void cfl_delete_type_equations(cfl_type_equations* equations);
+void cfl_free_type_equations(cfl_type_equations* equations);
 
 int cfl_add_type_equation(cfl_type_equations* equations,
                           cfl_type* left,
