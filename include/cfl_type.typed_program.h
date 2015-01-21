@@ -15,8 +15,7 @@ cfl_typed_definition_list* cfl_generate_definition_types(cfl_type_hypothesis_cha
                                                          cfl_definition_list* definitions,
                                                          unsigned int equation_hash_table_length);
 
-cfl_typed_program* cfl_generate_typed_program(cfl_type_equations* equations,
-                                              cfl_type_hypothesis_chain* hypothesis_head,
-                                              cfl_program* program);
+cfl_typed_program* cfl_generate_typed_program(cfl_program* program,
+                                              unsigned int equation_hash_table_length);
 
 #endif

@@ -1058,6 +1058,17 @@ static void cfl_print_node_inner(cfl_node* node)
                 printf("]");
             }
             break;
+        case CFL_NODE_TUPLE:
+            printf("(");
+            for(i = 0; i < node->number_of_children; ++i)
+            {
+                cfl_print_node_inner(node->children[i]);
+
+                if(i < node->number_of_children - 1)
+                    printf(", ");
+            }
+            printf(")");
+            break;
         case CFL_NODE_AND:
             printf("(");
             cfl_print_node_inner(node->children[0]);
@@ -1164,17 +1175,6 @@ static void cfl_print_node_inner(cfl_node* node)
             cfl_print_node_inner(node->children[3]);
             printf(") -> (");
             cfl_print_node_inner(node->children[4]);
-            printf(")");
-            break;
-        case CFL_NODE_TUPLE:
-            printf("(");
-            for(i = 0; i < node->number_of_children; ++i)
-            {
-                cfl_print_node_inner(node->children[i]);
-
-                if(i < node->number_of_children - 1)
-                    printf(", ");
-            }
             printf(")");
             break;
         default:

@@ -5,12 +5,90 @@
 
 extern void* cfl_type_malloc(size_t size);
 
+static unsigned int cfl_lookup_variable(
+        cfl_type_equations* equations,
+        cfl_type_hypothesis_chain* hypotheses,
+        cfl_typed_definition_list* definitions,
+        char* name)
+{
+    return 0;
+}
+
 cfl_typed_node* cfl_generate_typed_node(
         cfl_type_equations* equations,
         cfl_type_hypothesis_chain* hypothesis_head,
-        cfl_typed_definition_list* definitons,
+        cfl_typed_definition_list* definitions,
         cfl_node* node)
 {
+    if(node->type == CFL_NODE_VARIABLE)
+    {
+        unsigned int id = cfl_lookup_variable(equations,
+                                              hypothesis_head->next,
+                                              definitions,
+                                              node->data);
+
+        if(!id)
+        {
+            cfl_type_error_undefined_variable(node->data);
+
+            return 0;
+        }
+
+        cfl_type* type = cfl_create_new_type_variable(id);
+
+        if(!type)
+            return 0;
+
+        cfl_typed_node* result =
+            cfl_create_typed_node(CFL_NODE_VARIABLE, type, 0, node->data, 0);
+
+        node->data = 0;
+
+        return result;
+    }
+    else if(node->type == CFL_NODE_BOOL)
+    {
+        cfl_type* type = cfl_create_new_type_bool();
+
+        if(!type)
+            return 0;
+
+        cfl_typed_node* result =
+            cfl_create_typed_node(CFL_NODE_BOOL, type, 0, node->data, 0);
+
+        node->data = 0;
+
+        return result;
+    }
+    else if(node->type == CFL_NODE_INTEGER)
+    {
+        cfl_type* type = cfl_create_new_type_integer();
+
+        if(!type)
+            return 0;
+
+        cfl_typed_node* result =
+            cfl_create_typed_node(CFL_NODE_INTEGER, type, 0, node->data, 0);
+
+        node->data = 0;
+
+        return result;
+    }
+    else if(node->type == CFL_NODE_CHAR)
+    {
+        cfl_type* type = cfl_create_new_type_char();
+
+        if(!type)
+            return 0;
+
+        cfl_typed_node* result =
+            cfl_create_typed_node(CFL_NODE_CHAR, type, 0, node->data, 0);
+
+        node->data = 0;
+
+        return result;
+    }
+
     return 0;
 }
 
@@ -128,24 +206,35 @@ cfl_typed_definition_list* cfl_generate_definition_types(
 }
 
 cfl_typed_program* cfl_generate_typed_program(
-        cfl_type_equations* equations,
-        cfl_type_hypothesis_chain* hypothesis_head,
-        cfl_program* program)
+        cfl_program* program,
+        unsigned int equation_hash_table_length)
 {
-    cfl_typed_definition_list* typed_definitions = 
-        cfl_generate_definition_types(hypothesis_head, program->definitions,
-                                      equations->equation_hash_table_length);
+    cfl_type_equations equations;
 
-    if(!typed_definitions)
+    if(!cfl_initialize_type_equations(&equations, equation_hash_table_length))
+        return false;
+
+    cfl_type_hypothesis_chain hypothesis_head;
+    hypothesis_head.next = 0;
+
+    cfl_typed_definition_list*  typed_definitions = 0;
+
+    if(program->definitions)
     {
-        cfl_free_program(program);
-        cfl_free_type_equations(equations);
+        cfl_typed_definition_list* typed_definitions =  cfl_generate_definition_types(
+            &hypothesis_head, program->definitions, equation_hash_table_length);
 
-        return 0;
+        if(!typed_definitions)
+        {
+            cfl_free_program(program);
+            cfl_delete_type_equations(&equations);
+
+            return 0;
+        }
     }
 
-    cfl_typed_node* typed_main = cfl_generate_typed_node(equations,
-                                                         hypothesis_head,
+    cfl_typed_node* typed_main = cfl_generate_typed_node(&equations,
+                                                         &hypothesis_head,
                                                          typed_definitions,
                                                          program->main);
 
@@ -153,17 +242,38 @@ cfl_typed_program* cfl_generate_typed_program(
     {
         cfl_free_typed_definition_list(typed_definitions);
         cfl_free_program(program);
-        cfl_free_type_equations(equations);
+        cfl_delete_type_equations(&equations);
 
         return 0;
     }
 
     cfl_free_program(program);
 
-    if(!cfl_simplify_typed_node(equations, typed_main))
+    if(!cfl_close_type_equations(&equations))
     {
+        cfl_free_typed_node(typed_main);
         cfl_free_typed_definition_list(typed_definitions);
-        cfl_free_type_equations(equations);
+        cfl_delete_type_equations(&equations);
+
+        return 0;
+    }
+
+    if(!cfl_are_type_equations_consistent(&equations))
+    {
+        cfl_type_error_failure();
+
+        cfl_free_typed_node(typed_main);
+        cfl_free_typed_definition_list(typed_definitions);
+        cfl_delete_type_equations(&equations);
+
+        return 0;
+    }
+
+    if(!cfl_simplify_typed_node(&equations, typed_main))
+    {
+        cfl_free_typed_node(typed_main);
+        cfl_free_typed_definition_list(typed_definitions);
+        cfl_delete_type_equations(&equations);
 
         return 0;
     }
@@ -174,12 +284,12 @@ cfl_typed_program* cfl_generate_typed_program(
     {
         cfl_free_typed_node(typed_main);
         cfl_free_typed_definition_list(typed_definitions);
-        cfl_free_type_equations(equations);
+        cfl_delete_type_equations(&equations);
 
         return 0;
     }
 
-    cfl_free_type_equations(equations);
+    cfl_delete_type_equations(&equations);
 
     result->definitions = typed_definitions;
     result->main = typed_main;

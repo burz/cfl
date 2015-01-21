@@ -2,6 +2,7 @@ extern "C" {
 #include "cfl_parser.h"
 #include "cfl_program.h"
 #include "cfl_type.h"
+#include "cfl_typed_program.h"
 #include "cfl_eval.h"
 
 #include <stdio.h>
@@ -12,11 +13,14 @@ extern "C" {
 
 #define EQUATION_HASH_TABLE_LENGTH 503
 
-static char usage[] = "USAGE: cfl filename\n"
-                      "           -ast filename\n"
-                      "           -type filename\n"
-                      "           -eval filename\n"
-                      "           -jit filename";
+static char usage[] = "USAGE: cfl filename       :: compile the program\n"
+                      "           -ast filename  :: print the AST of the program\n"
+                      "           -type filename :: print the high level types of the "
+                                                   "program\n"
+                      "           -deep filename :: print all the types of the program\n"
+                      "           -eval filename :: evaluate the program\n"
+                      "           -jit filename  :: evaluate the program using Just-In"
+                                                    "-Time compiling";
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +46,7 @@ int main(int argc, char* argv[])
 
             cfl_free_program(program);
         }
-        else if(argc > 2 && !strcmp(argv[1], "-type"))
+        else if(!strcmp(argv[1], "-type"))
         {
             program = cfl_parse_file(argv[2]);
 
@@ -60,7 +64,7 @@ int main(int argc, char* argv[])
 
             cfl_free_program(program);
         }
-        else if(argc > 2 && !strcmp(argv[1], "-eval"))
+        else if(!strcmp(argv[1], "-eval"))
         {
             program = cfl_parse_file(argv[2]);
 
@@ -86,6 +90,23 @@ int main(int argc, char* argv[])
             cfl_print_node(program->main);
 
             cfl_free_program(program);
+        }
+        else if(!strcmp(argv[1], "-deep"))
+        {
+            program = cfl_parse_file(argv[2]);
+
+            if(!program)
+                return 1;
+
+            cfl_typed_program* typed_program =
+                cfl_generate_typed_program(program, EQUATION_HASH_TABLE_LENGTH);
+
+            if(!typed_program)
+                return 1;
+
+            cfl_print_typed_program(typed_program);
+
+            cfl_free_typed_program(typed_program);
         }
         else
         {

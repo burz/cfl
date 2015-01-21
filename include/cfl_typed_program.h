@@ -20,6 +20,13 @@ cfl_typed_node* cfl_create_typed_node(cfl_node_type node_type,
 
 void cfl_free_typed_node(cfl_typed_node* node);
 
+typedef struct cfl_typed_node_list_t {
+    cfl_typed_node* node;
+    struct cfl_typed_node_list_t* next;
+} cfl_typed_node_list;
+
+void cfl_free_typed_node_list(cfl_typed_node_list* list);
+
 typedef struct cfl_typed_definition_list_t {
     char* name;
     cfl_typed_node* definition;

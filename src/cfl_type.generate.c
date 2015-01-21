@@ -5,16 +5,16 @@
 
 extern void* cfl_type_malloc(size_t size);
 
-static unsigned int next_id;
+static unsigned int cfl_next_id;
 
 void cfl_reset_type_generator(void)
 {
-    next_id = 1;
+    cfl_next_id = 1;
 }
 
 unsigned int cfl_type_get_next_id(void)
 {
-    return next_id++;
+    return cfl_next_id++;
 }
 
 unsigned int cfl_lookup_hypothesis(cfl_type_hypothesis_chain* chain, char* name)
@@ -59,7 +59,7 @@ static unsigned int cfl_generate_hypotheses(
 {
     if(variable->type == CFL_NODE_VARIABLE)
     {
-        unsigned int id = next_id++;
+        unsigned int id = cfl_next_id++;
 
         cfl_type_hypothesis_chain* hypothesis_chain_node =
             cfl_type_malloc(sizeof(cfl_type_hypothesis_chain));
@@ -242,7 +242,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!temp_type0)
                 break;
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -312,7 +312,7 @@ cfl_type* cfl_generate_type_equation_chain(
 
                 for(i = 0; i < node->number_of_children; ++i)
                 {
-                    id0 = next_id++;
+                    id0 = cfl_next_id++;
 
                     child_type0 = cfl_generate_type_equation_chain(equations,
                                                                    hypothesis_head,
@@ -667,7 +667,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -792,7 +792,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type1, id0);
 
@@ -818,7 +818,7 @@ cfl_type* cfl_generate_type_equation_chain(
             if(!temp_type0)
                 break;
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -941,7 +941,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -1035,7 +1035,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -1129,7 +1129,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id0 = next_id++;
+            id0 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id0);
 
@@ -1157,7 +1157,7 @@ cfl_type* cfl_generate_type_equation_chain(
                 break;
             }
 
-            id1 = next_id++;
+            id1 = cfl_next_id++;
 
             cfl_create_type_variable(temp_type0, id1);
 
