@@ -1,23 +1,33 @@
 #!/bin/bash
 
-if [ "$2" == "" ]
+if [ -e "cfl-core" ]
 then
-    if [ "$1" == "" ]
+    if [ "$2" == "" ]
     then
-        ./cfl-core
+        if [ "$1" == "" ]
+        then
+            ./cfl-core
+        else
+            FILENAME="${1%.*}"
+            ./cfl-core $@ &> $FILENAME.ll
+            llvm-as -o $FILENAME $FILENAME.ll
+            chmod +x $FILENAME
+        fi
     else
-        FILENAME="${1%.*}"
-        ./cfl-core $@ &> $FILENAME.ll
-        llvm-as -o $FILENAME $FILENAME.ll
-        chmod +x $FILENAME
+        if [ "$1" == "-jit" ]
+        then
+            FILENAME="${2%.*}"
+            ./cfl-core $2 &> $FILENAME.ll
+            lli $FILENAME.ll
+        else
+            ./cfl-core $@
+        fi
     fi
 else
-    if [ "$1" == "-jit" ]
+    if [ -e "cfl-core-c" ]
     then
-        FILENAME="${2%.*}"
-        ./cfl-core $2 &> $FILENAME.ll
-        lli $FILENAME.ll
+        ./cfl-core-c $@
     else
-        ./cfl-core $@
+        echo "cfl has not been built. You must make it."
     fi
 fi
