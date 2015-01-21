@@ -46,7 +46,24 @@ void cfl_free_typed_node(cfl_typed_node* node)
     cfl_free_type(node->resulting_type);
 
     if(node->data)
+    {
+        if(node->node_type == CFL_NODE_LIST)
+        {
+            cfl_typed_node_list* pos = node->data;
+
+            while(pos)
+            {
+                cfl_typed_node_list* temp = pos;
+
+                pos = pos->next;
+
+                cfl_free_typed_node(temp->node);
+                free(temp);
+            }
+        }
+
         free(node->data);
+    }
 
     int i = 0;
     for( ; i < node->number_of_children; ++i)
@@ -110,9 +127,9 @@ static void cfl_print_typed_node_inner(cfl_typed_node* node)
             printf("'%c' :: ", *((char*) node->data));
             break;
         case CFL_NODE_FUNCTION:
-            printf("function ");
+            printf("function (");
             cfl_print_typed_node_inner(node->children[0]);
-            printf(" -> (");
+            printf(") -> (");
             cfl_print_typed_node_inner(node->children[1]);
             printf(") :: ");
             break;
