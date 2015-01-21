@@ -1,9 +1,11 @@
 #include "cfl_type.typed_program.h"
+#include "cfl_typed_program.h"
 #include "cfl_type.h"
 
 #include <string.h>
 
 extern void* cfl_type_malloc(size_t size);
+extern unsigned int cfl_type_get_next_id(void);
 
 static unsigned int cfl_lookup_variable(
         cfl_type_equations* equations,
@@ -87,6 +89,118 @@ cfl_typed_node* cfl_generate_typed_node(
         node->data = 0;
 
         return result;
+    }
+    else if(node->type == CFL_NODE_LIST)
+    {
+        unsigned int id = cfl_type_get_next_id();
+
+        cfl_typed_node_list typed_list;
+        cfl_typed_node_list* typed_pos = &typed_list;
+
+        cfl_list_node* pos = node->data;
+
+        node->data = 0;
+
+        while(pos)
+        {
+            cfl_typed_node* child_node = cfl_generate_typed_node(
+                equations, hypothesis_head, definitions, pos->node);
+
+            cfl_list_node* temp = pos;
+
+            pos = pos->next;
+
+            free(temp->node);
+            free(temp);
+
+            if(!child_node)
+            {
+                typed_pos->next = 0;
+
+                cfl_free_typed_node_list(typed_list.next);
+                cfl_delete_list_nodes(pos);
+
+                return 0;
+            }
+
+            cfl_type* child_type = cfl_copy_new_type(child_node->resulting_type);
+
+            if(!child_type)
+            {
+                cfl_free_typed_node(child_node);
+
+                typed_pos->next = 0;
+
+                cfl_free_typed_node_list(typed_list.next);
+                cfl_delete_list_nodes(pos);
+
+                return 0;
+            }
+
+            cfl_type* variable = cfl_create_new_type_variable(id);
+
+            if(!variable)
+            {
+                cfl_free_type(child_type);
+                cfl_free_typed_node(child_node);
+
+                typed_pos->next = 0;
+
+                cfl_free_typed_node_list(typed_list.next);
+                cfl_delete_list_nodes(pos);
+
+                return 0;
+            }
+
+            if(!cfl_add_type_equations(equations, child_type, variable))
+            {
+                cfl_free_typed_node(child_node);
+
+                typed_pos->next = 0;
+
+                cfl_free_typed_node_list(typed_list.next);
+                cfl_delete_list_nodes(pos);
+
+                return 0;
+            }
+
+            typed_pos->next = cfl_type_malloc(sizeof(cfl_typed_node_list));
+
+            if(!typed_pos->next)
+            {
+                cfl_free_typed_node(child_node);
+                cfl_free_typed_node_list(typed_list.next);
+                cfl_delete_list_nodes(pos);
+
+                return 0;
+            }
+
+            typed_pos->next->node = child_node;
+
+            typed_pos = typed_pos->next;
+        }
+
+        typed_pos->next = 0;
+
+        cfl_type* variable = cfl_create_new_type_variable(id);
+
+        if(!variable)
+        {
+            cfl_free_typed_node_list(typed_list.next);
+
+            return 0;
+        }
+
+        cfl_type* list_type = cfl_create_new_type_list(variable);
+
+        if(!list_type)
+        {
+            cfl_free_typed_node_list(typed_list.next);
+
+            return 0;
+        }
+
+        return cfl_create_typed_node(CFL_NODE_LIST, list_type, 0, typed_list.next, 0);
     }
 
     return 0;
