@@ -856,6 +856,191 @@ cfl_typed_node* cfl_generate_typed_node(
 
         return cfl_create_typed_node(CFL_NODE_IF, result_type, 3, 0, children);
     }
+    else if(node->type == CFL_NODE_LET_REC)
+    {
+        unsigned int function_id = cfl_type_get_next_id();
+
+        cfl_type* function_type = cfl_create_new_type_variable(function_id);
+
+        if(!function_type)
+            return 0;
+
+        cfl_typed_node* typed_function = cfl_create_typed_node(
+            CFL_NODE_VARIABLE, function_type, 0, node->children[0]->data, 0);
+
+        node->children[0]->data = 0;
+
+        if(!typed_function)
+            return 0;
+
+        unsigned int argument_id = cfl_type_get_next_id();
+
+        cfl_type* argument_type = cfl_create_new_type_variable(argument_id);
+
+        if(!argument_type)
+        {
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_argument = cfl_create_typed_node(
+            CFL_NODE_VARIABLE, argument_type, 0, node->children[1]->data, 0);
+
+        node->children[1]->data = 0;
+
+        if(!typed_argument)
+        {
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        if(!cfl_push_hypothesis(hypothesis_head, typed_function->data, function_id))
+        {
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        if(!cfl_push_hypothesis(hypothesis_head, typed_argument->data, argument_id))
+        {
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_def = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[2]);
+
+        cfl_pop_hypothesis(hypothesis_head);
+
+        if(!typed_def)
+        {
+            cfl_pop_hypothesis(hypothesis_head);
+
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_typed_node* typed_in = cfl_generate_typed_node(
+            equations, hypothesis_head, definitions, node->children[3]);
+
+        cfl_pop_hypothesis(hypothesis_head);
+
+        if(!typed_in)
+        {
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        free(node->children[0]);
+        free(node->children[1]);
+        free(node->children[2]);
+        free(node->children[3]);
+        free(node->children);
+
+        node->number_of_children = 0;
+
+        argument_type = cfl_create_new_type_variable(argument_id);
+
+        if(!argument_type)
+        {
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_type* def_type = cfl_copy_new_type(typed_def->resulting_type);
+
+        if(!def_type)
+        {
+            cfl_free_type(argument_type);
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_type* arrow = cfl_create_new_type_arrow(argument_type, def_type);
+
+        if(!arrow)
+        {
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        function_type = cfl_create_new_type_variable(function_id);
+
+        if(!function_type)
+        {
+            cfl_free_type(arrow);
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        if(!cfl_add_type_equations(equations, function_type, arrow))
+        {
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_type* in_type = cfl_copy_new_type(typed_in->resulting_type);
+
+        if(!in_type)
+        {
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        cfl_typed_node** children = cfl_type_malloc(sizeof(cfl_typed_node*) * 4);
+
+        if(!children)
+        {
+            cfl_free_type(in_type);
+            cfl_free_typed_node(typed_in);
+            cfl_free_typed_node(typed_def);
+            cfl_free_typed_node(typed_argument);
+            cfl_free_typed_node(typed_function);
+
+            return 0;
+        }
+
+        children[0] = typed_function;
+        children[1] = typed_argument;
+        children[2] = typed_def;
+        children[3] = typed_in;
+
+        return cfl_create_typed_node(CFL_NODE_LET_REC, in_type, 4, 0, children);
+    }
 
     return 0;
 }

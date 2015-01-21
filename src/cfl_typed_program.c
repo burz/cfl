@@ -61,8 +61,8 @@ void cfl_free_typed_node(cfl_typed_node* node)
                 free(temp);
             }
         }
-
-        free(node->data);
+        else
+            free(node->data);
     }
 
     int i = 0;
@@ -293,7 +293,7 @@ void cfl_print_typed_program(cfl_typed_program* program)
 
     while(pos)
     {
-        printf("%s ::> ", pos->name);
+        printf("%s ~>> ", pos->name);
 
         cfl_print_typed_node_inner(pos->definition);            
 
@@ -302,7 +302,7 @@ void cfl_print_typed_program(cfl_typed_program* program)
         pos = pos->next;
     }
 
-    printf("main ::> ");
+    printf("main ~>> ");
 
     cfl_print_typed_node_inner(program->main);
 
