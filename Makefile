@@ -18,6 +18,7 @@ CFILES = \
     cfl_ast.o \
     cfl_ast.error.o \
     cfl_program.o \
+    cfl_typed_program.o \
     cfl_parser.o \
     cfl_parser.error.o \
     cfl_parser.token.o \
@@ -29,6 +30,7 @@ CFILES = \
     cfl_type.equation.o \
     cfl_type.generate.o \
     cfl_type.program.o \
+    cfl_type.typed_program.o \
     cfl_eval.o
 
 all: libcfl.a cfl-core

@@ -29,6 +29,22 @@ llvm::Value* cfl_Compiler::compile_node_char(cfl_node* node)
     return builder->getInt8(value);
 }
 
+llvm::Value* cfl_Compiler::compile_node_list(cfl_node* node)
+{
+//    if(!node->number_of_children)
+//    {
+//        std::vector<llvm::Value*> values;
+//        llvm::ArrayRef<llvm::Value*> values_ref(values);
+//
+//        llvm::ConstantArray array =
+//            llvm::ConstantArray::get(builder->
+//    }
+//    else if(node->children[0]->type == CFL_NODE_BOOL)
+//    else if(node->children[0]->type == CFL_NODE_INTEGER)
+//    else if(node->children[0]->type == CFL_NODE_CHAR)
+    return 0;
+}
+
 llvm::Value* cfl_Compiler::compile_node_and(cfl_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
@@ -135,6 +151,8 @@ llvm::Value* cfl_Compiler::compile_node(cfl_node* node, llvm::Function* parent)
         return compile_node_integer(node);
     else if(node->type == CFL_NODE_CHAR)
         return compile_node_char(node);
+    else if(node->type == CFL_NODE_LIST)
+        return compile_node_list(node);
     else if(node->type == CFL_NODE_AND)
         return compile_node_and(node, parent);
     else if(node->type == CFL_NODE_OR)
@@ -332,8 +350,8 @@ bool cfl_Compiler::compile(cfl_program* program, std::string& destination_file)
 
     top_module->dump();
 
-    delete builder;
     delete top_module;
+    delete builder;
 
     return true;
 }

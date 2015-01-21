@@ -20,9 +20,7 @@ typedef struct {
 } cfl_program;
 
 void cfl_free_program(cfl_program* program);
-
 void cfl_print_program(cfl_program* program);
-
 void cfl_print_program_type(cfl_program* program);
 
 #endif
