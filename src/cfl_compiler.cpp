@@ -288,7 +288,18 @@ llvm::Value* cfl_Compiler::extract_value_from_pointer(
     else if(type->type == CFL_TYPE_CHAR)
         return builder->CreateLoad(pointer, "load_char");
     else if(type->type == CFL_TYPE_TUPLE)
-        return pointer;
+    {
+        llvm::ArrayType* tuple_type =
+            llvm::ArrayType::get(builder->getInt8PtrTy(), type->id);
+
+        llvm::PointerType* tuple_pointer_type =
+            llvm::PointerType::getUnqual(tuple_type);
+
+        llvm::Value* tuple_pointer =
+            builder->CreatePointerCast(pointer, tuple_pointer_type);
+
+        return builder->CreateLoad(tuple_pointer, "load_tuple");
+    }
 
     return 0;
 }
@@ -337,11 +348,11 @@ void cfl_Compiler::generate_print_function(
         builder->CreateCondBr(print_def->arg_begin()++, print_true, print_false);
 
         builder->SetInsertPoint(print_true);
-        builder->CreateCall(global_puts, true_string);
+        builder->CreateCall(global_printf, true_string);
         builder->CreateBr(print_end);
 
         builder->SetInsertPoint(print_false);
-        builder->CreateCall(global_puts, false_string);
+        builder->CreateCall(global_printf, false_string);
         builder->CreateBr(print_end);
 
         builder->SetInsertPoint(print_end);
@@ -377,7 +388,7 @@ void cfl_Compiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
-        llvm::Value* format_string = builder->CreateGlobalStringPtr("%d\n");
+        llvm::Value* format_string = builder->CreateGlobalStringPtr("%d");
 
         builder->CreateCall2(global_printf, format_string, print_def->arg_begin()++);
         builder->CreateRetVoid();
@@ -412,7 +423,7 @@ void cfl_Compiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
-        llvm::Value* format_string = builder->CreateGlobalStringPtr("'%c'\n");
+        llvm::Value* format_string = builder->CreateGlobalStringPtr("'%c'");
 
         builder->CreateCall2(global_printf, format_string, print_def->arg_begin()++);
         builder->CreateRetVoid();
@@ -423,14 +434,9 @@ void cfl_Compiler::generate_print_function(
     }
     else if(result_type->type == CFL_TYPE_TUPLE)
     {
-        llvm::Function* lookup = top_module->getFunction("__print_tuple");
-
-        if(lookup)
-        {
-            builder->CreateCall(lookup, result);
-
-            return;
-        }
+        static llvm::Value* open_parentheses = builder->CreateGlobalStringPtr("(");
+        static llvm::Value* comma = builder->CreateGlobalStringPtr(", ");
+        static llvm::Value* close_parentheses = builder->CreateGlobalStringPtr(")");
 
         llvm::ArrayType* array_type =
             llvm::ArrayType::get(builder->getInt8PtrTy(), result_type->id);
@@ -450,20 +456,28 @@ void cfl_Compiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
+        builder->CreateCall(global_printf, open_parentheses);
+
+        llvm::Value* argument = new_print_def->arg_begin()++;
+
         int i = 0;
         for( ; i < result_type->id; ++i)
         {
-            llvm::Value* extraction = builder->CreateExtractValue(result, i);
+            llvm::Value* extraction = builder->CreateExtractValue(argument, i);
 
             llvm::Value* child = extract_value_from_pointer(
                 extraction, ((cfl_type**) result_type->input)[i]);
 
             generate_print_function(
                 ((cfl_type**) result_type->input)[i], child, print_entry);
+
+            if(i < result_type->id - 1)
+                builder->CreateCall(global_printf, comma);
         }
 
         print_def = new_print_def;
 
+        builder->CreateCall(global_printf, close_parentheses);
         builder->CreateRetVoid();
 
         builder->SetInsertPoint(block);
@@ -485,7 +499,7 @@ void cfl_Compiler::generate_print_function(
 
         llvm::Value* success_string = builder->CreateGlobalStringPtr("Success.");
 
-        builder->CreateCall(global_puts, success_string);
+        builder->CreateCall(global_printf, success_string);
         builder->CreateRetVoid();
 
         builder->SetInsertPoint(block);
@@ -516,8 +530,13 @@ bool cfl_Compiler::compile_program(cfl_typed_program* program)
     if(!result)
         return false;
 
-    generate_print_function(program->main->resulting_type, result, main_entry);
+    llvm::BasicBlock* insert_block = builder->GetInsertBlock();
 
+    generate_print_function(program->main->resulting_type, result, insert_block);
+
+    llvm::Value* empty_string = builder->CreateGlobalStringPtr("");
+
+    builder->CreateCall(global_puts, empty_string);
     builder->CreateRet(llvm::ConstantInt::get(builder->getInt32Ty(), 0));
 
     return true;
