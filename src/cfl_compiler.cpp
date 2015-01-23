@@ -3,12 +3,43 @@
 #include <iostream>
 #include <vector>
 
-cfl_Compiler::cfl_Compiler(void)
+CflCompiler::CflCompiler(void)
     : global_context(llvm::getGlobalContext())
 {
 }
 
-llvm::Type* cfl_Compiler::generate_type(cfl_type* type)
+void CflCompiler::generate_list_struct_types(
+        cfl_type* type,
+        llvm::StructType** struct_type,
+        llvm::PointerType** struct_pointer_type)
+{
+    static llvm::StructType* list_type = 0;
+
+    if(list_type)
+    {
+        *struct_type = list_type;
+        *struct_pointer_type = llvm::PointerType::getUnqual(list_type);
+
+        return;
+    }
+
+    std::vector<llvm::Type*> members;
+
+    members.push_back(builder->getInt8PtrTy());
+
+    list_type = llvm::StructType::create(global_context, "list_node");
+
+    *struct_pointer_type = llvm::PointerType::getUnqual(list_type);
+    members.push_back(llvm::PointerType::getUnqual(list_type));
+
+    llvm::ArrayRef<llvm::Type*> members_ref(members);
+
+    list_type->setBody(members_ref);
+
+    *struct_type = list_type;
+}
+
+llvm::Type* CflCompiler::generate_type(cfl_type* type)
 {
     if(type->type == CFL_TYPE_BOOL)
         return builder->getInt1Ty();
@@ -17,7 +48,14 @@ llvm::Type* cfl_Compiler::generate_type(cfl_type* type)
     else if(type->type == CFL_TYPE_CHAR)
         return builder->getInt8Ty();
     else if(type->type == CFL_TYPE_LIST)
-        return builder->getInt8PtrTy();
+    {
+        llvm::StructType* struct_type;
+        llvm::PointerType* pointer_type;
+
+        generate_list_struct_types((cfl_type*) type->input, &struct_type, &pointer_type);
+
+        return pointer_type;
+    }
     else if(type->type == CFL_TYPE_TUPLE)
         return llvm::ArrayType::get(builder->getInt8PtrTy(), type->id);
     else if(type->type == CFL_TYPE_ARROW)
@@ -26,33 +64,97 @@ llvm::Type* cfl_Compiler::generate_type(cfl_type* type)
     return 0;
 }
 
-llvm::Value* cfl_Compiler::compile_node_bool(cfl_typed_node* node)
+llvm::Value* CflCompiler::compile_node_bool(cfl_typed_node* node)
 {
     bool value = *((bool*) node->data);
 
     return builder->getInt1(value);
 }
 
-llvm::Value* cfl_Compiler::compile_node_integer(cfl_typed_node* node)
+llvm::Value* CflCompiler::compile_node_integer(cfl_typed_node* node)
 {
     int value = *((int*) node->data);
 
     return builder->getInt32(value);
 }
 
-llvm::Value* cfl_Compiler::compile_node_char(cfl_typed_node* node)
+llvm::Value* CflCompiler::compile_node_char(cfl_typed_node* node)
 {
     char value = *((char*) node->data);
 
     return builder->getInt8(value);
 }
 
-llvm::Value* cfl_Compiler::compile_node_list(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_list(cfl_typed_node* node, llvm::Function* parent)
 {
-    return 0;
+    llvm::StructType* struct_type;
+    llvm::PointerType* struct_pointer_type;
+
+    generate_list_struct_types(node->resulting_type, &struct_type, &struct_pointer_type);
+
+    if(!node->data)
+        return llvm::ConstantPointerNull::get(struct_pointer_type);
+
+    llvm::Type* element_type = generate_type((cfl_type*) node->resulting_type->input);
+
+    cfl_typed_node_list* pos = (cfl_typed_node_list*) node->data;
+
+    llvm::Value* head = 0;
+    llvm::Value* last_node = 0;
+
+    while(pos)
+    {
+        llvm::Value* element = compile_node(pos->node, parent);
+
+        if(!element)
+            return 0;
+
+        llvm::Constant* size = builder->getInt32(1);
+
+        llvm::AllocaInst* element_space =
+            builder->CreateAlloca(element_type, size, "element_allocate");
+
+        builder->CreateStore(element, element_space);
+
+        llvm::Value* element_pointer =
+            builder->CreatePointerCast(element_space, builder->getInt8PtrTy());
+
+        std::vector<llvm::Constant*> initial_values;
+        initial_values.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
+        initial_values.push_back(llvm::ConstantPointerNull::get(struct_pointer_type));
+        llvm::ArrayRef<llvm::Constant*> initial_values_ref(initial_values);
+
+        llvm::Value* node = llvm::ConstantStruct::get(struct_type, initial_values_ref);
+
+        llvm::Value* store =
+            builder->CreateInsertValue(node, element_pointer, 0, "store_element");
+
+        llvm::AllocaInst* node_space =
+            builder->CreateAlloca(struct_type, size, "list_node_allocate");
+
+        builder->CreateStore(store, node_space, "store_new_node");
+
+        if(last_node)
+        {
+            llvm::Value* local_last_node =
+                builder->CreateLoad(last_node, "local_last_element");
+
+            builder->CreateInsertValue(local_last_node, node_space, 1, "preserve_link");
+
+            builder->CreateStore(local_last_node, last_node, "last_element_final");
+        }
+        else
+            head = node_space;
+
+        last_node = node_space;
+
+        pos = pos->next;
+    }
+
+    return head;
 }
 
-llvm::Value* cfl_Compiler::compile_node_tuple(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_tuple(cfl_typed_node* node, llvm::Function* parent)
 {
     std::vector<llvm::Value*> tuple;
     std::vector<llvm::Constant*> zeroes;
@@ -105,7 +207,7 @@ llvm::Value* cfl_Compiler::compile_node_tuple(cfl_typed_node* node, llvm::Functi
     return array;
 }
 
-llvm::Value* cfl_Compiler::compile_node_and(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_and(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -113,7 +215,7 @@ llvm::Value* cfl_Compiler::compile_node_and(cfl_typed_node* node, llvm::Function
     return builder->CreateAnd(left, right, "and");
 }
 
-llvm::Value* cfl_Compiler::compile_node_or(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_or(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -121,14 +223,14 @@ llvm::Value* cfl_Compiler::compile_node_or(cfl_typed_node* node, llvm::Function*
     return builder->CreateOr(left, right, "or");
 }
 
-llvm::Value* cfl_Compiler::compile_node_not(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_not(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* child = compile_node(node->children[0], parent);
 
     return builder->CreateNot(child, "not");
 }
 
-llvm::Value* cfl_Compiler::compile_node_add(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_add(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -136,7 +238,7 @@ llvm::Value* cfl_Compiler::compile_node_add(cfl_typed_node* node, llvm::Function
     return builder->CreateAdd(left, right, "add");
 }
 
-llvm::Value* cfl_Compiler::compile_node_multiply(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_multiply(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -144,7 +246,7 @@ llvm::Value* cfl_Compiler::compile_node_multiply(cfl_typed_node* node, llvm::Fun
     return builder->CreateMul(left, right, "multiply");
 }
 
-llvm::Value* cfl_Compiler::compile_node_divide(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_divide(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -152,7 +254,7 @@ llvm::Value* cfl_Compiler::compile_node_divide(cfl_typed_node* node, llvm::Funct
     return builder->CreateSDiv(left, right, "divide");
 }
 
-llvm::Value* cfl_Compiler::compile_node_equal(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_equal(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -160,7 +262,7 @@ llvm::Value* cfl_Compiler::compile_node_equal(cfl_typed_node* node, llvm::Functi
     return builder->CreateICmpEQ(left, right, "equal");
 }
 
-llvm::Value* cfl_Compiler::compile_node_less(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_less(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* left = compile_node(node->children[0], parent);
     llvm::Value* right = compile_node(node->children[1], parent);
@@ -168,7 +270,7 @@ llvm::Value* cfl_Compiler::compile_node_less(cfl_typed_node* node, llvm::Functio
     return builder->CreateICmpSLT(left, right, "less");
 }
 
-llvm::Value* cfl_Compiler::compile_node_if(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node_if(cfl_typed_node* node, llvm::Function* parent)
 {
     llvm::Value* condition = compile_node(node->children[0], parent);
 
@@ -203,7 +305,7 @@ llvm::Value* cfl_Compiler::compile_node_if(cfl_typed_node* node, llvm::Function*
     return phi;
 }
 
-llvm::Value* cfl_Compiler::compile_node(cfl_typed_node* node, llvm::Function* parent)
+llvm::Value* CflCompiler::compile_node(cfl_typed_node* node, llvm::Function* parent)
 {
     if(node->node_type == CFL_NODE_BOOL)
         return compile_node_bool(node);
@@ -237,7 +339,7 @@ llvm::Value* cfl_Compiler::compile_node(cfl_typed_node* node, llvm::Function* pa
     return 0;
 }
 
-void cfl_Compiler::setup_global_defs(void)
+void CflCompiler::setup_global_defs(void)
 {
     std::vector<llvm::Type*> puts_args;
     puts_args.push_back(builder->getInt8Ty()->getPointerTo());
@@ -261,7 +363,7 @@ void cfl_Compiler::setup_global_defs(void)
     global_printf = top_module->getOrInsertFunction("printf", printf_type);
 }
 
-llvm::Value* cfl_Compiler::extract_value_from_pointer(
+llvm::Value* CflCompiler::extract_value_from_pointer(
         llvm::Value* pointer,
         cfl_type* type)
 {
@@ -287,6 +389,15 @@ llvm::Value* cfl_Compiler::extract_value_from_pointer(
     }
     else if(type->type == CFL_TYPE_CHAR)
         return builder->CreateLoad(pointer, "load_char");
+    else if(type->type == CFL_TYPE_LIST)
+    {
+        llvm::StructType* list_type;
+        llvm::PointerType* list_pointer_type;
+
+        generate_list_struct_types(type, &list_type, &list_pointer_type);
+
+        return builder->CreatePointerCast(pointer, list_pointer_type);
+    }
     else if(type->type == CFL_TYPE_TUPLE)
     {
         llvm::ArrayType* tuple_type =
@@ -304,11 +415,56 @@ llvm::Value* cfl_Compiler::extract_value_from_pointer(
     return 0;
 }
 
-void cfl_Compiler::generate_print_function(
+static std::string cfl_arrow_string_inner(cfl_type* type)
+{
+    if(type->type == CFL_TYPE_VARIABLE)
+        return "a" + std::to_string(type->id);
+    else if(type->type == CFL_TYPE_BOOL)
+        return "Boolean";
+    else if(type->type == CFL_TYPE_INTEGER)
+        return "Integer";
+    else if(type->type == CFL_TYPE_CHAR)
+        return "Char";
+    else if(type->type == CFL_TYPE_LIST)
+        return "[" + cfl_arrow_string_inner((cfl_type*) type->input) + "]";
+    else if(type->type == CFL_TYPE_TUPLE)
+    {
+        std::string result = "(";
+
+        int i = 0;
+        for( ; i < type->id; ++i)
+        {
+            result += cfl_arrow_string_inner(((cfl_type**) type->input)[i]);
+
+            if(i < type->id - 1)
+                result += ", ";
+
+            return result + ")";
+        }
+    }
+    else if(type->type == CFL_TYPE_ARROW)
+        return cfl_arrow_string_inner((cfl_type*) type->input) + " -> " +
+               cfl_arrow_string_inner((cfl_type*) type->output);
+
+    return "";
+}
+
+static std::string cfl_arrow_string(cfl_type* type)
+{
+    return "function :: " + cfl_arrow_string_inner(type);
+}
+
+void CflCompiler::generate_print_function(
         cfl_type* result_type,
         llvm::Value* result,
         llvm::BasicBlock* block)
 {
+    static llvm::Value* comma = 0;
+
+    if(!comma && (result_type->type == CFL_TYPE_LIST ||
+                  result_type->type == CFL_TYPE_TUPLE))
+        comma = builder->CreateGlobalStringPtr(", ");
+
     if(result_type->type == CFL_TYPE_BOOL)
     {
         llvm::Function* lookup = top_module->getFunction("__print_bool");
@@ -432,10 +588,91 @@ void cfl_Compiler::generate_print_function(
 
         builder->CreateCall(print_def, result);
     }
+    else if(result_type->type == CFL_TYPE_LIST)
+    {
+        static llvm::Value* open_bracket = builder->CreateGlobalStringPtr("[");
+        static llvm::Value* close_bracket = builder->CreateGlobalStringPtr("]");
+        llvm::StructType* list_type;
+        llvm::PointerType* list_pointer_type;
+
+        generate_list_struct_types(result_type, &list_type, &list_pointer_type);
+
+        std::vector<llvm::Type*> print_args;
+        print_args.push_back(list_pointer_type);
+        llvm::ArrayRef<llvm::Type*> print_args_ref(print_args);
+
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), print_args_ref, false);
+
+        llvm::Function* new_print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_list", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_list_entry", new_print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        builder->CreateCall(global_printf, open_bracket);
+
+        llvm::Value* argument = new_print_def->arg_begin()++;
+
+        llvm::BasicBlock* print_loop = llvm::BasicBlock::Create(
+            global_context, "__print_list_loop", new_print_def);
+        llvm::BasicBlock* print_comma = llvm::BasicBlock::Create(
+            global_context, "__print_comma", new_print_def);
+        llvm::BasicBlock* print_end = llvm::BasicBlock::Create(
+            global_context, "__print_list_end", new_print_def);
+
+        llvm::Value* is_not_null = builder->CreateIsNotNull(argument);
+
+        llvm::AllocaInst* pos_pointer_space = builder->CreateAlloca(
+            list_pointer_type, builder->getInt32(1), "allocate_pos_pointer");
+
+        builder->CreateStore(argument, pos_pointer_space);
+
+        builder->CreateCondBr(is_not_null, print_loop, print_end);
+
+        builder->SetInsertPoint(print_loop);
+
+        llvm::Value* pos = builder->CreateLoad(pos_pointer_space);
+
+        llvm::Value* list_node = builder->CreateLoad(pos, "load_list_node");
+
+        llvm::Value* extracted = builder->CreateExtractValue(list_node, 0);
+
+        llvm::Value* element =
+            extract_value_from_pointer(extracted, (cfl_type*) result_type->input);
+
+        generate_print_function((cfl_type*) result_type->input, element, print_loop);
+
+        llvm::Value* new_pos = builder->CreateExtractValue(list_node, 1, "move_list_ptr");
+
+        builder->CreateStore(new_pos, pos_pointer_space, "save_position");
+
+        is_not_null = builder->CreateIsNotNull(new_pos);
+
+        builder->CreateCondBr(is_not_null, print_comma, print_end);
+
+        builder->SetInsertPoint(print_comma);
+
+        builder->CreateCall(global_printf, comma);
+
+        builder->CreateBr(print_loop);
+
+        builder->SetInsertPoint(print_end);
+
+        print_def = new_print_def;
+
+        builder->CreateCall(global_printf, close_bracket);
+        builder->CreateRetVoid();
+
+        builder->SetInsertPoint(block);
+
+        builder->CreateCall(print_def, result);
+    }
     else if(result_type->type == CFL_TYPE_TUPLE)
     {
         static llvm::Value* open_parentheses = builder->CreateGlobalStringPtr("(");
-        static llvm::Value* comma = builder->CreateGlobalStringPtr(", ");
         static llvm::Value* close_parentheses = builder->CreateGlobalStringPtr(")");
 
         llvm::ArrayType* array_type =
@@ -484,6 +721,31 @@ void cfl_Compiler::generate_print_function(
 
         builder->CreateCall(print_def, result);
     }
+    else if(result_type->type == CFL_TYPE_ARROW)
+    {
+        std::string generated_function_string = cfl_arrow_string(result_type);
+
+        llvm::FunctionType* print_type =
+            llvm::FunctionType::get(builder->getVoidTy(), false);
+
+        print_def = llvm::Function::Create(
+            print_type, llvm::Function::ExternalLinkage, "__print_function", top_module);
+
+        llvm::BasicBlock* print_entry = llvm::BasicBlock::Create(
+            global_context, "__print_function", print_def);
+
+        builder->SetInsertPoint(print_entry);
+
+        llvm::Value* function_string =
+            builder->CreateGlobalStringPtr(generated_function_string);
+
+        builder->CreateCall(global_printf, function_string);
+        builder->CreateRetVoid();
+
+        builder->SetInsertPoint(block);
+
+        builder->CreateCall(print_def);
+    }
     else
     {
         llvm::FunctionType* print_type =
@@ -497,7 +759,7 @@ void cfl_Compiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
-        llvm::Value* success_string = builder->CreateGlobalStringPtr("Success.");
+        static llvm::Value* success_string = builder->CreateGlobalStringPtr("Success.");
 
         builder->CreateCall(global_printf, success_string);
         builder->CreateRetVoid();
@@ -508,7 +770,7 @@ void cfl_Compiler::generate_print_function(
     }
 }
 
-bool cfl_Compiler::compile_program(cfl_typed_program* program)
+bool CflCompiler::compile_program(cfl_typed_program* program)
 {
     llvm::FunctionType* main_type = llvm::FunctionType::get(
         builder->getInt32Ty(), false);
@@ -542,7 +804,7 @@ bool cfl_Compiler::compile_program(cfl_typed_program* program)
     return true;
 }
 
-bool cfl_Compiler::compile(cfl_typed_program* program, std::string& destination_file)
+bool CflCompiler::compile(cfl_typed_program* program, std::string& destination_file)
 {
     builder = new llvm::IRBuilder<>(global_context);
     top_module = new llvm::Module(destination_file, global_context);
@@ -553,6 +815,7 @@ bool cfl_Compiler::compile(cfl_typed_program* program, std::string& destination_
     top_module->dump();
 
     delete builder;
+// TODO:
 //    delete top_module;
 
     return true;
