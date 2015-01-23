@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 
         std::string output_file = file.substr(0, extension_location) + ".ll";
 
-        cfl_Compiler compiler;
+        CflCompiler compiler;
 
         if(!compiler.compile(typed_program, output_file))
             return 1;

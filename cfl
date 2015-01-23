@@ -2,6 +2,7 @@
 
 if [ -e "cfl-core" ]
 then
+    TARGET=$(llvm-config --host-target)
     if [ "$2" == "" ]
     then
         if [ "$1" == "" ]
@@ -10,8 +11,8 @@ then
         else
             FILENAME="${1%.*}"
             ./cfl-core $@ &> $FILENAME.ll
-            llvm-as -o $FILENAME $FILENAME.ll
-            chmod +x $FILENAME
+            llvm-as $FILENAME.ll
+            llc -march=$TARGET $FILNAME.bc
         fi
     else
         if [ "$1" == "-jit" ]

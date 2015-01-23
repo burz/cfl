@@ -11,7 +11,7 @@ extern "C" {
 
 #include <string>
 
-class cfl_Compiler
+class CflCompiler
 {
   private:
     llvm::LLVMContext& global_context;
@@ -21,6 +21,10 @@ class cfl_Compiler
     llvm::Constant* global_puts;
     llvm::Constant* global_printf;
     llvm::Function* print_def;
+
+    void generate_list_struct_types(cfl_type* type,
+                                    llvm::StructType** struct_type,
+                                    llvm::PointerType** struct_pointer_type);
 
     llvm::Type* generate_type(cfl_type* type);
 
@@ -54,7 +58,7 @@ class cfl_Compiler
 
     bool compile_program(cfl_typed_program* program);
   public:
-    cfl_Compiler(void);
+    CflCompiler(void);
 
     bool compile(cfl_typed_program* program, std::string& destination_file);
 };
