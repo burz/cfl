@@ -3,6 +3,7 @@
 *.opp
 *.ll
 *.s
+*.bc
 *.dSYM
 
 *.cfl

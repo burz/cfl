@@ -2,7 +2,7 @@
 #define _CFL_COMPILER_H_
 
 extern "C" {
-#include "cfl_program.h"
+#include "cfl_typed_program.h"
 }
 
 #include "llvm/IR/LLVMContext.h"
@@ -22,31 +22,41 @@ class cfl_Compiler
     llvm::Constant* global_printf;
     llvm::Function* print_def;
 
-    llvm::Value* compile_node_bool(cfl_node* node);
-    llvm::Value* compile_node_integer(cfl_node* node);
-    llvm::Value* compile_node_char(cfl_node* node);
-    llvm::Value* compile_node_list(cfl_node* node);
+    llvm::Type* generate_type(cfl_type* type);
 
-    llvm::Value* compile_node_and(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_or(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_not(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_add(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_multiply(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_divide(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_equal(cfl_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_less(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_bool(cfl_typed_node* node);
+    llvm::Value* compile_node_integer(cfl_typed_node* node);
+    llvm::Value* compile_node_char(cfl_typed_node* node);
 
-    llvm::Value* compile_node_if(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_list(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_tuple(cfl_typed_node* node, llvm::Function* parent);
 
-    llvm::Value* compile_node(cfl_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_and(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_or(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_not(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_add(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_multiply(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_divide(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_equal(cfl_typed_node* node, llvm::Function* parent);
+    llvm::Value* compile_node_less(cfl_typed_node* node, llvm::Function* parent);
+
+    llvm::Value* compile_node_if(cfl_typed_node* node, llvm::Function* parent);
+
+    llvm::Value* compile_node(cfl_typed_node* node, llvm::Function* parent);
 
     void setup_global_defs(void);
-    void generate_print_function(cfl_program* program);
-    bool compile_program(cfl_program* program);
+
+    llvm::Value* extract_value_from_pointer(llvm::Value* pointer, cfl_type* type);
+
+    void generate_print_function(cfl_type* result_type,
+                                 llvm::Value* result,
+                                 llvm::BasicBlock* block);
+
+    bool compile_program(cfl_typed_program* program);
   public:
     cfl_Compiler(void);
 
-    bool compile(cfl_program* program, std::string& destination_file);
+    bool compile(cfl_typed_program* program, std::string& destination_file);
 };
 
 #endif
