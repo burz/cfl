@@ -130,14 +130,24 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        std::string output_file = "lol.ll";
+        cfl_typed_program* typed_program =
+            cfl_generate_typed_program(program, EQUATION_HASH_TABLE_LENGTH);
+
+        if(!typed_program)
+            return 1;
+
+        std::string file = argv[1];
+
+        size_t extension_location = file.rfind(".");
+
+        std::string output_file = file.substr(0, extension_location) + ".ll";
 
         cfl_Compiler compiler;
 
-        if(!compiler.compile(program, output_file))
-            return false;
+        if(!compiler.compile(typed_program, output_file))
+            return 1;
 
-        cfl_free_program(program);
+        cfl_free_typed_program(typed_program);
     }
 
     return 0;
