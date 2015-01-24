@@ -1,5 +1,5 @@
 CC = clang -std=c99
-CCPP = clang++ -std=c++11
+CCPP = clang++
 CFLAGS = -c -g -Wall
 
 SRCDIR = src
