@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 CflCompiler::CflCompiler(void)
     : global_context(llvm::getGlobalContext())
@@ -418,7 +419,12 @@ llvm::Value* CflCompiler::extract_value_from_pointer(
 static std::string cfl_arrow_string_inner(cfl_type* type)
 {
     if(type->type == CFL_TYPE_VARIABLE)
-        return "a" + std::to_string(type->id);
+    {
+        std::stringstream number;
+        number << type->id;
+
+        return "a" + number.str();
+    }
     else if(type->type == CFL_TYPE_BOOL)
         return "Boolean";
     else if(type->type == CFL_TYPE_INTEGER)
