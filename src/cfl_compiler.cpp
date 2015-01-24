@@ -88,13 +88,13 @@ llvm::Value* CflCompiler::compile_node_char(cfl_typed_node* node)
 
 llvm::Value* CflCompiler::compile_node_list(cfl_typed_node* node, llvm::Function* parent)
 {
-    llvm::StructType* struct_type;
-    llvm::PointerType* struct_pointer_type;
+    llvm::StructType* list_type;
+    llvm::PointerType* list_pointer_type;
 
-    generate_list_struct_types(node->resulting_type, &struct_type, &struct_pointer_type);
+    generate_list_struct_types(node->resulting_type, &list_type, &list_pointer_type);
 
     if(!node->data)
-        return llvm::ConstantPointerNull::get(struct_pointer_type);
+        return llvm::ConstantPointerNull::get(list_pointer_type);
 
     llvm::Type* element_type = generate_type((cfl_type*) node->resulting_type->input);
 
@@ -113,7 +113,7 @@ llvm::Value* CflCompiler::compile_node_list(cfl_typed_node* node, llvm::Function
         llvm::Constant* size = builder->getInt32(1);
 
         llvm::AllocaInst* element_space =
-            builder->CreateAlloca(element_type, size, "element_allocate");
+            builder->CreateAlloca(element_type, size, "element_space");
 
         builder->CreateStore(element, element_space);
 
@@ -122,27 +122,28 @@ llvm::Value* CflCompiler::compile_node_list(cfl_typed_node* node, llvm::Function
 
         std::vector<llvm::Constant*> initial_values;
         initial_values.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
-        initial_values.push_back(llvm::ConstantPointerNull::get(struct_pointer_type));
+        initial_values.push_back(llvm::ConstantPointerNull::get(list_pointer_type));
         llvm::ArrayRef<llvm::Constant*> initial_values_ref(initial_values);
 
-        llvm::Value* node = llvm::ConstantStruct::get(struct_type, initial_values_ref);
+        llvm::Value* node = llvm::ConstantStruct::get(list_type, initial_values_ref);
 
         llvm::Value* store =
-            builder->CreateInsertValue(node, element_pointer, 0, "store_element");
+            builder->CreateInsertValue(node, element_pointer, 0, "store");
 
         llvm::AllocaInst* node_space =
-            builder->CreateAlloca(struct_type, size, "list_node_allocate");
+            builder->CreateAlloca(list_type, size, "node_space");
 
-        builder->CreateStore(store, node_space, "store_new_node");
+        builder->CreateStore(store, node_space);
 
         if(last_node)
         {
             llvm::Value* local_last_node =
-                builder->CreateLoad(last_node, "local_last_element");
+                builder->CreateLoad(last_node, "local_last_node");
 
-            builder->CreateInsertValue(local_last_node, node_space, 1, "preserve_link");
+            llvm::Value* new_last_node =
+                builder->CreateInsertValue(local_last_node, node_space, 1);
 
-            builder->CreateStore(local_last_node, last_node, "last_element_final");
+            builder->CreateStore(new_last_node, last_node);
         }
         else
             head = node_space;
@@ -177,12 +178,12 @@ llvm::Value* CflCompiler::compile_node_tuple(cfl_typed_node* node, llvm::Functio
         llvm::Constant* size = builder->getInt32(1);
 
         llvm::AllocaInst* child_space =
-            builder->CreateAlloca(child_type, size, "child_allocate");
+            builder->CreateAlloca(child_type, size, "child_space");
 
-        builder->CreateStore(child, child_space, "child_store");
+        builder->CreateStore(child, child_space);
 
         llvm::Value* child_pointer = builder->CreatePointerCast(
-            child_space, builder->getInt8PtrTy(), "child_cast");
+            child_space, builder->getInt8PtrTy(), "child_pointer");
 
         tuple.push_back(child_pointer);
         zeroes.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
@@ -397,7 +398,13 @@ llvm::Value* CflCompiler::extract_value_from_pointer(
 
         generate_list_struct_types(type, &list_type, &list_pointer_type);
 
-        return builder->CreatePointerCast(pointer, list_pointer_type);
+        llvm::PointerType* list_pointer_pointer_type =
+            llvm::PointerType::getUnqual(list_pointer_type);
+
+        llvm::Value* list_pointer_pointer =
+            builder->CreatePointerCast(pointer, list_pointer_pointer_type);
+
+        return builder->CreateLoad(list_pointer_pointer, "load_list");
     }
     else if(type->type == CFL_TYPE_TUPLE)
     {
@@ -629,10 +636,10 @@ void CflCompiler::generate_print_function(
         llvm::BasicBlock* print_end = llvm::BasicBlock::Create(
             global_context, "__print_list_end", new_print_def);
 
-        llvm::Value* is_not_null = builder->CreateIsNotNull(argument);
+        llvm::Value* is_not_null = builder->CreateIsNotNull(argument, "is_not_null");
 
         llvm::AllocaInst* pos_pointer_space = builder->CreateAlloca(
-            list_pointer_type, builder->getInt32(1), "allocate_pos_pointer");
+            list_pointer_type, builder->getInt32(1), "pos_pointer_space");
 
         builder->CreateStore(argument, pos_pointer_space);
 
@@ -642,7 +649,7 @@ void CflCompiler::generate_print_function(
 
         llvm::Value* pos = builder->CreateLoad(pos_pointer_space);
 
-        llvm::Value* list_node = builder->CreateLoad(pos, "load_list_node");
+        llvm::Value* list_node = builder->CreateLoad(pos, "pos");
 
         llvm::Value* extracted = builder->CreateExtractValue(list_node, 0);
 
@@ -651,11 +658,11 @@ void CflCompiler::generate_print_function(
 
         generate_print_function((cfl_type*) result_type->input, element, print_loop);
 
-        llvm::Value* new_pos = builder->CreateExtractValue(list_node, 1, "move_list_ptr");
+        llvm::Value* new_pos = builder->CreateExtractValue(list_node, 1, "new_pos");
 
-        builder->CreateStore(new_pos, pos_pointer_space, "save_position");
+        builder->CreateStore(new_pos, pos_pointer_space);
 
-        is_not_null = builder->CreateIsNotNull(new_pos);
+        is_not_null = builder->CreateIsNotNull(new_pos, "is_not_null");
 
         builder->CreateCondBr(is_not_null, print_comma, print_end);
 
