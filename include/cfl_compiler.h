@@ -17,7 +17,6 @@ class CflCompiler
     llvm::LLVMContext& global_context;
     llvm::IRBuilder<>* builder;
     llvm::Module* top_module;
-    llvm::Value* cfl_error_division_by_zero_string;
     llvm::Constant* global_puts;
     llvm::Constant* global_printf;
     llvm::Function* print_def;

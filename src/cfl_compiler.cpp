@@ -250,8 +250,41 @@ llvm::Value* CflCompiler::compile_node_multiply(cfl_typed_node* node, llvm::Func
 
 llvm::Value* CflCompiler::compile_node_divide(cfl_typed_node* node, llvm::Function* parent)
 {
-    llvm::Value* left = compile_node(node->children[0], parent);
+    static llvm::Value* error_division_by_zero_string =
+        builder->CreateGlobalStringPtr("EVALUATION ERROR: Division by zero");
+
     llvm::Value* right = compile_node(node->children[1], parent);
+
+    llvm::Value* is_zero =
+        builder->CreateICmpEQ(right, builder->getInt32(0), "is_zero");
+
+    llvm::BasicBlock* zero = llvm::BasicBlock::Create(
+        global_context, "__zero", parent);
+    llvm::BasicBlock* nonzero = llvm::BasicBlock::Create(
+        global_context, "__nonzero", parent);
+
+    builder->CreateCondBr(is_zero, zero, nonzero);
+
+    builder->SetInsertPoint(zero);
+
+    builder->CreateCall(global_puts, error_division_by_zero_string);
+
+    std::vector<llvm::Type*> args;
+    args.push_back(builder->getInt32Ty());
+    llvm::ArrayRef<llvm::Type*> args_ref(args);
+
+    llvm::FunctionType* exit_type =
+        llvm::FunctionType::get(builder->getVoidTy(), args_ref, false);
+
+    llvm::Value* exit = top_module->getOrInsertFunction("exit", exit_type);
+
+    builder->CreateCall(exit, builder->getInt32(1));
+
+    builder->CreateUnreachable();
+
+    builder->SetInsertPoint(nonzero);
+
+    llvm::Value* left = compile_node(node->children[0], parent);
 
     return builder->CreateSDiv(left, right, "divide");
 }
@@ -351,9 +384,6 @@ void CflCompiler::setup_global_defs(void)
         llvm::FunctionType::get(builder->getInt32Ty(), puts_args_ref, false);
 
     global_puts = top_module->getOrInsertFunction("puts", puts_type);
-
-    cfl_error_division_by_zero_string =
-        builder->CreateGlobalStringPtr("EVALUATION ERROR: Division by zero");
 
     std::vector<llvm::Type*> printf_args;
     printf_args.push_back(builder->getInt8Ty()->getPointerTo());
