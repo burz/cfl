@@ -1,4 +1,4 @@
-CC = clang -std=c99
+CC = clang
 CCPP = clang++
 CFLAGS = -c -g -Wall
 
