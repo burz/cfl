@@ -10,6 +10,7 @@ extern "C" {
 #include "llvm/IR/IRBuilder.h"
 
 #include <string>
+#include <list>
 
 class CflCompiler
 {
@@ -21,8 +22,15 @@ class CflCompiler
     llvm::Constant* global_printf;
     llvm::Function* print_def;
 
-    void generate_list_struct_types(cfl_type* type,
-                                    llvm::StructType** struct_type,
+    llvm::FunctionType* generate_function_type(unsigned int* number_of_args,
+                                               cfl_type* type);
+
+    bool generate_function_struct_types(cfl_type* type,
+                                        llvm::FunctionType** function_type,
+                                        llvm::StructType** struct_type,
+                                        llvm::PointerType** struct_pointer_type);
+
+    void generate_list_struct_types(llvm::StructType** struct_type,
                                     llvm::PointerType** struct_pointer_type);
 
     llvm::Type* generate_type(cfl_type* type);
@@ -31,21 +39,29 @@ class CflCompiler
     llvm::Value* compile_node_integer(cfl_typed_node* node);
     llvm::Value* compile_node_char(cfl_typed_node* node);
 
-    llvm::Value* compile_node_list(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_tuple(cfl_typed_node* node, llvm::Function* parent);
+    typedef std::pair<char*, llvm::Value*> argument_register_mapping;
+    typedef std::list<std::pair<char*, llvm::Value*> > argument_register_map;
+    typedef llvm::Value* node_compiler(cfl_typed_node* node,
+                                       argument_register_map register_map,
+                                       llvm::BasicBlock* entry_block);
 
-    llvm::Value* compile_node_and(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_or(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_not(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_add(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_multiply(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_divide(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_equal(cfl_typed_node* node, llvm::Function* parent);
-    llvm::Value* compile_node_less(cfl_typed_node* node, llvm::Function* parent);
+    node_compiler compile_node_function;
 
-    llvm::Value* compile_node_if(cfl_typed_node* node, llvm::Function* parent);
+    node_compiler compile_node_list;
+    node_compiler compile_node_tuple;
 
-    llvm::Value* compile_node(cfl_typed_node* node, llvm::Function* parent);
+    node_compiler compile_node_and;
+    node_compiler compile_node_or;
+    node_compiler compile_node_not;
+    node_compiler compile_node_add;
+    node_compiler compile_node_multiply;
+    node_compiler compile_node_divide;
+    node_compiler compile_node_equal;
+    node_compiler compile_node_less;
+
+    node_compiler compile_node_if;
+
+    node_compiler compile_node;
 
     void setup_global_defs(void);
 
