@@ -35,8 +35,8 @@ static std::string cfl_arrow_string_inner(cfl_type* type)
         return result + ")";
     }
     else if(type->type == CFL_TYPE_ARROW)
-        return cfl_arrow_string_inner((cfl_type*) type->input) + " -> " +
-               cfl_arrow_string_inner((cfl_type*) type->output);
+        return cfl_arrow_string_inner((cfl_type*) type->input) + " -> (" +
+               cfl_arrow_string_inner((cfl_type*) type->output) + ")";
 
     return "";
 }

@@ -27,8 +27,7 @@ class CflCompiler
 
     bool generate_function_struct_types(cfl_type* type,
                                         llvm::FunctionType** function_type,
-                                        llvm::StructType** struct_type,
-                                        llvm::PointerType** struct_pointer_type);
+                                        llvm::StructType** struct_type);
 
     void generate_list_struct_types(llvm::StructType** struct_type,
                                     llvm::PointerType** struct_pointer_type);
