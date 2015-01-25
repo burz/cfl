@@ -62,6 +62,8 @@ class CflCompiler
 
     node_compiler compile_node_if;
 
+    node_compiler compile_node_push;
+
     node_compiler compile_node;
 
     void setup_global_defs(void);
