@@ -140,11 +140,11 @@ int main(int argc, char* argv[])
 
         size_t extension_location = file.rfind(".");
 
-        std::string output_file = file.substr(0, extension_location) + ".ll";
+        std::string filename_head = file.substr(0, extension_location);
 
         CflCompiler compiler;
 
-        if(!compiler.compile(typed_program, output_file))
+        if(!compiler.compile(typed_program, filename_head))
             return 1;
 
         cfl_free_typed_program(typed_program);

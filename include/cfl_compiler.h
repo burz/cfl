@@ -70,13 +70,14 @@ class CflCompiler
 
     void generate_print_function(cfl_type* result_type,
                                  llvm::Value* result,
-                                 llvm::BasicBlock* block);
+                                 llvm::BasicBlock* block,
+                                 bool in_string = false);
 
     bool compile_program(cfl_typed_program* program);
   public:
     CflCompiler(void);
 
-    bool compile(cfl_typed_program* program, std::string& destination_file);
+    bool compile(cfl_typed_program* program, std::string& filename_head);
 };
 
 #endif
