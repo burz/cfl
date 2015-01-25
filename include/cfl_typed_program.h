@@ -12,6 +12,8 @@ typedef struct cfl_typed_node_t {
     struct cfl_typed_node_t** children;
 } cfl_typed_node;
 
+bool cfl_is_free_in_typed_node(char* name, cfl_typed_node* node);
+
 cfl_typed_node* cfl_create_typed_node(cfl_node_type node_type,
                                       cfl_type* resulting_type,
                                       unsigned int number_of_children,

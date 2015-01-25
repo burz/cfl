@@ -10,7 +10,7 @@ extern "C" {
 #include "llvm/IR/IRBuilder.h"
 
 #include <string>
-#include <list>
+#include <vector>
 
 class CflCompiler
 {
@@ -39,10 +39,11 @@ class CflCompiler
     llvm::Value* compile_node_integer(cfl_typed_node* node);
     llvm::Value* compile_node_char(cfl_typed_node* node);
 
-    typedef std::pair<char*, llvm::Value*> argument_register_mapping;
-    typedef std::list<std::pair<char*, llvm::Value*> > argument_register_map;
+    typedef std::pair<cfl_typed_node*, llvm::Value*> argument_register_mapping;
+    typedef std::vector<std::pair<cfl_typed_node*, llvm::Value*> > argument_register_map;
     typedef llvm::Value* node_compiler(cfl_typed_node* node,
                                        argument_register_map register_map,
+                                       llvm::Function* parent,
                                        llvm::BasicBlock* entry_block);
 
     node_compiler compile_node_function;

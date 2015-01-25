@@ -3,6 +3,7 @@
 #include "cfl_type.h"
 
 #include <string.h>
+#include <stdio.h>
 
 extern void* cfl_type_malloc(size_t size);
 extern unsigned int cfl_type_get_next_id(void);

@@ -2,8 +2,90 @@
 #include "cfl_type.h"
 
 #include <stdio.h>
+#include <string.h>
 
 extern void* cfl_ast_malloc(size_t size);
+
+static bool cfl_is_bound_in_complex_variable(char* name, cfl_typed_node* node)
+{
+    if(node->node_type == CFL_NODE_VARIABLE)
+        return !strcmp(name, node->data);
+
+    int i = 0;
+    for( ; i < node->number_of_children; ++i)
+        if(cfl_is_bound_in_complex_variable(name, node->children[i]))
+            return true;
+
+    return false;
+}
+
+bool cfl_is_free_in_typed_node(char* name, cfl_typed_node* node)
+{
+    int i;
+    cfl_typed_node_list* pos;
+
+    switch(node->node_type)
+    {
+        case CFL_NODE_VARIABLE:
+            if(!strcmp(name, node->data))
+                return true;
+            break;
+        case CFL_NODE_BOOL:
+        case CFL_NODE_INTEGER:
+        case CFL_NODE_CHAR:
+            break;
+        case CFL_NODE_FUNCTION:
+            if(!cfl_is_bound_in_complex_variable(name, node->children[0]))
+                return cfl_is_free_in_typed_node(name, node->children[1]);
+            break;
+        case CFL_NODE_LIST:
+            for(pos = node->data; pos; pos = pos->next)
+                if(cfl_is_free_in_typed_node(name, pos->node))
+                    return true;
+            break;
+        case CFL_NODE_LET_REC:
+            if(strcmp(name, node->children[0]->data))
+            {
+                if(!cfl_is_bound_in_complex_variable(name, node->children[1]))
+                    return cfl_is_free_in_typed_node(name, node->children[2]) ||
+                           cfl_is_free_in_typed_node(name, node->children[3]);
+                else
+                    return cfl_is_free_in_typed_node(name, node->children[3]);
+            }
+            break;
+        case CFL_NODE_CASE:
+            if(cfl_is_bound_in_complex_variable(name, node->children[2]) ||
+               !strcmp(name, node->children[3]->data))
+                return cfl_is_free_in_typed_node(name, node->children[0]) ||
+                       cfl_is_free_in_typed_node(name, node->children[1]);
+            else
+                return cfl_is_free_in_typed_node(name, node->children[0]) ||
+                       cfl_is_free_in_typed_node(name, node->children[1]) ||
+                       cfl_is_free_in_typed_node(name, node->children[4]);
+            break;
+        case CFL_NODE_AND:
+        case CFL_NODE_OR:
+        case CFL_NODE_NOT:
+        case CFL_NODE_ADD:
+        case CFL_NODE_MULTIPLY:
+        case CFL_NODE_DIVIDE:
+        case CFL_NODE_EQUAL:
+        case CFL_NODE_LESS:
+        case CFL_NODE_APPLICATION:
+        case CFL_NODE_IF:
+        case CFL_NODE_PUSH:
+        case CFL_NODE_CONCATENATE:
+        case CFL_NODE_TUPLE:
+            for(i = 0; i < node->number_of_children; ++i)
+                if(cfl_is_free_in_typed_node(name, node->children[i]))
+                    return true;
+            break;
+        default:
+            break;
+    }
+
+    return false;
+}
 
 cfl_typed_node* cfl_create_typed_node(
         cfl_node_type node_type,
