@@ -224,7 +224,7 @@ llvm::Value* CflCompiler::compile_node_function(
     cfl_free_type(updated_type);
 
     std::stringstream new_name;
-    new_name << '_' << (char*) node->children[0]->data;
+    new_name << "_function_" << (char*) node->children[0]->data;
 
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
@@ -756,7 +756,8 @@ static std::string cfl_arrow_string(cfl_type* type)
 void CflCompiler::generate_print_function(
         cfl_type* result_type,
         llvm::Value* result,
-        llvm::BasicBlock* block)
+        llvm::BasicBlock* block,
+        bool in_string)
 {
     static llvm::Value* comma = 0;
 
@@ -878,7 +879,12 @@ void CflCompiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
-        llvm::Value* format_string = builder->CreateGlobalStringPtr("'%c'");
+        llvm::Value* format_string;
+
+        if(in_string)
+            format_string = builder->CreateGlobalStringPtr("%c");
+        else
+            format_string = builder->CreateGlobalStringPtr("'%c'");
 
         builder->CreateCall2(global_printf, format_string, print_def->arg_begin()++);
         builder->CreateRetVoid();
@@ -889,8 +895,17 @@ void CflCompiler::generate_print_function(
     }
     else if(result_type->type == CFL_TYPE_LIST)
     {
-        static llvm::Value* open_bracket = builder->CreateGlobalStringPtr("[");
-        static llvm::Value* close_bracket = builder->CreateGlobalStringPtr("]");
+        static llvm::Function* print_string = 0;
+
+        bool is_string = ((cfl_type*) result_type->input)->type == CFL_TYPE_CHAR;
+
+        if(print_string && is_string)
+        {
+            builder->CreateCall(print_string, result);
+
+            return;
+        }
+
         llvm::StructType* list_type;
         llvm::PointerType* list_pointer_type;
 
@@ -911,14 +926,25 @@ void CflCompiler::generate_print_function(
 
         builder->SetInsertPoint(print_entry);
 
-        builder->CreateCall(global_printf, open_bracket);
+        llvm::Value* quote = 0;
+
+        if(is_string)
+        {
+            quote = builder->CreateGlobalStringPtr("\"");
+
+            builder->CreateCall(global_printf, quote);
+        }
+        else
+        {
+            static llvm::Value* open_brackets = builder->CreateGlobalStringPtr("[");
+
+            builder->CreateCall(global_printf, open_brackets);
+        }
 
         llvm::Value* argument = new_print_def->arg_begin()++;
 
         llvm::BasicBlock* print_loop = llvm::BasicBlock::Create(
             global_context, "__print_list_loop", new_print_def);
-        llvm::BasicBlock* print_comma = llvm::BasicBlock::Create(
-            global_context, "__print_comma", new_print_def);
         llvm::BasicBlock* print_end = llvm::BasicBlock::Create(
             global_context, "__print_list_end", new_print_def);
 
@@ -942,7 +968,7 @@ void CflCompiler::generate_print_function(
         llvm::Value* element =
             extract_value_from_pointer(extracted, (cfl_type*) result_type->input);
 
-        generate_print_function((cfl_type*) result_type->input, element, print_loop);
+        generate_print_function((cfl_type*) result_type->input, element, print_loop, true);
 
         llvm::Value* new_pos = builder->CreateExtractValue(list_node, 1, "new_pos");
 
@@ -950,19 +976,35 @@ void CflCompiler::generate_print_function(
 
         is_not_null = builder->CreateIsNotNull(new_pos, "is_not_null");
 
-        builder->CreateCondBr(is_not_null, print_comma, print_end);
+        if(is_string)
+            builder->CreateCondBr(is_not_null, print_loop, print_end);
+        else
+        {
+            llvm::BasicBlock* print_comma = llvm::BasicBlock::Create(
+                global_context, "__print_comma", new_print_def);
 
-        builder->SetInsertPoint(print_comma);
+            builder->CreateCondBr(is_not_null, print_comma, print_end);
 
-        builder->CreateCall(global_printf, comma);
+            builder->SetInsertPoint(print_comma);
 
-        builder->CreateBr(print_loop);
+            builder->CreateCall(global_printf, comma);
+
+            builder->CreateBr(print_loop);
+        }
 
         builder->SetInsertPoint(print_end);
 
         print_def = new_print_def;
 
-        builder->CreateCall(global_printf, close_bracket);
+        if(is_string)
+            builder->CreateCall(global_printf, quote);
+        else
+        {
+            static llvm::Value* close_brackets = builder->CreateGlobalStringPtr("]");
+
+            builder->CreateCall(global_printf, close_brackets);
+        }
+
         builder->CreateRetVoid();
 
         builder->SetInsertPoint(block);
@@ -1105,10 +1147,10 @@ bool CflCompiler::compile_program(cfl_typed_program* program)
     return true;
 }
 
-bool CflCompiler::compile(cfl_typed_program* program, std::string& destination_file)
+bool CflCompiler::compile(cfl_typed_program* program, std::string& filename_head)
 {
     builder = new llvm::IRBuilder<>(global_context);
-    top_module = new llvm::Module(destination_file, global_context);
+    top_module = new llvm::Module(filename_head + ".cfl", global_context);
 
     if(!compile_program(program))
         return false;
