@@ -54,7 +54,9 @@ llvm-not-found:
 cfl-core-c: cfl_main.o libcfl.a
 	$(CC) -o cfl-core-c $< -L. -lcfl
 
-CPPFILES = cfl_compiler.opp
+CPPFILES = \
+    cfl_compiler.opp \
+    cfl_compiler.print.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
 	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
