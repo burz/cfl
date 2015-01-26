@@ -45,6 +45,12 @@ class CflCompiler
                                        llvm::Function* parent,
                                        llvm::BasicBlock* entry_block);
 
+    llvm::Value* compile_function_chain(cfl_typed_node* node,
+                                        argument_register_map register_map,
+                                        llvm::Function* parent,
+                                        llvm::BasicBlock* entry_block,
+                                        cfl_typed_node* first_argument = 0);
+
     node_compiler compile_node_function;
 
     node_compiler compile_node_list;
