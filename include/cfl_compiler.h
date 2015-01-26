@@ -62,6 +62,7 @@ class CflCompiler
     node_compiler compile_node_if;
 
     node_compiler compile_node_push;
+    node_compiler compile_node_concatenate;
 
     node_compiler compile_node;
 
