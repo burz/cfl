@@ -192,7 +192,20 @@ llvm::Value* CflCompiler::compile_node_function(
     llvm::BasicBlock* function_entry = llvm::BasicBlock::Create(
         global_context, "function_entry", function_def);
 
+    std::vector<llvm::Value*> new_register_map;
+    std::vector<
+
     llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
+
+    argument_reg_itt = register_map.begin();
+
+    for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
+        if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, node))
+        {
+            argument_register_mapping mapping(argument_reg_itt->first, arg_itt++);
+
+            new_register_map.push_back(mapping);
+        }
 
     cfl_typed_node* pos = node;
 
@@ -200,7 +213,7 @@ llvm::Value* CflCompiler::compile_node_function(
     {
         argument_register_mapping mapping(pos->children[0], arg_itt++);
 
-        register_map.push_back(mapping);
+        new_register_map.push_back(mapping);
 
         pos = pos->children[1];
     }
@@ -208,16 +221,22 @@ llvm::Value* CflCompiler::compile_node_function(
     builder->SetInsertPoint(function_entry);
 
     llvm::Value* result =
-        compile_node(pos, register_map, function_def, function_entry);
+        compile_node(pos, new_register_map, function_def, function_entry);
 
     if(!result)
         return 0;
+result->dump();
 
-    argument_reg_itt = pos;
-
-    for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
+    if(pos->resulting_type->type != CFL_TYPE_ARROW)
     {
-        if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, pos))
+        llvm::Value* function_struct = builder->CreateLoad(result);
+
+        llvm::Value* function_ptr = builder->CreateExtractValue(function_struct, 0);
+
+        llvm::ArrayRef<llvm::Value*> applicable_arguments_ref(applicable_arguments);
+
+        builder->CreateCall(function_ptr, applicable_arguments_ref);
+    }
 
     llvm::Type* result_type = generate_type(pos->resulting_type);
 
