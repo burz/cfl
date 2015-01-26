@@ -722,6 +722,66 @@ llvm::Value* CflCompiler::compile_node_concatenate(
     return phi;
 }
 
+llvm::Value* CflCompiler::compile_node_case(
+        cfl_typed_node* node,
+        argument_register_map register_map,
+        llvm::Function* parent,
+        llvm::BasicBlock* entry_block)
+{
+    llvm::Value* list =
+        compile_node(node->children[0], register_map, parent, entry_block);
+
+    llvm::Value* is_empty = builder->CreateIsNull(list, "is_empty");
+
+    llvm::BasicBlock* empty = llvm::BasicBlock::Create(
+        global_context, "__empty", parent);
+    llvm::BasicBlock* nonempty = llvm::BasicBlock::Create(
+        global_context, "__nonempty", parent);
+    llvm::BasicBlock* case_end = llvm::BasicBlock::Create(
+        global_context, "__case_end", parent);
+
+    builder->CreateCondBr(is_empty, empty, nonempty);
+
+    builder->SetInsertPoint(empty);
+
+    llvm::Value* empty_result =
+        compile_node(node->children[1], register_map, parent, empty);
+
+    builder->CreateBr(case_end);
+
+    builder->SetInsertPoint(nonempty);
+
+    llvm::Value* list_node = builder->CreateLoad(list, "list_node");
+
+    llvm::Value* element_pointer =
+        builder->CreateExtractValue(list_node, 0, "element_pointer");
+
+    llvm::Value* element = builder->CreateLoad(element_pointer, "element");
+    llvm::Value* tail = builder->CreateExtractValue(list_node, 1, "tail");
+
+    argument_register_mapping element_mapping(node->children[2], element);
+    argument_register_mapping tail_mapping(node->children[3], tail);
+
+    register_map.push_back(element_mapping);
+    register_map.push_back(tail_mapping);
+
+    llvm::Value* nonempty_result =
+        compile_node(node->children[4], register_map, parent, nonempty);
+
+    builder->CreateBr(case_end);
+
+    builder->SetInsertPoint(case_end);
+
+    llvm::Type* result_type = generate_type(node->resulting_type);
+
+    llvm::PHINode* phi = builder->CreatePHI(result_type, 2, "phi");
+
+    phi->addIncoming(empty_result, empty);
+    phi->addIncoming(nonempty_result, nonempty);
+
+    return phi;
+}
+
 llvm::Value* CflCompiler::compile_node(
         cfl_typed_node* node,
         argument_register_map register_map,
@@ -771,6 +831,8 @@ llvm::Value* CflCompiler::compile_node(
         return compile_node_push(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_CONCATENATE)
         return compile_node_concatenate(node, register_map, parent, entry_block);
+    else if(node->node_type == CFL_NODE_CASE)
+        return compile_node_case(node, register_map, parent, entry_block);
 
     return 0;
 }
