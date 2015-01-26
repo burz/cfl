@@ -148,12 +148,125 @@ llvm::Value* CflCompiler::compile_node_char(cfl_typed_node* node)
     return builder->getInt8(value);
 }
 
+llvm::Value* CflCompiler::compile_function_chain(
+        cfl_typed_node* node,
+        argument_register_map register_map,
+        llvm::Function* parent,
+        llvm::BasicBlock* entry_block,
+        cfl_typed_node* first_argument)
+{
+    cfl_typed_node* expression = node;
+    std::vector<llvm::Type*> arguments;
+    std::vector<cfl_typed_node*> argument_names;
+
+    while(expression->node_type == CFL_NODE_FUNCTION)
+    {
+        arguments.push_back(generate_type(expression->children[0]->resulting_type));
+        argument_names.push_back(expression->children[0]);
+
+        expression = expression->children[1];
+    }
+
+    llvm::Type* return_type = generate_type(expression->resulting_type);
+
+    argument_register_map::iterator argument_reg_itt = register_map.begin();
+    argument_register_map::iterator argument_reg_end = register_map.end();
+
+    for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
+        if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, node))
+        {
+            arguments.insert(arguments.begin(), argument_reg_itt->second->getType());
+            argument_names.insert(argument_names.begin(), argument_reg_itt->first);
+        }
+
+    llvm::ArrayRef<llvm::Type*> arguments_ref(arguments);
+
+    std::stringstream new_name;
+    new_name << "_function_" << (char*) node->children[0]->data << '_' << node;
+
+    llvm::FunctionType* function_type = llvm::FunctionType::get(
+        return_type, arguments_ref, false);
+
+    llvm::Function* function_def = llvm::Function::Create(
+        function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
+
+    llvm::BasicBlock* function_entry = llvm::BasicBlock::Create(
+        global_context, "function_entry", function_def);
+
+    builder->SetInsertPoint(function_entry);
+
+    argument_register_map new_register_map;
+
+    std::vector<cfl_typed_node*>::iterator argument_name_itt = argument_names.begin();
+    std::vector<cfl_typed_node*>::iterator argument_name_end = argument_names.end();
+    llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
+
+    for( ; argument_name_itt != argument_name_end; ++argument_name_itt)
+    {
+        argument_register_mapping new_mapping(*argument_name_itt, arg_itt++);
+
+        new_register_map.push_back(new_mapping);
+    }
+
+    llvm::Value* result =
+        compile_node(expression, new_register_map, function_def, function_entry);
+
+    builder->CreateRet(result);
+
+    builder->SetInsertPoint(entry_block);
+
+    llvm::ArrayType* array_type =
+        llvm::ArrayType::get(builder->getInt8PtrTy(), register_map.size());
+
+    std::vector<llvm::Type*> members;
+    members.push_back(function_def->getType());
+    members.push_back(array_type);
+    llvm::ArrayRef<llvm::Type*> members_ref(members);
+
+    llvm::StructType* struct_type = llvm::StructType::get(global_context, members_ref);
+
+    std::vector<llvm::Constant*> initial_values;
+
+    for(int i = 0; i < register_map.size(); ++i)
+        initial_values.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
+
+    llvm::ArrayRef<llvm::Constant*> initial_values_ref(initial_values);
+
+    llvm::Constant* initial_arguments =
+        llvm::ConstantArray::get(array_type, initial_values_ref);
+
+    std::vector<llvm::Constant*> function_values;
+    function_values.push_back(function_def);
+    function_values.push_back(initial_arguments);
+    llvm::ArrayRef<llvm::Constant*> function_values_ref(function_values);
+
+    llvm::Constant* initial_struct =
+        llvm::ConstantStruct::get(struct_type, function_values_ref);
+
+    llvm::Value* argument_array =
+        builder->CreateExtractValue(initial_struct, 1, "argument_array");
+
+    int i = 0;
+    argument_reg_itt = register_map.begin();
+    for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
+        if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, node))
+        {
+            argument_array =
+                builder->CreateInsertValue(argument_array, argument_reg_itt->second, i);
+
+            ++i;
+        }
+
+    return builder->CreateInsertValue(initial_struct, argument_array, 1, "happy_array");
+}
+
 llvm::Value* CflCompiler::compile_node_function(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
+    return compile_function_chain(node, register_map, parent, entry_block);
     cfl_type* updated_type = cfl_copy_new_type(node->resulting_type);
 
     if(!updated_type)
@@ -562,7 +675,7 @@ llvm::Value* CflCompiler::compile_node_if(
     builder->SetInsertPoint(if_true);
 
     llvm::Value* then_value =
-        compile_node(node->children[1], register_map, parent, entry_block);
+        compile_node(node->children[1], register_map, parent, if_true);
 
     builder->SetInsertPoint(if_true);
 
@@ -571,7 +684,7 @@ llvm::Value* CflCompiler::compile_node_if(
     builder->SetInsertPoint(if_false);
 
     llvm::Value* else_value =
-        compile_node(node->children[2], register_map, parent, entry_block);
+        compile_node(node->children[2], register_map, parent, if_false);
 
     builder->SetInsertPoint(if_false);
 
