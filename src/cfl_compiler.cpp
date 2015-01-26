@@ -640,6 +640,9 @@ llvm::Value* CflCompiler::compile_node_concatenate(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+
     llvm::Value* right =
         compile_node(node->children[1], register_map, parent, entry_block);
 
@@ -649,6 +652,8 @@ llvm::Value* CflCompiler::compile_node_concatenate(
         global_context, "__is_right_null_true", parent);
     llvm::BasicBlock* is_right_null_false = llvm::BasicBlock::Create(
         global_context, "__is_right_null_false", parent);
+    llvm::BasicBlock* is_left_null_false = llvm::BasicBlock::Create(
+        global_context, "__is_left_null_false", parent);
     llvm::BasicBlock* list_loop = llvm::BasicBlock::Create(
         global_context, "__list_loop", parent);
     llvm::BasicBlock* list_loop_end = llvm::BasicBlock::Create(
@@ -660,12 +665,15 @@ llvm::Value* CflCompiler::compile_node_concatenate(
 
     builder->SetInsertPoint(is_right_null_true);
 
-    llvm::Value* left =
-        compile_node(node->children[0], register_map, parent, entry_block);
-
     builder->CreateBr(concatenate_end);
 
     builder->SetInsertPoint(is_right_null_false);
+
+    llvm::Value* is_left_null = builder->CreateIsNull(left, "is_left_null");
+
+    builder->CreateCondBr(is_left_null, concatenate_end, is_left_null_false);
+
+    builder->SetInsertPoint(is_left_null_false);
 
     llvm::StructType* list_type;
     llvm::PointerType* list_pointer_type;
@@ -687,6 +695,8 @@ llvm::Value* CflCompiler::compile_node_concatenate(
     llvm::Value* next_pointer =
         builder->CreateExtractValue(list_node, 1, "next_pointer");
 
+    builder->CreateStore(next_pointer, node_space);
+
     llvm::Value* is_next_null =
         builder->CreateIsNull(next_pointer, "is_next_null");
 
@@ -703,10 +713,11 @@ llvm::Value* CflCompiler::compile_node_concatenate(
 
     builder->SetInsertPoint(concatenate_end);
 
-    llvm::PHINode* phi = builder->CreatePHI(list_pointer_type, 2, "phi");
+    llvm::PHINode* phi = builder->CreatePHI(list_pointer_type, 3, "phi");
 
     phi->addIncoming(left, is_right_null_true);
-    phi->addIncoming(right, list_loop_end);
+    phi->addIncoming(right, is_right_null_false);
+    phi->addIncoming(left, list_loop_end);
 
     return phi;
 }
