@@ -14,12 +14,24 @@ CflCompiler::CflCompiler(void)
 
 bool CflCompiler::generate_function_struct_types(
         cfl_typed_node* node,
+        argument_type_map saved_argument_types,
         llvm::FunctionType** function_type,
         llvm::StructType** struct_type)
 {
     std::vector<llvm::Type*> args;
+    argument_type_map new_argument_types;
 
-    while(node->resulting_type->type == CFL_TYPE_ARROW)
+    argument_type_map::iterator itt = saved_argument_types.begin();
+    argument_type_map::iterator end = saved_argument_types.end();
+
+    for( ; itt != end; ++itt)
+        if(cfl_is_free_in_typed_node((char*) itt->first->data, node))
+        {
+            args.push_back(itt->second); 
+            new_argument_types.push_back(*itt);
+        }
+
+    while(node->node_type == CFL_NODE_FUNCTION)
     {
         if(node->children[0]->resulting_type->type == CFL_TYPE_VARIABLE)
         {
@@ -28,20 +40,27 @@ bool CflCompiler::generate_function_struct_types(
             continue;
         }
 
-        llvm::Type* input_type = generate_type(node->children[0]);
+        llvm::Type* input_type =
+            generate_type_inner(saved_argument_types, node->children[0]);
 
         if(!input_type)
             return 0;
 
         args.push_back(input_type);
 
+        argument_type_mapping mapping(node->children[0], input_type);
+
+        new_argument_types.push_back(mapping);
+
         node = node->children[1];
     }
 
     llvm::ArrayRef<llvm::Type*> args_ref(args);
+cfl_print_type(node->resulting_type);
+    llvm::Type* return_type = generate_type_inner(new_argument_types, node);
 
     *function_type =
-        llvm::FunctionType::get(builder->getInt8PtrTy(), args_ref, false);
+        llvm::FunctionType::get(return_type, args_ref, false);
 
     if(!*function_type)
         return 0;
@@ -92,7 +111,9 @@ void CflCompiler::generate_list_struct_types(
     *struct_type = list_type;
 }
 
-llvm::Type* CflCompiler::generate_type(cfl_typed_node* node)
+llvm::Type* CflCompiler::generate_type_inner(
+        argument_type_map type_map,
+        cfl_typed_node* node)
 {
     if(node->resulting_type->type == CFL_TYPE_BOOL)
         return builder->getInt1Ty();
@@ -117,13 +138,32 @@ llvm::Type* CflCompiler::generate_type(cfl_typed_node* node)
         llvm::FunctionType* function_type;
         llvm::StructType* struct_type;
 
-        if(!generate_function_struct_types(node, &function_type, &struct_type))
+        if(!generate_function_struct_types(node, type_map, &function_type, &struct_type))
             return 0;
 
         return struct_type;
     }
 
     return 0;
+}
+
+llvm::Type* CflCompiler::generate_type(
+        argument_register_map register_map,
+        cfl_typed_node* node)
+{
+    argument_type_map type_map;
+
+    argument_register_map::iterator itt = register_map.begin();
+    argument_register_map::iterator end = register_map.end();
+
+    for( ; itt != end; ++itt)
+    {
+        argument_type_mapping mapping(itt->first, itt->second->getType());
+
+        type_map.push_back(mapping);
+    }
+
+    return generate_type_inner(type_map, node);
 }
 
 llvm::Value* CflCompiler::compile_node_bool(cfl_typed_node* node)
@@ -160,13 +200,19 @@ llvm::Value* CflCompiler::compile_function_chain(
 
     while(expression->node_type == CFL_NODE_FUNCTION)
     {
-        arguments.push_back(generate_type(expression->children[0]));
+        arguments.push_back(generate_type(register_map, expression->children[0]));
         argument_names.push_back(expression->children[0]);
 
         expression = expression->children[1];
     }
 
-    llvm::Type* return_type = generate_type(expression);
+llvm::Type* s_type = generate_type(register_map, node);
+std::cout << "\n = s_type";
+s_type->dump();
+    llvm::Type* return_type = generate_type(register_map, expression);
+std::cout << "\n = return_type";
+return_type->dump();
+std::cout << std::endl;
 
     argument_register_map::iterator argument_reg_itt = register_map.begin();
     argument_register_map::iterator argument_reg_end = register_map.end();
@@ -209,6 +255,9 @@ llvm::Value* CflCompiler::compile_function_chain(
 
     llvm::Value* result =
         compile_node(expression, new_register_map, function_def, function_entry);
+std::cout << "\n = result";
+result->getType()->dump();
+std::cout << std::endl;
 
     builder->CreateRet(result);
 
@@ -292,7 +341,7 @@ llvm::Value* CflCompiler::compile_node_list(
         return llvm::ConstantPointerNull::get(list_pointer_type);
 
     llvm::Type* element_type =
-        generate_type(((cfl_typed_node_list*) node->data)->node);
+        generate_type(register_map, ((cfl_typed_node_list*) node->data)->node);
 
     cfl_typed_node_list* pos = (cfl_typed_node_list*) node->data;
 
@@ -371,7 +420,7 @@ llvm::Value* CflCompiler::compile_node_tuple(
         if(!child)
             return 0;
 
-        llvm::Type* child_type = generate_type(node->children[i]);
+        llvm::Type* child_type = generate_type(register_map, node->children[i]);
 
         if(!child_type)
             return 0;
@@ -594,7 +643,7 @@ llvm::Value* CflCompiler::compile_node_push(
     llvm::Value* element =
         compile_node(node->children[0], register_map, parent, entry_block);
 
-    llvm::Type* element_type = generate_type(node->children[0]);
+    llvm::Type* element_type = generate_type(register_map, node->children[0]);
 
     llvm::Value* element_space = builder->CreateAlloca(element_type);
 
@@ -770,7 +819,7 @@ llvm::Value* CflCompiler::compile_node_case(
 
     builder->SetInsertPoint(case_end);
 
-    llvm::Type* result_type = generate_type(node);
+    llvm::Type* result_type = generate_type(register_map, node);
 
     llvm::PHINode* phi = builder->CreatePHI(result_type, 2, "phi");
 
