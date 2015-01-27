@@ -331,7 +331,7 @@ llvm::Value* Compiler::compile_function_chain(
         }
 
     return builder->CreateInsertValue(
-        initial_struct, argument_array, 1, "happy_array");
+        initial_struct, argument_array, 1, "closure");
 }
 
 llvm::Value* Compiler::compile_node_function(
