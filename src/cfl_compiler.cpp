@@ -7,12 +7,14 @@ extern "C" {
 #include <iostream>
 #include <sstream>
 
-CflCompiler::CflCompiler(void)
+namespace Cfl {
+
+Compiler::Compiler(void)
     : global_context(llvm::getGlobalContext())
 {
 }
 
-bool CflCompiler::generate_function_struct_types(
+bool Compiler::generate_function_struct_types(
         cfl_typed_node* node,
         argument_type_map saved_argument_types,
         llvm::FunctionType** function_type,
@@ -81,7 +83,7 @@ cfl_print_type(node->resulting_type);
     return true;
 }
 
-void CflCompiler::generate_list_struct_types(
+void Compiler::generate_list_struct_types(
         llvm::StructType** struct_type,
         llvm::PointerType** struct_pointer_type)
 {
@@ -111,7 +113,7 @@ void CflCompiler::generate_list_struct_types(
     *struct_type = list_type;
 }
 
-llvm::Type* CflCompiler::generate_type_inner(
+llvm::Type* Compiler::generate_type_inner(
         argument_type_map type_map,
         cfl_typed_node* node)
 {
@@ -147,7 +149,7 @@ llvm::Type* CflCompiler::generate_type_inner(
     return 0;
 }
 
-llvm::Type* CflCompiler::generate_type(
+llvm::Type* Compiler::generate_type(
         argument_register_map register_map,
         cfl_typed_node* node)
 {
@@ -166,28 +168,28 @@ llvm::Type* CflCompiler::generate_type(
     return generate_type_inner(type_map, node);
 }
 
-llvm::Value* CflCompiler::compile_node_bool(cfl_typed_node* node)
+llvm::Value* Compiler::compile_node_bool(cfl_typed_node* node)
 {
     bool value = *((bool*) node->data);
 
     return builder->getInt1(value);
 }
 
-llvm::Value* CflCompiler::compile_node_integer(cfl_typed_node* node)
+llvm::Value* Compiler::compile_node_integer(cfl_typed_node* node)
 {
     int value = *((int*) node->data);
 
     return builder->getInt32(value);
 }
 
-llvm::Value* CflCompiler::compile_node_char(cfl_typed_node* node)
+llvm::Value* Compiler::compile_node_char(cfl_typed_node* node)
 {
     char value = *((char*) node->data);
 
     return builder->getInt8(value);
 }
 
-llvm::Value* CflCompiler::compile_function_chain(
+llvm::Value* Compiler::compile_function_chain(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -317,7 +319,7 @@ std::cout << std::endl;
     return builder->CreateInsertValue(initial_struct, argument_array, 1, "happy_array");
 }
 
-llvm::Value* CflCompiler::compile_node_function(
+llvm::Value* Compiler::compile_node_function(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -326,7 +328,7 @@ llvm::Value* CflCompiler::compile_node_function(
     return compile_function_chain(node, register_map, parent, entry_block);
 }
 
-llvm::Value* CflCompiler::compile_node_list(
+llvm::Value* Compiler::compile_node_list(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -402,7 +404,7 @@ llvm::Value* CflCompiler::compile_node_list(
     return head;
 }
 
-llvm::Value* CflCompiler::compile_node_tuple(
+llvm::Value* Compiler::compile_node_tuple(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -459,7 +461,7 @@ llvm::Value* CflCompiler::compile_node_tuple(
     return array;
 }
 
-llvm::Value* CflCompiler::compile_node_and(
+llvm::Value* Compiler::compile_node_and(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -471,7 +473,7 @@ llvm::Value* CflCompiler::compile_node_and(
     return builder->CreateAnd(left, right, "and");
 }
 
-llvm::Value* CflCompiler::compile_node_or(
+llvm::Value* Compiler::compile_node_or(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -483,7 +485,7 @@ llvm::Value* CflCompiler::compile_node_or(
     return builder->CreateOr(left, right, "or");
 }
 
-llvm::Value* CflCompiler::compile_node_not(
+llvm::Value* Compiler::compile_node_not(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -494,7 +496,7 @@ llvm::Value* CflCompiler::compile_node_not(
     return builder->CreateNot(child, "not");
 }
 
-llvm::Value* CflCompiler::compile_node_add(
+llvm::Value* Compiler::compile_node_add(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -506,7 +508,7 @@ llvm::Value* CflCompiler::compile_node_add(
     return builder->CreateAdd(left, right, "add");
 }
 
-llvm::Value* CflCompiler::compile_node_multiply(
+llvm::Value* Compiler::compile_node_multiply(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -518,7 +520,7 @@ llvm::Value* CflCompiler::compile_node_multiply(
     return builder->CreateMul(left, right, "multiply");
 }
 
-llvm::Value* CflCompiler::compile_node_divide(
+llvm::Value* Compiler::compile_node_divide(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -565,7 +567,7 @@ llvm::Value* CflCompiler::compile_node_divide(
     return builder->CreateSDiv(left, right, "divide");
 }
 
-llvm::Value* CflCompiler::compile_node_equal(
+llvm::Value* Compiler::compile_node_equal(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -577,7 +579,7 @@ llvm::Value* CflCompiler::compile_node_equal(
     return builder->CreateICmpEQ(left, right, "equal");
 }
 
-llvm::Value* CflCompiler::compile_node_less(
+llvm::Value* Compiler::compile_node_less(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -589,7 +591,7 @@ llvm::Value* CflCompiler::compile_node_less(
     return builder->CreateICmpSLT(left, right, "less");
 }
 
-llvm::Value* CflCompiler::compile_node_if(
+llvm::Value* Compiler::compile_node_if(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -634,7 +636,7 @@ llvm::Value* CflCompiler::compile_node_if(
     return phi;
 }
 
-llvm::Value* CflCompiler::compile_node_push(
+llvm::Value* Compiler::compile_node_push(
         cfl_typed_node* node,
        argument_register_map register_map,
        llvm::Function* parent,
@@ -681,7 +683,7 @@ llvm::Value* CflCompiler::compile_node_push(
     return list_node_space;
 }
 
-llvm::Value* CflCompiler::compile_node_concatenate(
+llvm::Value* Compiler::compile_node_concatenate(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -769,7 +771,7 @@ llvm::Value* CflCompiler::compile_node_concatenate(
     return phi;
 }
 
-llvm::Value* CflCompiler::compile_node_case(
+llvm::Value* Compiler::compile_node_case(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -829,7 +831,7 @@ llvm::Value* CflCompiler::compile_node_case(
     return phi;
 }
 
-llvm::Value* CflCompiler::compile_node(
+llvm::Value* Compiler::compile_node(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
@@ -884,7 +886,7 @@ llvm::Value* CflCompiler::compile_node(
     return 0;
 }
 
-void CflCompiler::setup_global_defs(void)
+void Compiler::setup_global_defs(void)
 {
     std::vector<llvm::Type*> puts_args;
     puts_args.push_back(builder->getInt8Ty()->getPointerTo());
@@ -905,7 +907,7 @@ void CflCompiler::setup_global_defs(void)
     global_printf = top_module->getOrInsertFunction("printf", printf_type);
 }
 
-llvm::Value* CflCompiler::extract_value_from_pointer(
+llvm::Value* Compiler::extract_value_from_pointer(
         llvm::Value* pointer,
         cfl_type* type)
 {
@@ -963,7 +965,7 @@ llvm::Value* CflCompiler::extract_value_from_pointer(
     return 0;
 }
 
-bool CflCompiler::compile_program(cfl_typed_program* program)
+bool Compiler::compile_program(cfl_typed_program* program)
 {
     llvm::FunctionType* main_type = llvm::FunctionType::get(
         builder->getInt32Ty(), false);
@@ -999,7 +1001,7 @@ bool CflCompiler::compile_program(cfl_typed_program* program)
     return true;
 }
 
-bool CflCompiler::compile(cfl_typed_program* program, std::string& filename_head)
+bool Compiler::compile(cfl_typed_program* program, std::string& filename_head)
 {
     builder = new llvm::IRBuilder<>(global_context);
     top_module = new llvm::Module(filename_head + ".cfl", global_context);
@@ -1015,3 +1017,5 @@ bool CflCompiler::compile(cfl_typed_program* program, std::string& filename_head
 
     return true;
 }
+
+} // end namespace Cfl

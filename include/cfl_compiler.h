@@ -12,7 +12,9 @@ extern "C" {
 #include <string>
 #include <vector>
 
-class CflCompiler
+namespace Cfl {
+
+class Compiler
 {
   private:
     llvm::LLVMContext& global_context;
@@ -90,9 +92,11 @@ class CflCompiler
 
     bool compile_program(cfl_typed_program* program);
   public:
-    CflCompiler(void);
+    Compiler(void);
 
     bool compile(cfl_typed_program* program, std::string& filename_head);
 };
+
+} // end namespace Cfl
 
 #endif

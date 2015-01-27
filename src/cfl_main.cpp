@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 
         std::string filename_head = file.substr(0, extension_location);
 
-        CflCompiler compiler;
+        Cfl::Compiler compiler;
 
         if(!compiler.compile(typed_program, filename_head))
             return 1;
