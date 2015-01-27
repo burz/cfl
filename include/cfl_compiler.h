@@ -73,6 +73,7 @@ class Compiler
     node_compiler compile_node_equal;
     node_compiler compile_node_less;
 
+    node_compiler compile_node_application;
     node_compiler compile_node_if;
 
     node_compiler compile_node_push;
