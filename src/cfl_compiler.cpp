@@ -14,6 +14,22 @@ Compiler::Compiler(void)
 {
 }
 
+static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
+{
+    for( ;; )
+    {
+        if(node->node_type == CFL_NODE_IF ||
+           node->node_type == CFL_NODE_CASE)
+        {
+            node = node->children[1];
+
+            continue;
+        }
+
+        return node;
+    }
+}
+
 bool Compiler::generate_function_struct_types(
         cfl_typed_node* node,
         argument_type_map saved_argument_types,
@@ -58,8 +74,10 @@ bool Compiler::generate_function_struct_types(
     }
 
     llvm::ArrayRef<llvm::Type*> args_ref(args);
-cfl_print_type(node->resulting_type);
-    llvm::Type* return_type = generate_type_inner(new_argument_types, node);
+
+    cfl_typed_node* leaf_node = find_leaf_node(node);
+
+    llvm::Type* return_type = generate_type_inner(new_argument_types, leaf_node);
 
     *function_type =
         llvm::FunctionType::get(return_type, args_ref, false);
@@ -78,7 +96,7 @@ cfl_print_type(node->resulting_type);
     members.push_back(array_type);
     llvm::ArrayRef<llvm::Type*> members_ref(members);
 
-    *struct_type = llvm::StructType::create(members_ref);
+    *struct_type = llvm::StructType::get(global_context, members_ref);
 
     return true;
 }
@@ -140,7 +158,8 @@ llvm::Type* Compiler::generate_type_inner(
         llvm::FunctionType* function_type;
         llvm::StructType* struct_type;
 
-        if(!generate_function_struct_types(node, type_map, &function_type, &struct_type))
+        if(!generate_function_struct_types(
+                node, type_map, &function_type, &struct_type))
             return 0;
 
         return struct_type;
@@ -197,24 +216,8 @@ llvm::Value* Compiler::compile_function_chain(
         cfl_typed_node* first_argument)
 {
     cfl_typed_node* expression = node;
-    std::vector<llvm::Type*> arguments;
     std::vector<cfl_typed_node*> argument_names;
-
-    while(expression->node_type == CFL_NODE_FUNCTION)
-    {
-        arguments.push_back(generate_type(register_map, expression->children[0]));
-        argument_names.push_back(expression->children[0]);
-
-        expression = expression->children[1];
-    }
-
-llvm::Type* s_type = generate_type(register_map, node);
-std::cout << "\n = s_type";
-s_type->dump();
-    llvm::Type* return_type = generate_type(register_map, expression);
-std::cout << "\n = return_type";
-return_type->dump();
-std::cout << std::endl;
+    argument_type_map type_map;
 
     argument_register_map::iterator argument_reg_itt = register_map.begin();
     argument_register_map::iterator argument_reg_end = register_map.end();
@@ -222,17 +225,37 @@ std::cout << std::endl;
     for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
         if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, node))
         {
-            arguments.insert(arguments.begin(), argument_reg_itt->second->getType());
-            argument_names.insert(argument_names.begin(), argument_reg_itt->first);
+            argument_names.push_back(argument_reg_itt->first);
+
+            argument_type_mapping mapping(argument_reg_itt->first,
+                                           argument_reg_itt->second->getType());
+
+            type_map.push_back(mapping);
         }
 
-    llvm::ArrayRef<llvm::Type*> arguments_ref(arguments);
+    while(expression->node_type == CFL_NODE_FUNCTION)
+    {
+        argument_names.push_back(expression->children[0]);
+
+        llvm::Type* argument_type =
+            generate_type(register_map, expression->children[0]);
+
+        argument_type_mapping mapping(expression->children[0], argument_type);
+
+        type_map.push_back(mapping);
+
+        expression = expression->children[1];
+    }
+
+    llvm::FunctionType* function_type;
+    llvm::StructType* struct_type;
+
+    if(!generate_function_struct_types(
+            node, type_map, &function_type, &struct_type))
+        return 0;
 
     std::stringstream new_name;
     new_name << "_function_" << (char*) node->children[0]->data << '_' << node;
-
-    llvm::FunctionType* function_type = llvm::FunctionType::get(
-        return_type, arguments_ref, false);
 
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
@@ -257,30 +280,21 @@ std::cout << std::endl;
 
     llvm::Value* result =
         compile_node(expression, new_register_map, function_def, function_entry);
-std::cout << "\n = result";
-result->getType()->dump();
-std::cout << std::endl;
 
     builder->CreateRet(result);
 
     builder->SetInsertPoint(entry_block);
 
-    llvm::ArrayType* array_type =
-        llvm::ArrayType::get(builder->getInt8PtrTy(), register_map.size());
-
-    std::vector<llvm::Type*> members;
-    members.push_back(function_def->getType());
-    members.push_back(array_type);
-    llvm::ArrayRef<llvm::Type*> members_ref(members);
-
-    llvm::StructType* struct_type = llvm::StructType::get(global_context, members_ref);
-
     std::vector<llvm::Constant*> initial_values;
 
     for(int i = 0; i < register_map.size(); ++i)
-        initial_values.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
+        initial_values.push_back(
+            llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
 
     llvm::ArrayRef<llvm::Constant*> initial_values_ref(initial_values);
+
+    llvm::ArrayType* array_type =
+        llvm::cast<llvm::ArrayType>(struct_type->getElementType(1));
 
     llvm::Constant* initial_arguments =
         llvm::ConstantArray::get(array_type, initial_values_ref);
@@ -316,7 +330,8 @@ std::cout << std::endl;
             ++i;
         }
 
-    return builder->CreateInsertValue(initial_struct, argument_array, 1, "happy_array");
+    return builder->CreateInsertValue(
+        initial_struct, argument_array, 1, "happy_array");
 }
 
 llvm::Value* Compiler::compile_node_function(
