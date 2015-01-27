@@ -325,11 +325,11 @@ static void cfl_print_typed_node_inner(cfl_typed_node* node)
             printf(") :: ");
             break;
         case CFL_NODE_LET_REC:
-            printf("let rec ");
+            printf("let rec (");
             cfl_print_typed_node_inner(node->children[0]);
-            printf(" ");
+            printf(") (");
             cfl_print_typed_node_inner(node->children[1]);
-            printf(" = (");
+            printf(") = (");
             cfl_print_typed_node_inner(node->children[2]);
             printf(") in (");
             cfl_print_typed_node_inner(node->children[3]);
