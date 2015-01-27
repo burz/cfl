@@ -2,7 +2,9 @@
 
 #include <sstream>
 
-static std::string cfl_arrow_string_inner(cfl_type* type)
+namespace Cfl {
+
+static std::string arrow_string_inner(cfl_type* type)
 {
     if(type->type == CFL_TYPE_VARIABLE)
     {
@@ -18,7 +20,7 @@ static std::string cfl_arrow_string_inner(cfl_type* type)
     else if(type->type == CFL_TYPE_CHAR)
         return "Char";
     else if(type->type == CFL_TYPE_LIST)
-        return "[" + cfl_arrow_string_inner((cfl_type*) type->input) + "]";
+        return "[" + arrow_string_inner((cfl_type*) type->input) + "]";
     else if(type->type == CFL_TYPE_TUPLE)
     {
         std::string result = "(";
@@ -26,7 +28,7 @@ static std::string cfl_arrow_string_inner(cfl_type* type)
         int i = 0;
         for( ; i < type->id; ++i)
         {
-            result += cfl_arrow_string_inner(((cfl_type**) type->input)[i]);
+            result += arrow_string_inner(((cfl_type**) type->input)[i]);
 
             if(i < type->id - 1)
                 result += ", ";
@@ -35,18 +37,18 @@ static std::string cfl_arrow_string_inner(cfl_type* type)
         return result + ")";
     }
     else if(type->type == CFL_TYPE_ARROW)
-        return cfl_arrow_string_inner((cfl_type*) type->input) + " -> (" +
-               cfl_arrow_string_inner((cfl_type*) type->output) + ")";
+        return arrow_string_inner((cfl_type*) type->input) + " -> (" +
+               arrow_string_inner((cfl_type*) type->output) + ")";
 
     return "";
 }
 
-static std::string cfl_arrow_string(cfl_type* type)
+static std::string arrow_string(cfl_type* type)
 {
-    return "function :: " + cfl_arrow_string_inner(type);
+    return "function :: " + arrow_string_inner(type);
 }
 
-void CflCompiler::generate_print_function(
+void Compiler::generate_print_function(
         cfl_type* result_type,
         llvm::Value* result,
         llvm::BasicBlock* block,
@@ -357,7 +359,7 @@ void CflCompiler::generate_print_function(
     }
     else if(result_type->type == CFL_TYPE_ARROW)
     {
-        std::string generated_function_string = cfl_arrow_string(result_type);
+        std::string generated_function_string = arrow_string(result_type);
 
         llvm::FunctionType* print_type =
             llvm::FunctionType::get(builder->getVoidTy(), false);
@@ -381,3 +383,5 @@ void CflCompiler::generate_print_function(
         builder->CreateCall(print_def);
     }
 }
+
+} // end namespace Cfl
