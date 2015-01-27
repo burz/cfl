@@ -25,14 +25,14 @@ class CflCompiler
     llvm::FunctionType* generate_function_type(unsigned int* number_of_args,
                                                cfl_type* type);
 
-    bool generate_function_struct_types(cfl_type* type,
+    bool generate_function_struct_types(cfl_typed_node* node,
                                         llvm::FunctionType** function_type,
                                         llvm::StructType** struct_type);
 
     void generate_list_struct_types(llvm::StructType** struct_type,
                                     llvm::PointerType** struct_pointer_type);
 
-    llvm::Type* generate_type(cfl_type* type);
+    llvm::Type* generate_type(cfl_typed_node* node);
 
     llvm::Value* compile_node_bool(cfl_typed_node* node);
     llvm::Value* compile_node_integer(cfl_typed_node* node);
