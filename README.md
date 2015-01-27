@@ -10,18 +10,16 @@ functional programming language.
 
 ## Usage
 
-To build run `make`, which builds the interpreter `cfl`. To simply
-run the interpreter on a file run
+To build run `make`, which builds the interpreter `cfl`. Then the usage of `cfl` is
+seen by running `./cfl`:
 ```
-./cfl filename
-```
-To output the internal AST of a file run
-```
-./cfl -ast filename
-```
-To output the return type of a file run
-```
-./cfl -type filename
+$ ./cfl
+USAGE: cfl filename       :: compile the program
+           -ast filename  :: print the AST of the program
+           -type filename :: print the high level types of the program
+           -deep filename :: print all the types of the program
+           -eval filename :: evaluate the program
+           -jit filename  :: evaluate the program using Just-In-Time compiling
 ```
 
 ## Example
@@ -69,10 +67,25 @@ random_list => (Integer -> (Integer -> [Integer]))
 main => [Integer]
 ```
 
-Running `./cfl` will output something like
+Running `./cfl -deep` will output
+```
+split ~>> function (~F0 :: Integer) -> (let rec (split :: (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))) (x :: Integer) = (function (xs :: [Integer]) -> (function (l :: [Integer]) -> (function (r :: [Integer]) -> (case (xs :: [Integer]) of [] -> ((l :: [Integer], r :: [Integer]) :: ([Integer], [Integer])) | ((y :: Integer) : (ys :: [Integer])) -> ((function ((l' :: [Integer], r' :: [Integer]) :: ([Integer], [Integer])) -> (if (((y :: Integer) < (x :: Integer) :: Bool) || ((y :: Integer) == (x :: Integer) :: Bool) :: Bool) then (((y :: Integer) : (l' :: [Integer]) :: [Integer], r' :: [Integer]) :: ([Integer], [Integer])) else ((l' :: [Integer], (y :: Integer) : (r' :: [Integer]) :: [Integer]) :: ([Integer], [Integer])) :: ([Integer], [Integer])) :: (([Integer], [Integer]) -> ([Integer], [Integer]))) (((((split :: (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))) (x :: Integer) :: ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer]))))) (ys :: [Integer]) :: ([Integer] -> ([Integer] -> ([Integer], [Integer])))) (l :: [Integer]) :: ([Integer] -> ([Integer], [Integer]))) (r :: [Integer]) :: ([Integer], [Integer])) :: ([Integer], [Integer])) :: ([Integer], [Integer])) :: ([Integer] -> ([Integer], [Integer]))) :: ([Integer] -> ([Integer] -> ([Integer], [Integer])))) :: ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer]))))) in ((split :: (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))) (~F0 :: Integer) :: ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer]))))) :: ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer]))))) :: (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))
+quicksort ~>> function (~F1 :: [Integer]) -> (let rec (quicksort :: ([Integer] -> [Integer])) (x :: [Integer]) = (case (x :: [Integer]) of [] -> ([] :: [Integer]) | ((y :: Integer) : (ys :: [Integer])) -> ((function ((l :: [Integer], r :: [Integer]) :: ([Integer], [Integer])) -> (((quicksort :: ([Integer] -> [Integer])) (l :: [Integer]) :: [Integer]) ++ ((y :: Integer) : ((quicksort :: ([Integer] -> [Integer])) (r :: [Integer]) :: [Integer]) :: [Integer]) :: [Integer]) :: (([Integer], [Integer]) -> [Integer])) (((((split :: (Integer -> ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer])))))) (y :: Integer) :: ([Integer] -> ([Integer] -> ([Integer] -> ([Integer], [Integer]))))) (ys :: [Integer]) :: ([Integer] -> ([Integer] -> ([Integer], [Integer])))) ([] :: [Integer]) :: ([Integer] -> ([Integer], [Integer]))) ([] :: [Integer]) :: ([Integer], [Integer])) :: [Integer]) :: [Integer]) in ((quicksort :: ([Integer] -> [Integer])) (~F1 :: [Integer]) :: [Integer]) :: [Integer]) :: ([Integer] -> [Integer])
+random_list ~>> function (~F2 :: Integer) -> (let rec (random_list :: (Integer -> (Integer -> [Integer]))) (x :: Integer) = (function (l :: Integer) -> (if ((x :: Integer) == (0 :: Integer) :: Bool) then ([] :: [Integer]) else (((random :: (Integer -> Integer)) (l :: Integer) :: Integer) : (((random_list :: (Integer -> (Integer -> [Integer]))) ((x :: Integer) + ((-1 :: Integer) * (1 :: Integer) :: Integer) :: Integer) :: (Integer -> [Integer])) (l :: Integer) :: [Integer]) :: [Integer]) :: [Integer]) :: (Integer -> [Integer])) in ((random_list :: (Integer -> (Integer -> [Integer]))) (~F2 :: Integer) :: (Integer -> [Integer])) :: (Integer -> [Integer])) :: (Integer -> (Integer -> [Integer]))
+main ~>> (quicksort :: ([Integer] -> [Integer])) (((random_list :: (Integer -> (Integer -> [Integer]))) (100 :: Integer) :: (Integer -> [Integer])) (500 :: Integer) :: [Integer]) :: [Integer]
+```
+
+Running `./cfl -eval` or `./cfl -jit` will output something like
 ```
 [0, 1, 3, 8, 14, 15, 16, 17, 25, 32, 37, 38, 40, 46, 61, 61, 64, 77, 80, 106, 108, 110, 111, 113, 121, 127, 134, 134, 137, 144, 149, 151, 158, 160, 165, 177, 179, 180, 188, 192, 196, 200, 201, 202, 212, 216, 218, 220, 223, 230, 236, 239, 239, 244, 251, 253, 265, 269, 281, 294, 301, 304, 308, 315, 323, 332, 334, 356, 359, 372, 373, 374, 375, 375, 383, 385, 387, 392, 393, 397, 398, 399, 402, 412, 420, 425, 431, 433, 438, 440, 441, 445, 452, 454, 459, 474, 482, 488, 489, 495]
 ```
+
+Running `./cfl program.cfl` will output an executable `program` that when run will output
+something like
+```
+[0, 1, 3, 8, 14, 15, 16, 17, 25, 32, 37, 38, 40, 46, 61, 61, 64, 77, 80, 106, 108, 110, 111, 113, 121, 127, 134, 134, 137, 144, 149, 151, 158, 160, 165, 177, 179, 180, 188, 192, 196, 200, 201, 202, 212, 216, 218, 220, 223, 230, 236, 239, 239, 244, 251, 253, 265, 269, 281, 294, 301, 304, 308, 315, 323, 332, 334, 356, 359, 372, 373, 374, 375, 375, 383, 385, 387, 392, 393, 397, 398, 399, 402, 412, 420, 425, 431, 433, 438, 440, 441, 445, 452, 454, 459, 474, 482, 488, 489, 495]
+```
+
 
 ## Expressions
 
