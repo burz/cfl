@@ -9,18 +9,52 @@ then
             ./cfl-core
         else
             FILENAME="${1%.*}"
-            ./cfl-core $@ &> $FILENAME.ll
+            ./cfl-core $@ 2> $FILENAME.ll
+            if [ $? != 0 ]
+            then
+                cat $FILENAME.ll
+                rm $FILENAME.ll
+                exit 1
+            fi
             llc $FILENAME.ll
+            rm $FILENAME.ll
             clang -o $FILENAME $FILENAME.s
+            rm $FILENAME.s
         fi
     else
-        if [ "$1" == "-jit" ]
+        if [ "$1" == "-ll" ]
         then
-            FILENAME="${2%.*}"
-            ./cfl-core $2 &> $FILENAME.ll
-            lli $FILENAME.ll
+            ./cfl-core $2 2>&1
         else
-            ./cfl-core $@
+            if [ "$1" == "-asm" ]
+            then
+                FILENAME="${2%.*}"
+                ./cfl-core $2 &> $FILENAME.ll
+                if [ $? != 0 ]
+                then
+                    cat $FILENAME.ll
+                    rm $FILENAME.ll
+                    exit 1
+                fi
+                cat $FILENAME.ll | llc
+                rm $FILENAME.ll
+            else
+                if [ "$1" == "-jit" ]
+                then
+                    FILENAME="${2%.*}"
+                    ./cfl-core $2 &> $FILENAME.ll
+                    if [ $? != 0 ]
+                    then
+                        cat $FILENAME.ll
+                        rm $FILENAME.ll
+                        exit 1
+                    fi
+                    lli $FILENAME.ll
+                    rm $FILENAME.ll
+                else
+                    ./cfl-core $@
+                fi
+            fi
         fi
     fi
 else

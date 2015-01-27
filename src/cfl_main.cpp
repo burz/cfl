@@ -13,14 +13,15 @@ extern "C" {
 
 #define EQUATION_HASH_TABLE_LENGTH 503
 
-static char usage[] = "USAGE: cfl filename       :: compile the program\n"
-                      "           -ast filename  :: print the AST of the program\n"
-                      "           -type filename :: print the high level types of the "
-                                                   "program\n"
-                      "           -deep filename :: print all the types of the program\n"
-                      "           -eval filename :: evaluate the program\n"
-                      "           -jit filename  :: evaluate the program using Just-In"
-                                                    "-Time compiling";
+static char usage[] =
+    "USAGE: cfl filename       :: compile the program\n"
+    "           -ast filename  :: print the AST of the program\n"
+    "           -type filename :: print the high level types of the program\n"
+    "           -deep filename :: print all the types of the program\n"
+    "           -eval filename :: evaluate the program\n"
+    "           -ll filename   :: print out the llvm representation of the program\n"
+    "           -asm filename  :: print out native assembly for the program\n"
+    "           -jit filename  :: evaluate the program using Just-In-Time compiling";
 
 int main(int argc, char* argv[])
 {
