@@ -19,8 +19,8 @@ static char usage[] =
     "           -type filename :: print the high level types of the program\n"
     "           -deep filename :: print all the types of the program\n"
     "           -eval filename :: evaluate the program\n"
-    "           -ll filename   :: print out the llvm representation of the program\n"
-    "           -asm filename  :: print out native assembly for the program\n"
+    "           -ll filename   :: print out the llvm code for the program\n"
+    "           -asm filename  :: print out native assembly code for the program\n"
     "           -jit filename  :: evaluate the program using Just-In-Time compiling";
 
 int main(int argc, char* argv[])

@@ -255,7 +255,7 @@ llvm::Value* Compiler::compile_function_chain(
         return 0;
 
     std::stringstream new_name;
-    new_name << "_function_" << (char*) node->children[0]->data << '_' << node;
+    new_name << "_function_" << (char*) node->children[0]->data;
 
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
