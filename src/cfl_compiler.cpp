@@ -93,6 +93,7 @@ bool Compiler::generate_function_struct_types(
 
     std::vector<llvm::Type*> members;
     members.push_back(function_pointer_type);
+    members.push_back(builder->getInt32Ty());
     members.push_back(array_type);
     llvm::ArrayRef<llvm::Type*> members_ref(members);
 
@@ -215,9 +216,9 @@ llvm::Value* Compiler::compile_function_chain(
         llvm::BasicBlock* entry_block,
         cfl_typed_node* first_argument)
 {
-    cfl_typed_node* expression = node;
     std::vector<cfl_typed_node*> argument_names;
     argument_type_map type_map;
+    int closure_size = 0;
 
     argument_register_map::iterator argument_reg_itt = register_map.begin();
     argument_register_map::iterator argument_reg_end = register_map.end();
@@ -231,7 +232,11 @@ llvm::Value* Compiler::compile_function_chain(
                                            argument_reg_itt->second->getType());
 
             type_map.push_back(mapping);
+
+            ++closure_size;
         }
+
+    cfl_typed_node* expression = node;
 
     while(expression->node_type == CFL_NODE_FUNCTION)
     {
@@ -294,13 +299,14 @@ llvm::Value* Compiler::compile_function_chain(
     llvm::ArrayRef<llvm::Constant*> initial_values_ref(initial_values);
 
     llvm::ArrayType* array_type =
-        llvm::cast<llvm::ArrayType>(struct_type->getElementType(1));
+        llvm::cast<llvm::ArrayType>(struct_type->getElementType(2));
 
     llvm::Constant* initial_arguments =
         llvm::ConstantArray::get(array_type, initial_values_ref);
 
     std::vector<llvm::Constant*> function_values;
     function_values.push_back(function_def);
+    function_values.push_back(builder->getInt32(closure_size));
     function_values.push_back(initial_arguments);
     llvm::ArrayRef<llvm::Constant*> function_values_ref(function_values);
 
@@ -308,7 +314,7 @@ llvm::Value* Compiler::compile_function_chain(
         llvm::ConstantStruct::get(struct_type, function_values_ref);
 
     llvm::Value* argument_array =
-        builder->CreateExtractValue(initial_struct, 1, "argument_array");
+        builder->CreateExtractValue(initial_struct, 2, "argument_array");
 
     int i = 0;
     argument_reg_itt = register_map.begin();
@@ -330,8 +336,7 @@ llvm::Value* Compiler::compile_function_chain(
             ++i;
         }
 
-    return builder->CreateInsertValue(
-        initial_struct, argument_array, 1, "closure");
+    return builder->CreateInsertValue(initial_struct, argument_array, 2, "closure");
 }
 
 llvm::Value* Compiler::compile_node_function(
@@ -482,8 +487,10 @@ llvm::Value* Compiler::compile_node_and(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateAnd(left, right, "and");
 }
@@ -494,8 +501,10 @@ llvm::Value* Compiler::compile_node_or(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateOr(left, right, "or");
 }
@@ -506,7 +515,8 @@ llvm::Value* Compiler::compile_node_not(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* child = compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* child =
+        compile_node(node->children[0], register_map, parent, entry_block);
 
     return builder->CreateNot(child, "not");
 }
@@ -517,8 +527,10 @@ llvm::Value* Compiler::compile_node_add(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateAdd(left, right, "add");
 }
@@ -529,8 +541,10 @@ llvm::Value* Compiler::compile_node_multiply(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateMul(left, right, "multiply");
 }
@@ -588,8 +602,10 @@ llvm::Value* Compiler::compile_node_equal(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateICmpEQ(left, right, "equal");
 }
@@ -600,10 +616,26 @@ llvm::Value* Compiler::compile_node_less(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* left = compile_node(node->children[0], register_map, parent, entry_block);
-    llvm::Value* right = compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* left =
+        compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* right =
+        compile_node(node->children[1], register_map, parent, entry_block);
 
     return builder->CreateICmpSLT(left, right, "less");
+}
+
+llvm::Value* Compiler::compile_node_application(
+        cfl_typed_node* node,
+        argument_register_map register_map,
+        llvm::Function* parent,
+        llvm::BasicBlock* entry_block)
+{
+    llvm::Value* value =
+        compile_node(node->children[1], register_map, parent, entry_block);
+    llvm::Value* function =
+        compile_node(node->children[0], register_map, parent, entry_block);
+
+    return 0;
 }
 
 llvm::Value* Compiler::compile_node_if(
@@ -612,7 +644,8 @@ llvm::Value* Compiler::compile_node_if(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::Value* condition = compile_node(node->children[0], register_map, parent, entry_block);
+    llvm::Value* condition =
+        compile_node(node->children[0], register_map, parent, entry_block);
 
     llvm::BasicBlock* if_true = llvm::BasicBlock::Create(
         global_context, "__if_true", parent);
@@ -889,6 +922,8 @@ llvm::Value* Compiler::compile_node(
         return compile_node_equal(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_LESS)
         return compile_node_less(node, register_map, parent, entry_block);
+    else if(node->node_type == CFL_NODE_APPLICATION)
+        return compile_node_application(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_IF)
         return compile_node_if(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_PUSH)
