@@ -16,8 +16,10 @@ then
                 rm $FILENAME.ll
                 exit 1
             fi
-            llc $FILENAME.ll
+            opt $FILENAME.ll > $FILENAME.bc
             rm $FILENAME.ll
+            llc $FILENAME.bc
+            rm $FILENAME.bc
             clang -o $FILENAME $FILENAME.s
             rm $FILENAME.s
         fi
