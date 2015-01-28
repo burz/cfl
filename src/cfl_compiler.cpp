@@ -635,6 +635,98 @@ llvm::Value* Compiler::compile_node_application(
     llvm::Value* function =
         compile_node(node->children[0], register_map, parent, entry_block);
 
+    llvm::StructType* function_struct_type =
+        llvm::cast<llvm::StructType>(function->getType());
+    llvm::ArrayType* argument_array_type =
+        llvm::cast<llvm::ArrayType>(function_struct_type->getElementType(2));
+
+    llvm::Value* argument_array =
+        builder->CreateExtractValue(function, 2, "argument_array");
+
+    int number_of_arguments = argument_array_type->getNumElements();
+    llvm::Constant* number_of_arguments_value =
+        builder->getInt32(number_of_arguments);
+
+    llvm::Value* applied_arguments =
+        builder->CreateExtractValue(function, 1, "applied_arguments");
+
+    llvm::Value* is_fully_applied =
+        builder->CreateICmpEQ(applied_arguments, number_of_arguments_value);
+
+    llvm::BasicBlock* it_is_fully_applied = llvm::BasicBlock::Create(
+        global_context, "__is_fully_applied", parent);
+    llvm::BasicBlock* is_not_fully_applied = llvm::BasicBlock::Create(
+        global_context, "__is_not_fully_applied", parent);
+    llvm::BasicBlock* application_end = llvm::BasicBlock::Create(
+        global_context, "__application_end", parent);
+
+    builder->CreateCondBr(
+        is_fully_applied, it_is_fully_applied, is_not_fully_applied);
+
+    builder->SetInsertPoint(it_is_fully_applied);
+
+    llvm::PointerType* function_pointer_type =
+        llvm::cast<llvm::PointerType>(function_struct_type->getElementType(0));
+
+    llvm::FunctionType* function_type =
+        llvm::cast<llvm::FunctionType>(function_pointer_type->getElementType());
+
+    std::vector<llvm::Value*> arguments;
+
+    for(int i = 0; i < number_of_arguments - 1; ++i)
+    {
+        llvm::Value* element_pointer =
+            builder->CreateExtractValue(argument_array, i);
+
+        llvm::Value* argument_pointer = builder->CreatePointerCast(
+            element_pointer, function_type->getParamType(i));
+
+        llvm::Value* argument = builder->CreateLoad(argument_pointer);
+
+        arguments.push_back(argument);
+    }
+
+    arguments.push_back(value);
+
+    llvm::ArrayRef<llvm::Value*> arguments_ref(arguments);
+
+    llvm::Value* function_pointer =
+        builder->CreateExtractValue(function, 0, "function_pointer");
+
+    llvm::Value* applied_result =
+        builder->CreateCall(function_pointer, arguments_ref, "applied_result");
+
+    builder->CreateBr(application_end);
+
+    builder->SetInsertPoint(is_not_fully_applied);
+
+    llvm::AllocaInst* value_space =
+        builder->CreateAlloca(value->getType(), builder->getInt32(1), "value_space");
+
+    builder->CreateStore(value, value_space);
+
+    llvm::Value* value_pointer =
+        builder->CreatePointerCast(value_space, builder->getInt8PtrTy());
+top_module->dump();
+
+    llvm::Value* array_pointer =
+        builder->CreateStructGEP(function, 2, "array_pointer");
+top_module->dump();
+
+    llvm::Value* argument_pointer =
+        builder->CreateGEP(array_pointer, applied_arguments);
+
+    builder->CreateStore(value_pointer, argument_pointer);
+
+    llvm::Value* updated_arguments = builder->CreateInsertElement(
+        argument_array, value_pointer, applied_arguments, "updated_arguments");
+
+    llvm::Value* updated_function = builder->CreateInsertValue(
+        function, updated_arguments, 2);
+
+    builder->SetInsertPoint(application_end);
+top_module->dump();
+
     return 0;
 }
 
