@@ -8,7 +8,7 @@ namespace Cfl {
 
 static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
 {
-    for( ;; )
+    for(;;)
     {
         if(node->node_type == CFL_NODE_IF ||
            node->node_type == CFL_NODE_CASE)
@@ -41,35 +41,24 @@ bool Compiler::generate_function_struct_types(
             new_argument_types.push_back(*itt);
         }
 
-    while(node->node_type == CFL_NODE_FUNCTION)
-    {
-        if(node->children[0]->resulting_type->type == CFL_TYPE_VARIABLE)
-        {
-            node = node->children[1];
+    llvm::Type* input_type =
+        generate_type_inner(saved_argument_types, node->children[0]);
 
-            continue;
-        }
+    if(!input_type)
+        return 0;
 
-        llvm::Type* input_type =
-            generate_type_inner(saved_argument_types, node->children[0]);
+    args.push_back(input_type);
 
-        if(!input_type)
-            return 0;
+    argument_type_mapping mapping(node->children[0], input_type);
 
-        args.push_back(input_type);
-
-        argument_type_mapping mapping(node->children[0], input_type);
-
-        new_argument_types.push_back(mapping);
-
-        node = node->children[1];
-    }
+    new_argument_types.push_back(mapping);
 
     llvm::ArrayRef<llvm::Type*> args_ref(args);
 
-    cfl_typed_node* leaf_node = find_leaf_node(node);
+    cfl_typed_node* expression = find_leaf_node(node->children[1]);
 
-    llvm::Type* return_type = generate_type_inner(new_argument_types, leaf_node);
+    llvm::Type* return_type =
+        generate_type_inner(new_argument_types, expression);
 
     *function_type =
         llvm::FunctionType::get(return_type, args_ref, false);
@@ -81,12 +70,11 @@ bool Compiler::generate_function_struct_types(
         llvm::PointerType::getUnqual(*function_type);
 
     llvm::ArrayType* array_type =
-        llvm::ArrayType::get(builder->getInt8PtrTy(), args.size());
+        llvm::ArrayType::get(builder->getInt8PtrTy(), args.size() - 1);
 
     std::vector<llvm::Type*> members;
     members.push_back(function_pointer_type);
-    members.push_back(builder->getInt32Ty());
-    members.push_back(array_type);
+    members.push_back(array_type->getPointerTo());
     llvm::ArrayRef<llvm::Type*> members_ref(members);
 
     *struct_type = llvm::StructType::get(global_context, members_ref);

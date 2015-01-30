@@ -53,17 +53,9 @@ class Compiler
     llvm::Value* compile_node_integer(cfl_typed_node* node);
     llvm::Value* compile_node_char(cfl_typed_node* node);
 
-    llvm::Value* compile_function_chain(cfl_typed_node* node,
-                                        argument_register_map register_map,
-                                        llvm::Function* parent,
-                                        llvm::BasicBlock* entry_block,
-                                        cfl_typed_node* first_argument = 0);
-
     node_compiler compile_node_function;
-
     node_compiler compile_node_list;
     node_compiler compile_node_tuple;
-
     node_compiler compile_node_and;
     node_compiler compile_node_or;
     node_compiler compile_node_not;
@@ -72,14 +64,11 @@ class Compiler
     node_compiler compile_node_divide;
     node_compiler compile_node_equal;
     node_compiler compile_node_less;
-
     node_compiler compile_node_application;
     node_compiler compile_node_if;
-
     node_compiler compile_node_push;
     node_compiler compile_node_concatenate;
     node_compiler compile_node_case;
-
     node_compiler compile_node;
 
     void setup_global_defs(void);
