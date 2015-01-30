@@ -19,6 +19,14 @@ LLVMLIBS = $(shell llvm-config --libs core)
 LIBS = $(LLVMLIBS)
 FLAGS = $(INCL) $(LLVMFLAGS)
 
+ARCH = $(shell getconf LONG_BIT)
+
+ifeq ($(ARCH), 32)
+    FLAGS += -DARCH_32
+else
+    FLAGS += -DARCH_64
+endif
+
 LDFLAGS = $(LLVMLDFLAGS) $(LIBS)
 
 CFILES = \
@@ -57,6 +65,7 @@ cfl-core-c: cfl_main.o libcfl.a
 CPPFILES = \
     cfl_compiler.opp \
     cfl_compiler.types.opp \
+    cfl_compiler.heap.opp \
     cfl_compiler.print.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
