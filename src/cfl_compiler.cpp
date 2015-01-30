@@ -195,15 +195,17 @@ llvm::Value* Compiler::compile_node_list(
         if(!element)
             return 0;
 
-        llvm::Constant* size = builder->getInt32(1);
+//        llvm::Constant* size = builder->getInt32(1);
 
-        llvm::AllocaInst* element_space =
-            builder->CreateAlloca(element_type, size, "element_space");
-
-        builder->CreateStore(element, element_space);
+//        llvm::AllocaInst* element_space =
+//            builder->CreateAlloca(element_type, size, "element_space");
+        llvm::Value* element_space = call_malloc(element_type, parent, entry_block);
 
         llvm::Value* element_pointer =
-            builder->CreatePointerCast(element_space, builder->getInt8PtrTy());
+            builder->CreatePointerCast(element_space, element_type->getPointerTo());
+
+        builder->CreateStore(element, element_pointer);
+
 
         std::vector<llvm::Constant*> initial_values;
         initial_values.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
@@ -213,12 +215,16 @@ llvm::Value* Compiler::compile_node_list(
         llvm::Value* node = llvm::ConstantStruct::get(list_type, initial_values_ref);
 
         llvm::Value* store =
-            builder->CreateInsertValue(node, element_pointer, 0, "store");
+            builder->CreateInsertValue(node, element_space, 0, "store");
 
-        llvm::AllocaInst* node_space =
-            builder->CreateAlloca(list_type, size, "node_space");
+//        llvm::AllocaInst* node_space =
+//            builder->CreateAlloca(list_type, size, "node_space");
+        llvm::Value* node_space = call_malloc(list_type, parent, entry_block);
 
-        builder->CreateStore(store, node_space);
+        llvm::Value* node_pointer =
+            builder->CreatePointerCast(node_space, list_pointer_type, "node_pointer");
+
+        builder->CreateStore(store, node_pointer);
 
         if(last_node)
         {
@@ -226,14 +232,14 @@ llvm::Value* Compiler::compile_node_list(
                 builder->CreateLoad(last_node, "local_last_node");
 
             llvm::Value* new_last_node =
-                builder->CreateInsertValue(local_last_node, node_space, 1);
+                builder->CreateInsertValue(local_last_node, node_pointer, 1);
 
             builder->CreateStore(new_last_node, last_node);
         }
         else
-            head = node_space;
+            head = node_pointer;
 
-        last_node = node_space;
+        last_node = node_pointer;
 
         pos = pos->next;
     }

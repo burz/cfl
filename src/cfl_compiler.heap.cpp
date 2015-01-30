@@ -2,8 +2,28 @@
 
 namespace Cfl {
 
-llvm::Value* Compiler::call_malloc(llvm::Type* type, llvm::Function* parent)
+llvm::Value* Compiler::call_malloc(
+        llvm::Type* type,
+        llvm::Function* parent,
+        llvm::BasicBlock* entry_block)
 {
+    llvm::Function* lookup = top_module->getFunction("__cfl_malloc");
+
+    llvm::DataLayout* data_layout = new llvm::DataLayout(top_module);
+
+    uint64_t type_size = data_layout->getTypeAllocSize(type);
+
+    delete data_layout;
+
+#ifdef ARCH_32
+    llvm::Value* type_size_value = builder->getInt32(type_size);
+#else
+    llvm::Value* type_size_value = builder->getInt64(type_size);
+#endif
+
+    if(lookup)
+        return builder->CreateCall(lookup, type_size_value);
+
     std::vector<llvm::Type*> args;
 
 #ifdef ARCH_32
@@ -20,24 +40,26 @@ llvm::Value* Compiler::call_malloc(llvm::Type* type, llvm::Function* parent)
     llvm::Value* malloc_def =
         top_module->getOrInsertFunction("malloc", malloc_type);
 
-    llvm::DataLayout* data_layout = new llvm::DataLayout(top_module);
+    llvm::FunctionType* cfl_malloc_type =
+        llvm::FunctionType::get(builder->getInt8PtrTy(), args_ref, false);
 
-    uint64_t type_size = data_layout->getTypeAllocSize(type);
+    llvm::Function* cfl_malloc_def = llvm::Function::Create(
+        cfl_malloc_type, llvm::Function::ExternalLinkage, "__cfl_malloc", top_module);
 
-#ifdef ARCH_32
-    llvm::Value* space =
-        builder->CreateCall(malloc_def, builder->getInt32(type_size), "space");
-#else
-    llvm::Value* space =
-        builder->CreateCall(malloc_def, builder->getInt32(type_size), "space");
-#endif
+    llvm::BasicBlock* cfl_malloc_entry = llvm::BasicBlock::Create(
+        global_context, "__cfl_malloc_entry", cfl_malloc_def);
+
+    builder->SetInsertPoint(cfl_malloc_entry);
+
+    llvm::Value* space = builder->CreateCall(
+        malloc_def, cfl_malloc_def->arg_begin()++, "space");
 
     llvm::Value* is_null = builder->CreateIsNull(space, "is_null");
 
     llvm::BasicBlock* malloc_error = llvm::BasicBlock::Create(
-        global_context, "__malloc_error", parent);
+        global_context, "__malloc_error", cfl_malloc_def);
     llvm::BasicBlock* malloc_end = llvm::BasicBlock::Create(
-        global_context, "__malloc_end", parent);
+        global_context, "__malloc_end", cfl_malloc_def);
 
     builder->CreateCondBr(is_null, malloc_error, malloc_end);
 
@@ -50,8 +72,8 @@ llvm::Value* Compiler::call_malloc(llvm::Type* type, llvm::Function* parent)
     llvm::FunctionType* exit_type =
         llvm::FunctionType::get(builder->getVoidTy(), exit_args_ref, false);
 
-    static llvm::Value* memory_error_string = builder->CreateGlobalStringPtr(
-        "MEMORY ERROR: Could not allocate memory on the heap.");
+    llvm::Value* memory_error_string = builder->CreateGlobalStringPtr(
+        "MEMORY ERROR: Could not allocate memory on the heap");
 
     builder->CreateCall(global_puts, memory_error_string);
 
@@ -64,7 +86,11 @@ llvm::Value* Compiler::call_malloc(llvm::Type* type, llvm::Function* parent)
 
     builder->SetInsertPoint(malloc_end);
 
-    return space;
+    builder->CreateRet(space);
+
+    builder->SetInsertPoint(entry_block);
+
+    return builder->CreateCall(cfl_malloc_def, type_size_value);
 }
 
 void Compiler::call_free(llvm::Value* pointer)

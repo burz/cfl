@@ -53,7 +53,9 @@ class Compiler
     llvm::Value* compile_node_integer(cfl_typed_node* node);
     llvm::Value* compile_node_char(cfl_typed_node* node);
 
-    llvm::Value* call_malloc(llvm::Type* type, llvm::Function* parent);
+    llvm::Value* call_malloc(llvm::Type* type,
+                             llvm::Function* parent,
+                             llvm::BasicBlock* entry_block);
     void call_free(llvm::Value* pointer);
 
     node_compiler compile_node_function;
