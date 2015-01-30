@@ -35,16 +35,13 @@ llvm::Value* Compiler::compile_node_char(cfl_typed_node* node)
     return builder->getInt8(value);
 }
 
-llvm::Value* Compiler::compile_function_chain(
+llvm::Value* Compiler::compile_node_function(
         cfl_typed_node* node,
         argument_register_map register_map,
         llvm::Function* parent,
-        llvm::BasicBlock* entry_block,
-        cfl_typed_node* first_argument)
+        llvm::BasicBlock* entry_block)
 {
-    std::vector<cfl_typed_node*> argument_names;
     argument_type_map type_map;
-    int closure_size = 0;
 
     argument_register_map::iterator argument_reg_itt = register_map.begin();
     argument_register_map::iterator argument_reg_end = register_map.end();
@@ -52,31 +49,18 @@ llvm::Value* Compiler::compile_function_chain(
     for( ; argument_reg_itt != argument_reg_end; ++argument_reg_itt)
         if(cfl_is_free_in_typed_node((char*) argument_reg_itt->first->data, node))
         {
-            argument_names.push_back(argument_reg_itt->first);
-
             argument_type_mapping mapping(argument_reg_itt->first,
                                            argument_reg_itt->second->getType());
 
             type_map.push_back(mapping);
-
-            ++closure_size;
         }
 
-    cfl_typed_node* expression = node;
+    llvm::Type* argument_type =
+        generate_type(register_map, node->children[0]);
 
-    while(expression->node_type == CFL_NODE_FUNCTION)
-    {
-        argument_names.push_back(expression->children[0]);
+    argument_type_mapping mapping(node->children[0], argument_type);
 
-        llvm::Type* argument_type =
-            generate_type(register_map, expression->children[0]);
-
-        argument_type_mapping mapping(expression->children[0], argument_type);
-
-        type_map.push_back(mapping);
-
-        expression = expression->children[1];
-    }
+    type_map.push_back(mapping);
 
     llvm::FunctionType* function_type;
     llvm::StructType* struct_type;
@@ -98,26 +82,26 @@ llvm::Value* Compiler::compile_function_chain(
 
     argument_register_map new_register_map;
 
-    std::vector<cfl_typed_node*>::iterator argument_name_itt = argument_names.begin();
-    std::vector<cfl_typed_node*>::iterator argument_name_end = argument_names.end();
+    argument_type_map::iterator argument_type_itt = type_map.begin();
+    argument_type_map::iterator argument_type_end = type_map.end();
     llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
 
-    for( ; argument_name_itt != argument_name_end; ++argument_name_itt)
+    for( ; argument_type_itt != argument_type_end; ++argument_type_itt)
     {
-        argument_register_mapping new_mapping(*argument_name_itt, arg_itt++);
+        argument_register_mapping new_mapping(argument_type_itt->first, arg_itt++);
 
         new_register_map.push_back(new_mapping);
     }
 
-    llvm::Value* result =
-        compile_node(expression, new_register_map, function_def, function_entry);
+    llvm::Value* result = compile_node(
+        node->children[1], new_register_map, function_def, function_entry);
 
     builder->CreateRet(result);
 
     builder->SetInsertPoint(entry_block);
 
     llvm::PointerType* array_pointer_type =
-        llvm::cast<llvm::PointerType>(struct_type->getElementType(2));
+        llvm::cast<llvm::PointerType>(struct_type->getElementType(1));
     llvm::ArrayType* array_type =
         llvm::cast<llvm::ArrayType>(array_pointer_type->getElementType());
 
@@ -132,25 +116,24 @@ llvm::Value* Compiler::compile_function_chain(
     llvm::Constant* initial_arguments =
         llvm::ConstantArray::get(array_type, initial_values_ref);
 
-    llvm::AllocaInst* arguments_space = builder->CreateAlloca(
-        array_type, builder->getInt32(1), "arguments_space");
-
-    builder->CreateStore(initial_arguments, arguments_space);
-
     llvm::Constant* initial_array_pointer =
         llvm::ConstantPointerNull::get(array_pointer_type);
 
     std::vector<llvm::Constant*> function_values;
     function_values.push_back(function_def);
-    function_values.push_back(builder->getInt32(closure_size));
     function_values.push_back(initial_array_pointer);
     llvm::ArrayRef<llvm::Constant*> function_values_ref(function_values);
 
     llvm::Constant* initial_struct =
         llvm::ConstantStruct::get(struct_type, function_values_ref);
 
+    llvm::AllocaInst* arguments_space = builder->CreateAlloca(
+        array_type, builder->getInt32(1), "arguments_space");
+
+    builder->CreateStore(initial_arguments, arguments_space);
+
     llvm::Value* allocated_struct =
-        builder->CreateInsertValue(initial_struct, arguments_space, 2, "allocated_struct");
+        builder->CreateInsertValue(initial_struct, arguments_space, 1, "allocated_struct");
 
     int i = 0;
     argument_reg_itt = register_map.begin();
@@ -180,15 +163,6 @@ llvm::Value* Compiler::compile_function_chain(
         }
 
     return allocated_struct;
-}
-
-llvm::Value* Compiler::compile_node_function(
-        cfl_typed_node* node,
-        argument_register_map register_map,
-        llvm::Function* parent,
-        llvm::BasicBlock* entry_block)
-{
-    return compile_function_chain(node, register_map, parent, entry_block);
 }
 
 llvm::Value* Compiler::compile_node_list(
@@ -480,35 +454,6 @@ llvm::Value* Compiler::compile_node_application(
 
     llvm::StructType* function_struct_type =
         llvm::cast<llvm::StructType>(function_struct->getType());
-    llvm::PointerType* array_pointer_type =
-        llvm::cast<llvm::PointerType>(function_struct_type->getElementType(2));
-    llvm::ArrayType* array_type =
-        llvm::cast<llvm::ArrayType>(array_pointer_type->getElementType());
-
-    llvm::Value* argument_array_pointer =
-        builder->CreateExtractValue(function_struct, 2, "argument_array_pointer");
-
-    int number_of_arguments = array_type->getNumElements();
-    llvm::Constant* number_of_arguments_value =
-        builder->getInt32(number_of_arguments);
-
-    llvm::Value* applied_arguments =
-        builder->CreateExtractValue(function_struct, 1, "applied_arguments");
-
-    llvm::Value* is_fully_applied =
-        builder->CreateICmpEQ(applied_arguments, number_of_arguments_value);
-
-    llvm::BasicBlock* it_is_fully_applied = llvm::BasicBlock::Create(
-        global_context, "__is_fully_applied", parent);
-    llvm::BasicBlock* is_not_fully_applied = llvm::BasicBlock::Create(
-        global_context, "__is_not_fully_applied", parent);
-    llvm::BasicBlock* application_end = llvm::BasicBlock::Create(
-        global_context, "__application_end", parent);
-
-    builder->CreateCondBr(
-        is_fully_applied, it_is_fully_applied, is_not_fully_applied);
-
-    builder->SetInsertPoint(it_is_fully_applied);
 
     llvm::PointerType* function_pointer_type =
         llvm::cast<llvm::PointerType>(function_struct_type->getElementType(0));
@@ -517,22 +462,28 @@ llvm::Value* Compiler::compile_node_application(
 
     std::vector<llvm::Value*> arguments;
 
-    for(int i = 0; i < number_of_arguments - 1; ++i)
+    if(function_type->getNumParams() > 1)
     {
-        std::vector<llvm::Value*> indices;
-        indices.push_back(builder->getInt32(0));
-        indices.push_back(builder->getInt32(i));
-        llvm::ArrayRef<llvm::Value*> indices_ref;
+        llvm::Value* argument_array_pointer =
+            builder->CreateExtractValue(function_struct, 1, "argument_array_pointer");
 
-        llvm::Value* element_pointer = builder->CreateGEP(
-            argument_array_pointer, indices_ref, "element_pointer");
+        for(int i = 0; i < function_type->getNumParams() - 1; ++i)
+        {
+            std::vector<llvm::Value*> indices;
+            indices.push_back(builder->getInt32(0));
+            indices.push_back(builder->getInt32(i));
+            llvm::ArrayRef<llvm::Value*> indices_ref;
 
-        llvm::Value* argument_pointer = builder->CreatePointerCast(
-            element_pointer, function_type->getParamType(i));
+            llvm::Value* element_pointer = builder->CreateGEP(
+                argument_array_pointer, indices_ref, "element_pointer");
 
-        llvm::Value* argument = builder->CreateLoad(argument_pointer);
+            llvm::Value* argument_pointer = builder->CreatePointerCast(
+                element_pointer, function_type->getParamType(i)->getPointerTo());
 
-        arguments.push_back(argument);
+            llvm::Value* argument = builder->CreateLoad(argument_pointer);
+
+            arguments.push_back(argument);
+        }
     }
 
     arguments.push_back(value);
@@ -542,37 +493,8 @@ llvm::Value* Compiler::compile_node_application(
     llvm::Value* function_pointer =
         builder->CreateExtractValue(function_struct, 0, "function_pointer");
 
-    llvm::Value* applied_result =
-        builder->CreateCall(function_pointer, arguments_ref, "applied_result");
-
-    builder->CreateBr(application_end);
-
-    builder->SetInsertPoint(is_not_fully_applied);
-
-    std::vector<llvm::Value*> indices;
-    indices.push_back(builder->getInt32(0));
-    indices.push_back(applied_arguments);
-    llvm::ArrayRef<llvm::Value*> indices_ref;
-
-    llvm::AllocaInst* argument_space = builder->CreateAlloca(
-        value->getType(), builder->getInt32(1), "argument_space");
-
-    builder->CreateStore(value, argument_space);
-
-    llvm::Value* argument_pointer = builder->CreatePointerCast(
-        argument_space, builder->getInt8PtrTy(), "argument_pointer");
-
-    llvm::Value* element_pointer = builder->CreateGEP(
-        argument_array_pointer, indices_ref, "element_pointer");
-
-    builder->CreateStore(argument_pointer, element_pointer);
-
-    builder->CreateBr(application_end);
-
-    builder->SetInsertPoint(application_end);
-top_module->dump();
-
-    return 0;
+    return builder->CreateCall(
+        function_pointer, arguments_ref, "applied_result");
 }
 
 llvm::Value* Compiler::compile_node_if(

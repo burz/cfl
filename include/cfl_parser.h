@@ -4,22 +4,9 @@
 #include "cfl_ast.h"
 #include "cfl_program.h"
 #include "cfl_parser.types.h"
+#include "cfl_parser.error.h"
 
 #define MAX_INTEGER_STRING_LENGTH 11
-
-bool cfl_get_parse_error_flag(void);
-void cfl_parse_error_unexpected_char(char x);
-void cfl_parse_error_integer_overflow(char* start, int length);
-void cfl_parse_error_expected(char* expecting, char* after, char* start, char* end);
-void cfl_parse_error_no_equal_after_def(char* name);
-void cfl_parse_error_bad_arguments_after_def(char* name);
-void cfl_parse_error_bad_division(void);
-void cfl_parse_error_complex_function_name(void);
-void cfl_parse_error_partial_program(void);
-void cfl_parse_error_missing_main(void);
-void cfl_parse_error_main_has_arguments(void);
-void cfl_parse_error_redeclaration(char* name);
-void cfl_parse_error_unparseable_file(char* filename);
 
 bool cfl_is_whitespace(char x);
 bool cfl_is_number(char x);
@@ -33,7 +20,6 @@ void cfl_delete_token_list(cfl_token_list* list);
 bool cfl_token_string_compare(cfl_token_list* position, char* string, int length);
 
 cfl_node_parser cfl_parse_parentheses;
-
 cfl_node_parser cfl_parse_variable;
 
 cfl_list_node* cfl_parse_comma_separated(cfl_token_list** end,
@@ -56,7 +42,6 @@ cfl_node_parser cfl_parse_integer;
 cfl_node_parser cfl_parse_char;
 cfl_node_parser cfl_parse_string;
 cfl_node_parser cfl_parse_function;
-
 cfl_node_parser cfl_parse_list;
 cfl_node_parser cfl_parse_tuple;
 
@@ -89,7 +74,6 @@ cfl_node_parser cfl_parse_less;
 cfl_node_parser cfl_parse_less_equal;
 cfl_node_parser cfl_parse_greater;
 cfl_node_parser cfl_parse_greater_equal;
-
 cfl_node_parser cfl_parse_application;
 cfl_node_parser cfl_parse_composition;
 cfl_node_parser cfl_parse_applicative;
@@ -103,11 +87,9 @@ bool cfl_parse_def(cfl_token_list** end,
 
 cfl_node_parser cfl_parse_let;
 cfl_node_parser cfl_parse_if;
-
 cfl_node_parser cfl_parse_push;
 cfl_node_parser cfl_parse_concatenate;
 cfl_node_parser cfl_parse_case;
-
 cfl_node_parser cfl_parse_atom;
 cfl_node_parser cfl_parse_factor;
 cfl_node_parser cfl_parse_term;
