@@ -1,9 +1,5 @@
 #include "cfl_compiler.h"
 
-extern "C" {
-#include "cfl_type.h"
-}
-
 namespace Cfl {
 
 static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
