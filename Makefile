@@ -57,7 +57,8 @@ libcfl.a: $(CFILES)
 	ar cr libcfl.a $(CFILES)
 
 llvm-not-found:
-	@echo "LLVM not found. Building eval-only C version..."
+	@echo NOTE: LLVM not found.
+	@echo Building eval-only C version...
 
 cfl-core-c: cfl_main.o libcfl.a
 	$(CC) -o cfl-core-c $< -L. -lcfl
