@@ -498,6 +498,11 @@ llvm::Value* Compiler::compile_node_application(
 
             llvm::Value* argument = builder->CreateLoad(argument_pointer);
 
+            llvm::Value* argument_array_space = builder->CreatePointerCast(
+                argument_array_pointer, builder->getInt8PtrTy(), "argument_array_space");
+
+            call_free(argument_array_space);
+
             arguments.push_back(argument);
         }
     }
@@ -931,6 +936,50 @@ bool Compiler::compile_program(cfl_typed_program* program)
     llvm::Value* empty_string = builder->CreateGlobalStringPtr("");
 
     builder->CreateCall(global_puts, empty_string);
+
+    if(program->main->resulting_type->type == CFL_TYPE_LIST)
+    {
+        llvm::Value* is_null =
+            builder->CreateIsNull(result, "is_null");
+
+        llvm::AllocaInst* pos =
+            builder->CreateAlloca(result->getType(), builder->getInt32(1), "pos");
+
+        builder->CreateStore(result, pos);
+
+        llvm::BasicBlock* delete_loop = llvm::BasicBlock::Create(
+            global_context, "delete_loop", main_def);
+        llvm::BasicBlock* delete_loop_end = llvm::BasicBlock::Create(
+            global_context, "delete_loop_end", main_def);
+
+        builder->CreateCondBr(is_null, delete_loop_end, delete_loop);
+
+        builder->SetInsertPoint(delete_loop);
+
+        llvm::Value* temp_pointer = builder->CreateLoad(pos);
+
+        llvm::Value* temp = builder->CreateLoad(temp_pointer, "temp");
+
+        llvm::Value* temp_space = builder->CreatePointerCast(
+            temp_pointer, builder->getInt8PtrTy(), "temp_space");
+
+        call_free(temp_space);
+
+        llvm::Value* value = builder->CreateExtractValue(temp, 0, "value");
+
+        call_free(value);
+
+        temp_pointer = builder->CreateExtractValue(temp, 1);
+
+        llvm::Value* done = builder->CreateIsNull(temp_pointer, "done");
+
+        builder->CreateStore(temp_pointer, pos);
+
+        builder->CreateCondBr(done, delete_loop_end, delete_loop);
+
+        builder->SetInsertPoint(delete_loop_end);
+    }
+
     builder->CreateRet(llvm::ConstantInt::get(builder->getInt32Ty(), 0));
 
     return true;
@@ -947,8 +996,7 @@ bool Compiler::compile(cfl_typed_program* program, std::string& filename_head)
     top_module->dump();
 
     delete builder;
-// TODO:
-//    delete top_module;
+    delete top_module;
 
     return true;
 }
