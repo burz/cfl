@@ -131,8 +131,6 @@ llvm::Value* Compiler::compile_node_function(
 
     llvm::Value* arguments_space = builder->CreatePointerCast(
         arguments_pointer, array_type->getPointerTo(), "arguments_space");
-//    llvm::AllocaInst* arguments_space = builder->CreateAlloca(
-//        array_type, builder->getInt32(1), "arguments_space");
 
     builder->CreateStore(initial_arguments, arguments_space);
 
@@ -150,14 +148,8 @@ llvm::Value* Compiler::compile_node_function(
 
             llvm::Value* arg_space = builder->CreatePointerCast(
                 arg_pointer, arg_type->getPointerTo(), "arg_space");
-//            llvm::AllocaInst* arg_space = builder->CreateAlloca(
-//                argument_reg_itt->second->getType(), builder->getInt32(1),
-//                "arg_space");
 
             builder->CreateStore(argument_reg_itt->second, arg_space);
-
-//            llvm::Value* arg_pointer =
-//                builder->CreatePointerCast(arg_space, builder->getInt8PtrTy());
 
             std::vector<llvm::Value*> offsets;
             offsets.push_back(builder->getInt32(0));
@@ -205,10 +197,6 @@ llvm::Value* Compiler::compile_node_list(
         if(!element)
             return 0;
 
-//        llvm::Constant* size = builder->getInt32(1);
-
-//        llvm::AllocaInst* element_space =
-//            builder->CreateAlloca(element_type, size, "element_space");
         llvm::Value* element_space = call_malloc(element_type, parent, entry_block);
 
         llvm::Value* element_pointer = builder->CreatePointerCast(
@@ -227,8 +215,6 @@ llvm::Value* Compiler::compile_node_list(
         llvm::Value* store =
             builder->CreateInsertValue(node, element_space, 0, "store");
 
-//        llvm::AllocaInst* node_space =
-//            builder->CreateAlloca(list_type, size, "node_space");
         llvm::Value* node_space = call_malloc(list_type, parent, entry_block);
 
         llvm::Value* node_pointer =
@@ -577,14 +563,10 @@ llvm::Value* Compiler::compile_node_push(
 
     llvm::Value* element_pointer = call_malloc(element_type, parent, entry_block);
 
-//    llvm::Value* element_space = builder->CreateAlloca(element_type);
     llvm::Value* element_space = builder->CreatePointerCast(
         element_pointer, element_type->getPointerTo());
 
     builder->CreateStore(element, element_space, "stored_element");
-
-//    llvm::Value* element_pointer = builder->CreatePointerCast(
-//        element_space, builder->getInt8PtrTy(), "element_pointer");
 
     llvm::Value* tail =
         compile_node(node->children[1], register_map, parent, entry_block);
@@ -612,9 +594,6 @@ llvm::Value* Compiler::compile_node_push(
 
     llvm::Value* list_node_space =
         builder->CreatePointerCast(list_node_pointer, list_type->getPointerTo());
-
-//    llvm::AllocaInst* list_node_space =
-//        builder->CreateAlloca(list_type, builder->getInt32(1), "list_node_space");
 
     builder->CreateStore(connected_node, list_node_space);
 
