@@ -548,8 +548,17 @@ llvm::Value* Compiler::compile_node_if(
     return phi;
 }
 
+llvm::Value* Compiler::compile_node_let_rec(
+       cfl_typed_node* node,
+       argument_register_map register_map,
+       llvm::Function* parent,
+       llvm::BasicBlock* entry_block)
+{
+    return 0;
+}
+
 llvm::Value* Compiler::compile_node_push(
-        cfl_typed_node* node,
+       cfl_typed_node* node,
        argument_register_map register_map,
        llvm::Function* parent,
        llvm::BasicBlock* entry_block)
@@ -793,6 +802,8 @@ llvm::Value* Compiler::compile_node(
         return compile_node_application(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_IF)
         return compile_node_if(node, register_map, parent, entry_block);
+    else if(node->node_type == CFL_NODE_LET_REC)
+        return compile_node_let_rec(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_PUSH)
         return compile_node_push(node, register_map, parent, entry_block);
     else if(node->node_type == CFL_NODE_CONCATENATE)
