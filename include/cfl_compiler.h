@@ -71,6 +71,7 @@ class Compiler
     node_compiler compile_node_less;
     node_compiler compile_node_application;
     node_compiler compile_node_if;
+    node_compiler compile_node_let_rec;
     node_compiler compile_node_push;
     node_compiler compile_node_concatenate;
     node_compiler compile_node_case;
