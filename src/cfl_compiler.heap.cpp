@@ -22,7 +22,7 @@ llvm::Value* Compiler::call_malloc(
 #endif
 
     if(lookup)
-        return builder->CreateCall(lookup, type_size_value);
+        return builder->CreateCall(lookup, type_size_value, "new_space");
 
     std::vector<llvm::Type*> args;
 
@@ -90,7 +90,7 @@ llvm::Value* Compiler::call_malloc(
 
     builder->SetInsertPoint(entry_block);
 
-    return builder->CreateCall(cfl_malloc_def, type_size_value);
+    return builder->CreateCall(cfl_malloc_def, type_size_value, "new_space");
 }
 
 void Compiler::call_free(llvm::Value* pointer)

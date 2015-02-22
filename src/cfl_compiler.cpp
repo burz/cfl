@@ -549,25 +549,25 @@ llvm::Value* Compiler::compile_node_if(
     llvm::Value* then_value = compile_node(
         node->children[1], register_map, functions, parent, if_true);
 
-    builder->SetInsertPoint(if_true);
-
     builder->CreateBr(if_end);
+
+    llvm::BasicBlock* if_true_end = builder->GetInsertBlock();
 
     builder->SetInsertPoint(if_false);
 
     llvm::Value* else_value = compile_node(
         node->children[2], register_map, functions, parent, if_false);
 
-    builder->SetInsertPoint(if_false);
-
     builder->CreateBr(if_end);
+
+    llvm::BasicBlock* if_false_end = builder->GetInsertBlock();
 
     builder->SetInsertPoint(if_end);
 
     llvm::PHINode* phi = builder->CreatePHI(then_value->getType(), 2, "phi");
 
-    phi->addIncoming(then_value, if_true);
-    phi->addIncoming(else_value, if_false);
+    phi->addIncoming(then_value, if_true_end);
+    phi->addIncoming(else_value, if_false_end);
 
     return phi;
 }
@@ -825,6 +825,8 @@ llvm::Value* Compiler::compile_node_case(
 
     builder->CreateBr(case_end);
 
+    llvm::BasicBlock* empty_end = builder->GetInsertBlock();
+
     builder->SetInsertPoint(nonempty);
 
     llvm::Value* list_node = builder->CreateLoad(list, "list_node");
@@ -846,14 +848,16 @@ llvm::Value* Compiler::compile_node_case(
 
     builder->CreateBr(case_end);
 
+    llvm::BasicBlock* nonempty_end = builder->GetInsertBlock();
+
     builder->SetInsertPoint(case_end);
 
     llvm::Type* result_type = generate_type(register_map, node);
 
     llvm::PHINode* phi = builder->CreatePHI(result_type, 2, "phi");
 
-    phi->addIncoming(empty_result, empty);
-    phi->addIncoming(nonempty_result, nonempty);
+    phi->addIncoming(empty_result, empty_end);
+    phi->addIncoming(nonempty_result, nonempty_end);
 
     return phi;
 }
