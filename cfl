@@ -64,10 +64,18 @@ else
     then
         ./cfl-core-c $@
     else
-        make
+        echo "Running for the first time. Building cfl-core..."
+        make &> .make.log
         if [ $? == 0 ]
         then
-            ./cfl
+            echo "Done."
+            ./cfl $@
+        else
+            echo -e "\033[31mAn error ocurred while building. make output:\033[0m"
+            echo "---------------------------------------------"
+            cat .make.log
         fi
+        rm .make.log
+        make clean &> /dev/null
     fi
 fi
