@@ -31,6 +31,25 @@ static cfl_type* cfl_lookup_variable(
         definitions = definitions->next;
     }
 
+    if(!strcmp(name, "random"))
+    {
+        cfl_type* integer0 = cfl_create_new_type_integer();
+
+        if(!integer0)
+            return 0;
+
+        cfl_type* integer1 = cfl_create_new_type_integer();
+
+        if(!integer1)
+        {
+            cfl_free_type(integer0);
+
+            return 0;
+        }
+
+        return cfl_create_new_type_arrow(integer0, integer1);
+    }
+
     cfl_type_error_undefined_variable(name);
 
     return 0;

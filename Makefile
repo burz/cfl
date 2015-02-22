@@ -67,6 +67,7 @@ CPPFILES = \
     cfl_compiler.opp \
     cfl_compiler.types.opp \
     cfl_compiler.heap.opp \
+    cfl_compiler.library.opp \
     cfl_compiler.print.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
