@@ -10,8 +10,8 @@ functional programming language.
 
 ## Usage
 
-To build run `make`, which builds the interpreter `cfl`. Then the usage of `cfl` is
-seen by running `./cfl`:
+To see the usage simply run `./cfl`. If LLVM is already installed (can be installed by running
+`brew install llvm` or `apt-get install llvm`) then the usage will be
 ```
 $ ./cfl
 USAGE: cfl filename       :: compile the program
@@ -19,8 +19,12 @@ USAGE: cfl filename       :: compile the program
            -type filename :: print the high level types of the program
            -deep filename :: print all the types of the program
            -eval filename :: evaluate the program
+           -ll filename   :: print out the llvm code for the program
+           -asm filename  :: print out native assembly code for the program
            -jit filename  :: evaluate the program using Just-In-Time compiling
 ```
+Note that you can still run cfl without LLVM but you will not have LLVM related options like
+-jit or compilation.
 
 ## Example
 

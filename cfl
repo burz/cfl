@@ -64,6 +64,10 @@ else
     then
         ./cfl-core-c $@
     else
-        echo "cfl has not been built. You must make it."
+        make
+        if [ $? == 0 ]
+        then
+            ./cfl
+        fi
     fi
 fi
