@@ -30,12 +30,23 @@ class Compiler
     typedef std::pair<cfl_typed_node*, llvm::Value*> argument_register_mapping;
     typedef std::vector<argument_register_mapping> argument_register_map;
 
+    typedef struct {
+        cfl_typed_node* node;
+        llvm::StructType* struct_type;
+        llvm::Constant* function_def;
+    } function_map_result;
+
+    typedef std::pair<cfl_typed_node*, function_map_result> function_mapping;
+    typedef std::vector<function_mapping> function_map;
+
     typedef llvm::Value* node_compiler(cfl_typed_node* node,
                                        argument_register_map register_map,
+                                       function_map functions,
                                        llvm::Function* parent,
                                        llvm::BasicBlock* entry_block);
 
-    bool generate_function_struct_types(cfl_typed_node* node,
+    bool generate_function_struct_types(cfl_typed_node* argument,
+                                        cfl_typed_node* expression,
                                         argument_type_map type_map,
                                         llvm::FunctionType** function_type,
                                         llvm::StructType** struct_type);
@@ -57,6 +68,13 @@ class Compiler
                              llvm::Function* parent,
                              llvm::BasicBlock* entry_block);
     void call_free(llvm::Value* pointer);
+
+    llvm::Value* populate_function_struct(argument_register_map register_map,
+                                          cfl_typed_node* node,
+                                          llvm::StructType* struct_type,
+                                          llvm::Constant* function_def,
+                                          llvm::Function* parent,
+                                          llvm::BasicBlock* entry_block);
 
     node_compiler compile_node_function;
     node_compiler compile_node_list;

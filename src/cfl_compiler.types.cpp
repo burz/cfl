@@ -19,7 +19,8 @@ static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
 }
 
 bool Compiler::generate_function_struct_types(
-        cfl_typed_node* node,
+        cfl_typed_node* argument,
+        cfl_typed_node* expression,
         argument_type_map saved_argument_types,
         llvm::FunctionType** function_type,
         llvm::StructType** struct_type)
@@ -31,30 +32,31 @@ bool Compiler::generate_function_struct_types(
     argument_type_map::iterator end = saved_argument_types.end();
 
     for( ; itt != end; ++itt)
-        if(cfl_is_free_in_typed_node((char*) itt->first->data, node))
+        if(strcmp((char*) argument->data, (char*) itt->first->data) &&
+           cfl_is_free_in_typed_node((char*) itt->first->data, expression))
         {
             args.push_back(itt->second); 
             new_argument_types.push_back(*itt);
         }
 
     llvm::Type* input_type =
-        generate_type_inner(saved_argument_types, node->children[0]);
+        generate_type_inner(saved_argument_types, argument);
 
     if(!input_type)
         return 0;
 
     args.push_back(input_type);
 
-    argument_type_mapping mapping(node->children[0], input_type);
+    argument_type_mapping mapping(argument, input_type);
 
     new_argument_types.push_back(mapping);
 
     llvm::ArrayRef<llvm::Type*> args_ref(args);
 
-    cfl_typed_node* expression = find_leaf_node(node->children[1]);
+    cfl_typed_node* resulting_expression = find_leaf_node(expression);
 
     llvm::Type* return_type =
-        generate_type_inner(new_argument_types, expression);
+        generate_type_inner(new_argument_types, resulting_expression);
 
     *function_type =
         llvm::FunctionType::get(return_type, args_ref, false);
@@ -136,7 +138,8 @@ llvm::Type* Compiler::generate_type_inner(
         llvm::StructType* struct_type;
 
         if(!generate_function_struct_types(
-                node, type_map, &function_type, &struct_type))
+                node->children[0], node->children[1],
+                type_map, &function_type, &struct_type))
             return 0;
 
         return struct_type;
