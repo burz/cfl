@@ -124,13 +124,6 @@ int main(int argc, char* argv[])
         if(!program)
             return 1;
 
-        if(!cfl_typecheck(program, EQUATION_HASH_TABLE_LENGTH))
-        {
-            cfl_free_program(program);
-
-            return 1;
-        }
-
         cfl_typed_program* typed_program =
             cfl_generate_typed_program(program, EQUATION_HASH_TABLE_LENGTH);
 

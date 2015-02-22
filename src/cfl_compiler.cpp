@@ -886,6 +886,9 @@ llvm::Value* Compiler::compile_node(
                     register_map, result.node, result.struct_type,
                     result.function_def, parent, entry_block);
             }
+
+        if(!strcmp((char*) node->data, "random"))
+            return create_random_function_struct(parent, entry_block);
     }
     else if(node->node_type == CFL_NODE_BOOL)
         return compile_node_bool(node);

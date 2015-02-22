@@ -69,6 +69,9 @@ class Compiler
                              llvm::BasicBlock* entry_block);
     void call_free(llvm::Value* pointer);
 
+    llvm::Value* create_random_function_struct(llvm::Function* parent,
+                                               llvm::BasicBlock* entry_block);
+
     llvm::Value* populate_function_struct(argument_register_map register_map,
                                           cfl_typed_node* node,
                                           llvm::StructType* struct_type,
