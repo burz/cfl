@@ -11,7 +11,7 @@ functional programming language.
 ## Usage
 
 To see the usage simply run `./cfl`. If LLVM is already installed (can be installed by running
-`brew install llvm` or `apt-get install llvm`) then the usage will be
+`brew install llvm` or `apt-get install llvm`, etc.) then the usage will be
 ```
 $ ./cfl
 USAGE: cfl filename       :: compile the program
@@ -79,17 +79,10 @@ random_list ~>> function (~F2 :: Integer) -> (let rec (random_list :: (Integer -
 main ~>> (quicksort :: ([Integer] -> [Integer])) (((random_list :: (Integer -> (Integer -> [Integer]))) (100 :: Integer) :: (Integer -> [Integer])) (500 :: Integer) :: [Integer]) :: [Integer]
 ```
 
-Running `./cfl -eval` or `./cfl -jit` will output something like
+Running `./cfl -eval` or `./cfl -jit`, or running `./cfl program.cfl` and then `./program` will output something like
 ```
 [0, 1, 3, 8, 14, 15, 16, 17, 25, 32, 37, 38, 40, 46, 61, 61, 64, 77, 80, 106, 108, 110, 111, 113, 121, 127, 134, 134, 137, 144, 149, 151, 158, 160, 165, 177, 179, 180, 188, 192, 196, 200, 201, 202, 212, 216, 218, 220, 223, 230, 236, 239, 239, 244, 251, 253, 265, 269, 281, 294, 301, 304, 308, 315, 323, 332, 334, 356, 359, 372, 373, 374, 375, 375, 383, 385, 387, 392, 393, 397, 398, 399, 402, 412, 420, 425, 431, 433, 438, 440, 441, 445, 452, 454, 459, 474, 482, 488, 489, 495]
 ```
-
-Running `./cfl program.cfl` will output an executable `program` that when run will output
-something like
-```
-[0, 1, 3, 8, 14, 15, 16, 17, 25, 32, 37, 38, 40, 46, 61, 61, 64, 77, 80, 106, 108, 110, 111, 113, 121, 127, 134, 134, 137, 144, 149, 151, 158, 160, 165, 177, 179, 180, 188, 192, 196, 200, 201, 202, 212, 216, 218, 220, 223, 230, 236, 239, 239, 244, 251, 253, 265, 269, 281, 294, 301, 304, 308, 315, 323, 332, 334, 356, 359, 372, 373, 374, 375, 375, 383, 385, 387, 392, 393, 397, 398, 399, 402, 412, 420, 425, 431, 433, 438, 440, 441, 445, 452, 454, 459, 474, 482, 488, 489, 495]
-```
-
 
 ## Expressions
 
