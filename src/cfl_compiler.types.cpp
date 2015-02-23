@@ -122,7 +122,29 @@ llvm::Type* Compiler::generate_type_inner(
         return builder->getInt32Ty();
     else if(node->resulting_type->type == CFL_TYPE_CHAR)
         return builder->getInt8Ty();
-    else if(node->resulting_type->type == CFL_TYPE_LIST)
+    else if(node->node_type == CFL_NODE_VARIABLE)
+    {
+        char* name = (char*) node->data;
+
+        argument_type_map::iterator itt = type_map.begin();
+        argument_type_map::iterator end = type_map.end();
+
+        for( ; itt != end; ++itt)
+            if(!strcmp((char*) itt->first->data, name))
+                return itt->second;
+
+        function_map::reverse_iterator function_itt = functions.rbegin();
+        function_map::reverse_iterator function_end = functions.rend();
+
+        for( ; function_itt != function_end; ++function_itt)
+            if(!strcmp(function_itt->first, name))
+                return function_itt->second.struct_type;
+
+        if(!strcmp(name, "random"))
+            return generate_random_function_struct_type();
+    }
+
+    if(node->resulting_type->type == CFL_TYPE_LIST)
     {
         llvm::StructType* struct_type;
         llvm::PointerType* pointer_type;
@@ -136,28 +158,7 @@ llvm::Type* Compiler::generate_type_inner(
                                     node->number_of_children);
     else if(node->resulting_type->type == CFL_TYPE_ARROW)
     {
-        if(node->node_type == CFL_NODE_VARIABLE)
-        {
-            char* name = (char*) node->data;
-
-            argument_type_map::iterator itt = type_map.begin();
-            argument_type_map::iterator end = type_map.end();
-
-            for( ; itt != end; ++itt)
-                if(!strcmp((char*) itt->first->data, name))
-                    return itt->second;
-
-            function_map::reverse_iterator function_itt = functions.rbegin();
-            function_map::reverse_iterator function_end = functions.rend();
-
-            for( ; function_itt != function_end; ++function_itt)
-                if(!strcmp(function_itt->first, name))
-                    return function_itt->second.struct_type;
-
-            if(!strcmp(name, "random"))
-                return generate_random_function_struct_type();
-        }
-        else if(node->node_type == CFL_NODE_LET_REC)
+        if(node->node_type == CFL_NODE_LET_REC)
         {
             argument_type_map new_type_map;
 
