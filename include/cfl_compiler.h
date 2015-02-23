@@ -32,7 +32,9 @@ class Compiler
 
     typedef struct {
         cfl_typed_node* node;
+        llvm::ArrayType* array_type;
         llvm::StructType* struct_type;
+        llvm::Constant* application_def;
         llvm::Constant* function_def;
     } function_map_result;
 
@@ -49,7 +51,9 @@ class Compiler
                                         cfl_typed_node* expression,
                                         argument_type_map type_map,
                                         function_map functions,
+                                        llvm::FunctionType** application_type,
                                         llvm::FunctionType** function_type,
+                                        llvm::ArrayType** array_type,
                                         llvm::StructType** struct_type);
 
     void generate_list_struct_types(llvm::StructType** struct_type,
@@ -76,9 +80,18 @@ class Compiler
     llvm::Value* create_random_function_struct(llvm::Function* parent,
                                                llvm::BasicBlock* entry_block);
 
+    llvm::Function* create_application_function(std::string name,
+                                                llvm::ArrayType* array_type,
+                                                llvm::StructType* struct_type,
+                                                llvm::FunctionType* application_type,
+                                                llvm::FunctionType* function_type,
+                                                llvm::Constant* function_def);
+
     llvm::Value* populate_function_struct(argument_register_map register_map,
                                           cfl_typed_node* node,
+                                          llvm::ArrayType* array_type,
                                           llvm::StructType* struct_type,
+                                          llvm::Constant* application_def,
                                           llvm::Constant* function_def,
                                           llvm::Function* parent,
                                           llvm::BasicBlock* entry_block);

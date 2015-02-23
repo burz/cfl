@@ -35,19 +35,86 @@ llvm::Value* Compiler::compile_node_char(cfl_typed_node* node)
     return builder->getInt8(value);
 }
 
+llvm::Function* Compiler::create_application_function(
+        std::string name,
+        llvm::ArrayType* array_type,
+        llvm::StructType* struct_type,
+        llvm::FunctionType* application_type,
+        llvm::FunctionType* function_type,
+        llvm::Constant* function_def)
+{
+    std::stringstream new_application_name;
+    new_application_name << name << "_application";
+
+    llvm::Function* application_def = llvm::Function::Create(
+        application_type, llvm::Function::ExternalLinkage,
+        new_application_name.str(), top_module);
+
+    llvm::BasicBlock* application_entry = llvm::BasicBlock::Create(
+        global_context, "function_entry", application_def);
+
+    builder->SetInsertPoint(application_entry);
+
+    llvm::Function::arg_iterator itt = application_def->arg_begin();
+
+    llvm::Value* function_pointer = itt++;
+    llvm::Value* array_pointer = itt++;
+    llvm::Value* argument = itt++;
+
+    std::vector<llvm::Value*> arguments;
+
+    if(function_type->getNumParams() > 1)
+    {
+        llvm::Value* argument_array_pointer = builder->CreatePointerCast(
+            array_pointer, function_type->getPointerTo(), "argument_array_pointer");
+
+        for(int i = 0; i < function_type->getNumParams() - 1; ++i)
+        {
+            std::vector<llvm::Value*> indices;
+            indices.push_back(builder->getInt32(0));
+            indices.push_back(builder->getInt32(i));
+            llvm::ArrayRef<llvm::Value*> indices_ref(indices);
+
+            llvm::Value* element_pointer = builder->CreateGEP(
+                argument_array_pointer, indices_ref, "element_pointer");
+
+            llvm::Value* argument_space =
+                builder->CreateLoad(element_pointer, "argument_space");
+
+            llvm::Value* argument_pointer = builder->CreatePointerCast(
+                argument_space, function_type->getParamType(i)->getPointerTo());
+
+            llvm::Value* argument = builder->CreateLoad(argument_pointer);
+
+            arguments.push_back(argument);
+        }
+    }
+
+    arguments.push_back(argument);
+
+    llvm::ArrayRef<llvm::Value*> arguments_ref(arguments);
+
+    llvm::Value* function = builder->CreatePointerCast(
+        function_pointer, function_type->getPointerTo(), "function");
+
+    llvm::Value* applied_result = builder->CreateCall(
+        function, arguments_ref, "applied_result");
+
+    builder->CreateRet(applied_result);
+
+    return application_def;
+}
+
 llvm::Value* Compiler::populate_function_struct(
         argument_register_map register_map,
         cfl_typed_node* node,
+        llvm::ArrayType* array_type,
         llvm::StructType* struct_type,
+        llvm::Constant* application_def,
         llvm::Constant* function_def,
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
-    llvm::PointerType* array_pointer_type =
-        llvm::cast<llvm::PointerType>(struct_type->getElementType(1));
-    llvm::ArrayType* array_type =
-        llvm::cast<llvm::ArrayType>(array_pointer_type->getElementType());
-
     std::vector<llvm::Constant*> initial_values;
 
     for(int i = 0; i < register_map.size(); ++i)
@@ -59,16 +126,22 @@ llvm::Value* Compiler::populate_function_struct(
     llvm::Constant* initial_arguments =
         llvm::ConstantArray::get(array_type, initial_values_ref);
 
-    llvm::Constant* initial_array_pointer =
-        llvm::ConstantPointerNull::get(array_pointer_type);
-
     std::vector<llvm::Constant*> function_values;
-    function_values.push_back(function_def);
-    function_values.push_back(initial_array_pointer);
+    function_values.push_back(application_def);
+    function_values.push_back(
+        llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
+    function_values.push_back(
+        llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
     llvm::ArrayRef<llvm::Constant*> function_values_ref(function_values);
 
     llvm::Constant* initial_struct =
         llvm::ConstantStruct::get(struct_type, function_values_ref);
+
+    llvm::Value* function_pointer =
+        builder->CreatePointerCast(function_def, builder->getInt8PtrTy());
+
+    llvm::Value* function_struct = builder->CreateInsertValue(
+        initial_struct, function_pointer, 1, "function_struct");
 
     llvm::Value* arguments_pointer = call_malloc(array_type, parent, entry_block);
 
@@ -107,7 +180,7 @@ llvm::Value* Compiler::populate_function_struct(
         }
 
     llvm::Value* allocated_struct = builder->CreateInsertValue(
-        initial_struct, arguments_space, 1, "allocated_struct");
+        function_struct, arguments_pointer, 2, "allocated_struct");
 
     return allocated_struct;
 }
@@ -138,12 +211,15 @@ llvm::Value* Compiler::compile_node_function(
     argument_type_mapping mapping(node->children[0], argument_type);
     type_map.push_back(mapping);
 
+    llvm::FunctionType* application_type;
     llvm::FunctionType* function_type;
+    llvm::ArrayType* array_type;
     llvm::StructType* struct_type;
 
     if(!generate_function_struct_types(
             node->children[0], node->children[1], type_map,
-            functions, &function_type, &struct_type))
+            functions, &application_type, &function_type,
+            &array_type, &struct_type))
         return 0;
 
     std::stringstream new_name;
@@ -174,10 +250,15 @@ llvm::Value* Compiler::compile_node_function(
 
     builder->CreateRet(result);
 
+    llvm::Function* application_def = create_application_function(
+        new_name.str(), array_type, struct_type,
+        application_type, function_type, function_def);
+
     builder->SetInsertPoint(entry_block);
 
     return populate_function_struct(
-        register_map, node, struct_type, function_def, parent, entry_block);
+        register_map, node, array_type, struct_type,
+        application_def, function_def, parent, entry_block);
 }
 
 llvm::Value* Compiler::compile_node_list(
@@ -478,52 +559,22 @@ llvm::Value* Compiler::compile_node_application(
     llvm::Value* function_struct = compile_node(
         node->children[0], register_map, functions, parent, entry_block);
 
-    llvm::StructType* function_struct_type =
-        llvm::cast<llvm::StructType>(function_struct->getType());
+    llvm::Value* application_def = builder->CreateExtractValue(
+        function_struct, 0, "application_def");
 
-    llvm::PointerType* function_pointer_type =
-        llvm::cast<llvm::PointerType>(function_struct_type->getElementType(0));
-    llvm::FunctionType* function_type =
-        llvm::cast<llvm::FunctionType>(function_pointer_type->getElementType());
+    llvm::Value* function_pointer = builder->CreateExtractValue(
+        function_struct, 1, "function_pointer");
 
-    std::vector<llvm::Value*> arguments;
+    llvm::Value* array_pointer = builder->CreateExtractValue(
+        function_struct, 2, "array_pointer");
 
-    if(function_type->getNumParams() > 1)
-    {
-        llvm::Value* argument_array_pointer =
-            builder->CreateExtractValue(function_struct, 1, "argument_array_pointer");
+    std::vector<llvm::Value*> args;
+    args.push_back(function_pointer);
+    args.push_back(array_pointer);
+    args.push_back(value);
+    llvm::ArrayRef<llvm::Value*> args_ref(args);
 
-        for(int i = 0; i < function_type->getNumParams() - 1; ++i)
-        {
-            std::vector<llvm::Value*> indices;
-            indices.push_back(builder->getInt32(0));
-            indices.push_back(builder->getInt32(i));
-            llvm::ArrayRef<llvm::Value*> indices_ref(indices);
-
-            llvm::Value* element_pointer = builder->CreateGEP(
-                argument_array_pointer, indices_ref, "element_pointer");
-
-            llvm::Value* argument_space =
-                builder->CreateLoad(element_pointer, "argument_space");
-
-            llvm::Value* argument_pointer = builder->CreatePointerCast(
-                argument_space, function_type->getParamType(i)->getPointerTo());
-
-            llvm::Value* argument = builder->CreateLoad(argument_pointer);
-
-            arguments.push_back(argument);
-        }
-    }
-
-    arguments.push_back(value);
-
-    llvm::ArrayRef<llvm::Value*> arguments_ref(arguments);
-
-    llvm::Value* function_pointer =
-        builder->CreateExtractValue(function_struct, 0, "function_pointer");
-
-    return builder->CreateCall(
-        function_pointer, arguments_ref, "applied_result");
+    return builder->CreateCall(application_def, args_ref, "application_result");
 }
 
 llvm::Value* Compiler::compile_node_if(
@@ -605,12 +656,15 @@ llvm::Value* Compiler::compile_node_let_rec(
     argument_type_mapping mapping(node->children[1], argument_type);
     type_map.push_back(mapping);
 
+    llvm::FunctionType* application_type;
     llvm::FunctionType* function_type;
+    llvm::ArrayType* array_type;
     llvm::StructType* struct_type;
 
     if(!generate_function_struct_types(
             node->children[1], node->children[2], type_map,
-            functions, &function_type, &struct_type))
+            functions, &application_type, &function_type,
+            &array_type, &struct_type))
         return 0;
 
     std::stringstream new_name;
@@ -620,9 +674,15 @@ llvm::Value* Compiler::compile_node_let_rec(
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
 
+    llvm::Function* application_def = create_application_function(
+        new_name.str(), array_type, struct_type,
+        application_type, function_type, function_def);
+
     function_map_result map_result;
     map_result.node = node;
+    map_result.array_type = array_type;
     map_result.struct_type = struct_type;
+    map_result.application_def = application_def;
     map_result.function_def = function_def;
 
     function_mapping new_function_mapping((char*) node->children[0]->data, map_result);
@@ -653,7 +713,7 @@ llvm::Value* Compiler::compile_node_let_rec(
     builder->SetInsertPoint(entry_block);
 
     llvm::Value* in_result = compile_node(
-        node->children[3], register_map, functions, function_def, function_entry);
+        node->children[3], register_map, functions, parent, entry_block);
 
     functions.pop_back();
 
@@ -894,7 +954,8 @@ llvm::Value* Compiler::compile_node(
                     return builder->CreateCall(result.function_def, "constant_gen");
                 else
                     return populate_function_struct(
-                        register_map, result.node, result.struct_type,
+                        register_map, result.node, result.array_type,
+                        result.struct_type, result.application_def,
                         result.function_def, parent, entry_block);
             }
 
@@ -1059,12 +1120,15 @@ bool Compiler::compile_definitions(
             argument_type_mapping mapping(definition->children[0], argument_type);
             type_map.push_back(mapping);
 
+            llvm::FunctionType* application_type;
             llvm::FunctionType* function_type;
+            llvm::ArrayType* array_type;
             llvm::StructType* struct_type;
 
             if(!generate_function_struct_types(
                     definition->children[0], definition->children[1], type_map,
-                    functions, &function_type, &struct_type))
+                    functions, &application_type, &function_type, &array_type,
+                    &struct_type))
                 return 0;
 
             std::stringstream new_name;
@@ -1098,10 +1162,16 @@ bool Compiler::compile_definitions(
 
             builder->CreateRet(result);
 
+            llvm::Function* application_def = create_application_function(
+                new_name.str(), array_type, struct_type,
+                application_type, function_type, function_def);
+
             function_map_result function_result;
 
             function_result.node = definition;
+            function_result.array_type = array_type;
             function_result.struct_type = struct_type;
+            function_result.application_def = application_def;
             function_result.function_def = function_def;
 
             function_mapping f_mapping(definitions->name, function_result);
