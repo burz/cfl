@@ -22,6 +22,7 @@ bool Compiler::generate_function_struct_types(
         cfl_typed_node* argument,
         cfl_typed_node* expression,
         argument_type_map saved_argument_types,
+        function_map functions,
         llvm::FunctionType** function_type,
         llvm::StructType** struct_type)
 {
@@ -40,7 +41,7 @@ bool Compiler::generate_function_struct_types(
         }
 
     llvm::Type* input_type =
-        generate_type_inner(saved_argument_types, argument);
+        generate_type_inner(saved_argument_types, functions, argument);
 
     if(!input_type)
         return 0;
@@ -56,7 +57,7 @@ bool Compiler::generate_function_struct_types(
     cfl_typed_node* resulting_expression = find_leaf_node(expression);
 
     llvm::Type* return_type =
-        generate_type_inner(new_argument_types, resulting_expression);
+        generate_type_inner(new_argument_types, functions, resulting_expression);
 
     *function_type =
         llvm::FunctionType::get(return_type, args_ref, false);
@@ -112,6 +113,7 @@ void Compiler::generate_list_struct_types(
 
 llvm::Type* Compiler::generate_type_inner(
         argument_type_map type_map,
+        function_map functions,
         cfl_typed_node* node)
 {
     if(node->resulting_type->type == CFL_TYPE_BOOL)
@@ -134,15 +136,39 @@ llvm::Type* Compiler::generate_type_inner(
                                     node->number_of_children);
     else if(node->resulting_type->type == CFL_TYPE_ARROW)
     {
-        llvm::FunctionType* function_type;
-        llvm::StructType* struct_type;
+        if(node->node_type == CFL_NODE_VARIABLE)
+        {
+            char* name = (char*) node->data;
 
-        if(!generate_function_struct_types(
-                node->children[0], node->children[1],
-                type_map, &function_type, &struct_type))
-            return 0;
+            argument_type_map::iterator itt = type_map.begin();
+            argument_type_map::iterator end = type_map.end();
 
-        return struct_type;
+            for( ; itt != end; ++itt)
+                if(!strcmp((char*) itt->first->data, name))
+                    return itt->second;
+
+            function_map::reverse_iterator function_itt = functions.rbegin();
+            function_map::reverse_iterator function_end = functions.rend();
+
+            for( ; function_itt != function_end; ++function_itt)
+                if(!strcmp(function_itt->first, name))
+                    return function_itt->second.struct_type;
+
+            if(!strcmp(name, "random"))
+                return generate_random_function_struct_type();
+        }
+        else
+        {
+            llvm::FunctionType* function_type;
+            llvm::StructType* struct_type;
+
+            if(!generate_function_struct_types(
+                    node->children[0], node->children[1], type_map,
+                    functions, &function_type, &struct_type))
+                return 0;
+
+            return struct_type;
+        }
     }
 
     return 0;
@@ -150,6 +176,7 @@ llvm::Type* Compiler::generate_type_inner(
 
 llvm::Type* Compiler::generate_type(
         argument_register_map register_map,
+        function_map functions,
         cfl_typed_node* node)
 {
     argument_type_map type_map;
@@ -164,7 +191,7 @@ llvm::Type* Compiler::generate_type(
         type_map.push_back(mapping);
     }
 
-    return generate_type_inner(type_map, node);
+    return generate_type_inner(type_map, functions, node);
 }
 
 } // end namespace Cfl

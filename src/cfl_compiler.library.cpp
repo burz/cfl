@@ -2,6 +2,26 @@
 
 namespace Cfl {
 
+llvm::StructType* Compiler::generate_random_function_struct_type(void)
+{
+    std::vector<llvm::Type*> cfl_rand_args;
+    cfl_rand_args.push_back(builder->getInt32Ty());
+    llvm::ArrayRef<llvm::Type*> cfl_rand_args_ref(cfl_rand_args);
+
+    llvm::FunctionType* cfl_rand_type =
+        llvm::FunctionType::get(builder->getInt32Ty(), cfl_rand_args_ref, false);
+
+    llvm::ArrayType* array_type =
+        llvm::ArrayType::get(builder->getInt8PtrTy(), 0);
+
+    std::vector<llvm::Type*> members;
+    members.push_back(cfl_rand_type);
+    members.push_back(array_type->getPointerTo());
+    llvm::ArrayRef<llvm::Type*> members_ref(members);
+
+    return llvm::StructType::get(global_context, members_ref);
+}
+
 llvm::Value* Compiler::create_random_function_struct(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
