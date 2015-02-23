@@ -157,6 +157,42 @@ llvm::Type* Compiler::generate_type_inner(
             if(!strcmp(name, "random"))
                 return generate_random_function_struct_type();
         }
+        else if(node->node_type == CFL_NODE_LET_REC)
+        {
+            argument_type_map new_type_map;
+
+            argument_type_map::iterator itt = type_map.begin();
+            argument_type_map::iterator end = type_map.end();
+
+            for( ; itt != end; ++itt)
+            {
+                char* argument = (char*) itt->first->data;
+
+                if(strcmp(argument, (char*) node->children[0]->data) &&
+                   strcmp(argument, (char*) node->children[1]->data) &&
+                   cfl_is_free_in_typed_node(argument, node->children[2]))
+                    new_type_map.push_back(*itt);
+            }
+
+            llvm::Type* argument_type =
+                generate_type_inner(type_map, functions, node->children[1]);
+
+            argument_type_mapping mapping(node->children[1], argument_type);
+            new_type_map.push_back(mapping);
+
+            llvm::FunctionType* function_type;
+            function_map_result map_result;
+
+            if(!generate_function_struct_types(
+                    node->children[1], node->children[2], new_type_map,
+                    functions, &function_type, &map_result.struct_type))
+                return 0;
+
+            function_mapping f_mapping((char*) node->children[0]->data, map_result);
+            functions.push_back(f_mapping);
+
+            return generate_type_inner(type_map, functions, node->children[3]);
+        }
         else
         {
             llvm::FunctionType* function_type;

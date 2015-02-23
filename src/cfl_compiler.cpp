@@ -594,7 +594,7 @@ llvm::Value* Compiler::compile_node_let_rec(
            cfl_is_free_in_typed_node(argument, node->children[2]))
         {
             argument_type_mapping mapping(argument_reg_itt->first,
-                                           argument_reg_itt->second->getType());
+                                          argument_reg_itt->second->getType());
             type_map.push_back(mapping);
         }
     }
