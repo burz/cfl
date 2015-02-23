@@ -23,7 +23,9 @@ bool Compiler::generate_function_struct_types(
         cfl_typed_node* expression,
         argument_type_map saved_argument_types,
         function_map functions,
+        llvm::FunctionType** application_type,
         llvm::FunctionType** function_type,
+        llvm::ArrayType** array_type,
         llvm::StructType** struct_type)
 {
     std::vector<llvm::Type*> args;
@@ -59,21 +61,28 @@ bool Compiler::generate_function_struct_types(
     llvm::Type* return_type =
         generate_type_inner(new_argument_types, functions, resulting_expression);
 
+    std::vector<llvm::Type*> application_args;
+    application_args.push_back(builder->getInt8PtrTy());
+    application_args.push_back(builder->getInt8PtrTy());
+    application_args.push_back(input_type);
+    llvm::ArrayRef<llvm::Type*> application_args_ref(application_args);
+
+    *application_type =
+        llvm::FunctionType::get(return_type, application_args_ref, false);
+
     *function_type =
         llvm::FunctionType::get(return_type, args_ref, false);
 
     if(!*function_type)
         return 0;
 
-    llvm::PointerType* function_pointer_type =
-        llvm::PointerType::getUnqual(*function_type);
-
-    llvm::ArrayType* array_type =
+    *array_type =
         llvm::ArrayType::get(builder->getInt8PtrTy(), args.size() - 1);
 
     std::vector<llvm::Type*> members;
-    members.push_back(function_pointer_type);
-    members.push_back(array_type->getPointerTo());
+    members.push_back((*application_type)->getPointerTo());
+    members.push_back(builder->getInt8PtrTy());
+    members.push_back(builder->getInt8PtrTy());
     llvm::ArrayRef<llvm::Type*> members_ref(members);
 
     *struct_type = llvm::StructType::get(global_context, members_ref);
@@ -181,12 +190,15 @@ llvm::Type* Compiler::generate_type_inner(
             argument_type_mapping mapping(node->children[1], argument_type);
             new_type_map.push_back(mapping);
 
+            llvm::FunctionType* application_type;
             llvm::FunctionType* function_type;
+            llvm::ArrayType* array_type;
             function_map_result map_result;
 
             if(!generate_function_struct_types(
                     node->children[1], node->children[2], new_type_map,
-                    functions, &function_type, &map_result.struct_type))
+                    functions, &application_type, &function_type, &array_type,
+                    &map_result.struct_type))
                 return 0;
 
             function_mapping f_mapping((char*) node->children[0]->data, map_result);
@@ -196,12 +208,15 @@ llvm::Type* Compiler::generate_type_inner(
         }
         else
         {
+            llvm::FunctionType* application_type;
             llvm::FunctionType* function_type;
+            llvm::ArrayType* array_type;
             llvm::StructType* struct_type;
 
             if(!generate_function_struct_types(
                     node->children[0], node->children[1], type_map,
-                    functions, &function_type, &struct_type))
+                    functions, &application_type, &function_type,
+                    &array_type, &struct_type))
                 return 0;
 
             return struct_type;
