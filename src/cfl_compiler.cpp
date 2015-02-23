@@ -133,7 +133,7 @@ llvm::Value* Compiler::compile_node_function(
         }
 
     llvm::Type* argument_type =
-        generate_type(register_map, node->children[0]);
+        generate_type(register_map, functions, node->children[0]);
 
     argument_type_mapping mapping(node->children[0], argument_type);
     type_map.push_back(mapping);
@@ -143,7 +143,7 @@ llvm::Value* Compiler::compile_node_function(
 
     if(!generate_function_struct_types(
             node->children[0], node->children[1], type_map,
-            &function_type, &struct_type))
+            functions, &function_type, &struct_type))
         return 0;
 
     std::stringstream new_name;
@@ -196,7 +196,7 @@ llvm::Value* Compiler::compile_node_list(
         return llvm::ConstantPointerNull::get(list_pointer_type);
 
     llvm::Type* element_type =
-        generate_type(register_map, ((cfl_typed_node_list*) node->data)->node);
+        generate_type(register_map, functions, ((cfl_typed_node_list*) node->data)->node);
 
     cfl_typed_node_list* pos = (cfl_typed_node_list*) node->data;
 
@@ -275,7 +275,8 @@ llvm::Value* Compiler::compile_node_tuple(
         if(!child)
             return 0;
 
-        llvm::Type* child_type = generate_type(register_map, node->children[i]);
+        llvm::Type* child_type =
+            generate_type(register_map, functions, node->children[i]);
 
         if(!child_type)
             return 0;
@@ -599,7 +600,7 @@ llvm::Value* Compiler::compile_node_let_rec(
     }
 
     llvm::Type* argument_type =
-        generate_type(register_map, node->children[1]);
+        generate_type(register_map, functions, node->children[1]);
 
     argument_type_mapping mapping(node->children[1], argument_type);
     type_map.push_back(mapping);
@@ -608,7 +609,8 @@ llvm::Value* Compiler::compile_node_let_rec(
     llvm::StructType* struct_type;
 
     if(!generate_function_struct_types(
-            node->children[1], node->children[2], type_map, &function_type, &struct_type))
+            node->children[1], node->children[2], type_map,
+            functions, &function_type, &struct_type))
         return 0;
 
     std::stringstream new_name;
@@ -623,7 +625,7 @@ llvm::Value* Compiler::compile_node_let_rec(
     map_result.struct_type = struct_type;
     map_result.function_def = function_def;
 
-    function_mapping new_function_mapping(node->children[0], map_result);
+    function_mapping new_function_mapping((char*) node->children[0]->data, map_result);
     functions.push_back(new_function_mapping);
 
     llvm::BasicBlock* function_entry = llvm::BasicBlock::Create(
@@ -651,7 +653,7 @@ llvm::Value* Compiler::compile_node_let_rec(
     builder->SetInsertPoint(entry_block);
 
     llvm::Value* in_result = compile_node(
-        node->children[3], new_register_map, functions, function_def, function_entry);
+        node->children[3], register_map, functions, function_def, function_entry);
 
     functions.pop_back();
 
@@ -668,7 +670,8 @@ llvm::Value* Compiler::compile_node_push(
     llvm::Value* element = compile_node(
         node->children[0], register_map, functions, parent, entry_block);
 
-    llvm::Type* element_type = generate_type(register_map, node->children[0]);
+    llvm::Type* element_type =
+        generate_type(register_map, functions, node->children[0]);
 
     llvm::Value* element_pointer = call_malloc(element_type, parent, entry_block);
 
@@ -852,7 +855,8 @@ llvm::Value* Compiler::compile_node_case(
 
     builder->SetInsertPoint(case_end);
 
-    llvm::Type* result_type = generate_type(register_map, node);
+    llvm::Type* result_type =
+        generate_type(register_map, functions, node);
 
     llvm::PHINode* phi = builder->CreatePHI(result_type, 2, "phi");
 
@@ -878,17 +882,20 @@ llvm::Value* Compiler::compile_node(
             if(!strcmp((char*) itt->first->data, (char*) node->data))
                 return itt->second;
 
-        function_map::iterator function_itt = functions.begin();
-        function_map::iterator function_end = functions.end();
+        function_map::reverse_iterator function_itt = functions.rbegin();
+        function_map::reverse_iterator function_end = functions.rend();
 
         for( ; function_itt != function_end; ++function_itt)
-            if(!strcmp((char*) function_itt->first->data, (char*) node->data))
+            if(!strcmp(function_itt->first, (char*) node->data))
             {
                 function_map_result result = function_itt->second;
 
-                return populate_function_struct(
-                    register_map, result.node, result.struct_type,
-                    result.function_def, parent, entry_block);
+                if(result.struct_type == 0)
+                    return builder->CreateCall(result.function_def, "constant_gen");
+                else
+                    return populate_function_struct(
+                        register_map, result.node, result.struct_type,
+                        result.function_def, parent, entry_block);
             }
 
         if(!strcmp((char*) node->data, "random"))
@@ -1034,8 +1041,138 @@ llvm::Value* Compiler::extract_value_from_pointer(
     return 0;
 }
 
+bool Compiler::compile_definitions(
+        cfl_typed_definition_list* definitions,
+        function_map& functions)
+{
+    while(definitions)
+    {
+        cfl_typed_node* definition = definitions->definition;
+
+        if(definition->resulting_type->type == CFL_TYPE_ARROW)
+        {
+            argument_type_map type_map;
+
+            llvm::Type* argument_type =
+                generate_type_inner(type_map, functions, definition->children[0]);
+
+            argument_type_mapping mapping(definition->children[0], argument_type);
+            type_map.push_back(mapping);
+
+            llvm::FunctionType* function_type;
+            llvm::StructType* struct_type;
+
+            if(!generate_function_struct_types(
+                    definition->children[0], definition->children[1], type_map,
+                    functions, &function_type, &struct_type))
+                return 0;
+
+            std::stringstream new_name;
+            new_name << "__D__" << definitions->name;
+
+            llvm::Function* function_def = llvm::Function::Create(
+                function_type, llvm::Function::ExternalLinkage,
+                new_name.str(), top_module);
+
+            llvm::BasicBlock* function_entry = llvm::BasicBlock::Create(
+                global_context, "function_entry", function_def);
+
+            builder->SetInsertPoint(function_entry);
+
+            argument_register_map new_register_map;
+
+            argument_type_map::iterator argument_type_itt = type_map.begin();
+            argument_type_map::iterator argument_type_end = type_map.end();
+            llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
+
+            for( ; argument_type_itt != argument_type_end; ++argument_type_itt)
+            {
+                argument_register_mapping new_mapping(
+                    argument_type_itt->first, arg_itt++);
+                new_register_map.push_back(new_mapping);
+            }
+
+            llvm::Value* result = compile_node(
+                definition->children[1], new_register_map, functions,
+                function_def, function_entry);
+
+            builder->CreateRet(result);
+
+            function_map_result function_result;
+
+            function_result.node = definition;
+            function_result.struct_type = struct_type;
+            function_result.function_def = function_def;
+
+            function_mapping f_mapping(definitions->name, function_result);
+            functions.push_back(f_mapping);
+        }
+        else
+        {
+            argument_type_map type_map;
+
+            llvm::Type* result_type =
+                generate_type_inner(type_map, functions, definition);
+
+            llvm::FunctionType* function_type =
+                llvm::FunctionType::get(result_type, false);
+
+            std::stringstream new_name;
+            new_name << "__D__" << definitions->name;
+
+            llvm::Function* function_def = llvm::Function::Create(
+                function_type, llvm::Function::ExternalLinkage,
+                new_name.str(), top_module);
+
+            llvm::BasicBlock* function_entry = llvm::BasicBlock::Create(
+                global_context, "function_entry", function_def);
+
+            builder->SetInsertPoint(function_entry);
+
+            argument_register_map new_register_map;
+
+            argument_type_map::iterator argument_type_itt = type_map.begin();
+            argument_type_map::iterator argument_type_end = type_map.end();
+            llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
+
+            for( ; argument_type_itt != argument_type_end; ++argument_type_itt)
+            {
+                argument_register_mapping new_mapping(
+                    argument_type_itt->first, arg_itt++);
+                new_register_map.push_back(new_mapping);
+            }
+
+            llvm::Value* result = compile_node(
+                definition, new_register_map, functions,
+                function_def, function_entry);
+
+            builder->CreateRet(result);
+
+            function_map_result function_result;
+
+            function_result.node = definition;
+            function_result.struct_type = 0;
+            function_result.function_def = function_def;
+
+            function_mapping f_mapping(definitions->name, function_result);
+            functions.push_back(f_mapping);
+        }
+
+        definitions = definitions->next;
+    }
+
+    return true;
+}
+
 bool Compiler::compile_program(cfl_typed_program* program)
 {
+    setup_global_defs();
+
+    function_map functions;
+
+    if(!compile_definitions(program->definitions, functions))
+        return false;
+
     llvm::FunctionType* main_type = llvm::FunctionType::get(
         builder->getInt32Ty(), false);
 
@@ -1047,12 +1184,7 @@ bool Compiler::compile_program(cfl_typed_program* program)
 
     builder->SetInsertPoint(main_entry);
 
-    setup_global_defs();
-
-    builder->SetInsertPoint(main_entry);
-
     argument_register_map register_map;
-    function_map functions;
 
     llvm::Value* result = compile_node(
         program->main, register_map, functions, main_def, main_entry);

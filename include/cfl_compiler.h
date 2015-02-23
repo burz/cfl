@@ -36,7 +36,7 @@ class Compiler
         llvm::Constant* function_def;
     } function_map_result;
 
-    typedef std::pair<cfl_typed_node*, function_map_result> function_mapping;
+    typedef std::pair<char*, function_map_result> function_mapping;
     typedef std::vector<function_mapping> function_map;
 
     typedef llvm::Value* node_compiler(cfl_typed_node* node,
@@ -48,6 +48,7 @@ class Compiler
     bool generate_function_struct_types(cfl_typed_node* argument,
                                         cfl_typed_node* expression,
                                         argument_type_map type_map,
+                                        function_map functions,
                                         llvm::FunctionType** function_type,
                                         llvm::StructType** struct_type);
 
@@ -55,9 +56,11 @@ class Compiler
                                     llvm::PointerType** struct_pointer_type);
 
     llvm::Type* generate_type_inner(argument_type_map type_map,
+                                    function_map functions,
                                     cfl_typed_node* node);
 
     llvm::Type* generate_type(argument_register_map register_map,
+                              function_map functions,
                               cfl_typed_node* node);
 
     llvm::Value* compile_node_bool(cfl_typed_node* node);
@@ -69,6 +72,7 @@ class Compiler
                              llvm::BasicBlock* entry_block);
     void call_free(llvm::Value* pointer);
 
+    llvm::StructType* generate_random_function_struct_type(void);
     llvm::Value* create_random_function_struct(llvm::Function* parent,
                                                llvm::BasicBlock* entry_block);
 
@@ -106,6 +110,9 @@ class Compiler
                                  llvm::Value* result,
                                  llvm::BasicBlock* block,
                                  bool in_string = false);
+
+    bool compile_definitions(cfl_typed_definition_list* definitions,
+                             function_map& functions);
 
     bool compile_program(cfl_typed_program* program);
   public:
