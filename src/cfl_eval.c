@@ -131,7 +131,7 @@ bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
     {
         cfl_definition_list* pos = definitions;
 
-       while(pos && strcmp(pos->name->data, node->data))
+        while(pos && strcmp(pos->name->data, node->data))
             pos = pos->next;
 
         if(pos)
@@ -140,6 +140,13 @@ bool cfl_evaluate(cfl_node* node, cfl_definition_list* definitions)
 
             if(!result)
                 return false;
+
+            if(!cfl_evaluate(result, definitions))
+            {
+                cfl_free_node(result);
+
+                return false;
+            }
 
             cfl_delete_node(node);
 
