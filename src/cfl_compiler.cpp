@@ -66,7 +66,7 @@ llvm::Function* Compiler::create_application_function(
     if(function_type->getNumParams() > 1)
     {
         llvm::Value* argument_array_pointer = builder->CreatePointerCast(
-            array_pointer, function_type->getPointerTo(), "argument_array_pointer");
+            array_pointer, array_type->getPointerTo(), "argument_array_pointer");
 
         for(int i = 0; i < function_type->getNumParams() - 1; ++i)
         {
@@ -897,7 +897,11 @@ llvm::Value* Compiler::compile_node_case(
     llvm::Value* element_pointer =
         builder->CreateExtractValue(list_node, 0, "element_pointer");
 
-    llvm::Value* element = builder->CreateLoad(element_pointer, "element");
+    cfl_type* element_type = (cfl_type*) node->children[0]->resulting_type->input;
+
+    llvm::Value* element =
+        extract_value_from_pointer(element_pointer, element_type);
+
     llvm::Value* tail = builder->CreateExtractValue(list_node, 1, "tail");
 
     argument_register_mapping element_mapping(node->children[2], element);
