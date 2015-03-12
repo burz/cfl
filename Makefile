@@ -71,7 +71,7 @@ CPPFILES = \
     cfl_compiler.print.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
-	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
+	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS) -lncurses
 
 clean:
 	rm -f *.o *.opp *.a

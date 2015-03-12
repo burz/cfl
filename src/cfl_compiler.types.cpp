@@ -61,6 +61,9 @@ bool Compiler::generate_function_struct_types(
     llvm::Type* return_type =
         generate_type_inner(new_argument_types, functions, resulting_expression);
 
+    if(!return_type)
+        return 0;
+
     std::vector<llvm::Type*> application_args;
     application_args.push_back(builder->getInt8PtrTy());
     application_args.push_back(builder->getInt8PtrTy());
@@ -125,7 +128,9 @@ llvm::Type* Compiler::generate_type_inner(
         function_map functions,
         cfl_typed_node* node)
 {
-    if(node->resulting_type->type == CFL_TYPE_BOOL)
+    if(node->resulting_type->type == CFL_TYPE_VARIABLE)
+        return builder->getInt8PtrTy();
+    else if(node->resulting_type->type == CFL_TYPE_BOOL)
         return builder->getInt1Ty();
     else if(node->resulting_type->type == CFL_TYPE_INTEGER)
         return builder->getInt32Ty();
@@ -152,6 +157,10 @@ llvm::Type* Compiler::generate_type_inner(
         if(!strcmp(name, "random"))
             return generate_random_function_struct_type();
     }
+    else if(node->node_type == CFL_NODE_IF)
+        return generate_type_inner(type_map, functions, node->children[1]);
+    else if(node->node_type == CFL_NODE_CASE)
+        return generate_type_inner(type_map, functions, node->children[1]);
 
     if(node->resulting_type->type == CFL_TYPE_LIST)
     {
@@ -186,6 +195,9 @@ llvm::Type* Compiler::generate_type_inner(
 
             llvm::Type* argument_type =
                 generate_type_inner(type_map, functions, node->children[1]);
+
+            if(!argument_type)
+                return 0;
 
             argument_type_mapping mapping(node->children[1], argument_type);
             new_type_map.push_back(mapping);
