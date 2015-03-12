@@ -18,6 +18,53 @@ static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
     }
 }
 
+static bool is_not_bound_in(
+        cfl_typed_node* variable,
+        cfl_typed_node* complex_variable)
+{
+    if(variable->node_type == CFL_NODE_VARIABLE)
+    {
+        if(complex_variable->node_type == CFL_NODE_VARIABLE)
+        {
+            if(*((char*) complex_variable->data) == '_')
+                return true;
+
+            return strcmp((char*) variable->data, (char*) complex_variable->data);
+        }
+
+        for(int i = 0; i < complex_variable->number_of_children; ++i)
+            if(!strcmp((char*) variable->data, (char*) complex_variable->children[i]->data))
+                return false;
+
+        return true;
+    }
+    else
+    {
+        for(int i = 0; i < variable->number_of_children; ++i)
+        {
+            if(*((char*) variable->children[i]->data) == '_')
+                    continue;
+
+            if(complex_variable->node_type == CFL_NODE_VARIABLE)
+            {
+                if(*((char*) complex_variable->data) == '_')
+                    continue;
+
+                if(!strcmp((char*) variable->children[i]->data,
+                           (char*) complex_variable->data))
+                    return false;
+            }
+            else
+                for(int j = 0; j < complex_variable->number_of_children; ++j)
+                    if(!strcmp((char*) variable->children[i]->data,
+                               (char*) complex_variable->children[j]->data))
+                        return false;
+        }
+
+        return true;
+    }
+}
+
 bool Compiler::generate_function_struct_types(
         cfl_typed_node* argument,
         cfl_typed_node* expression,
@@ -35,7 +82,7 @@ bool Compiler::generate_function_struct_types(
     argument_type_map::iterator end = saved_argument_types.end();
 
     for( ; itt != end; ++itt)
-        if(strcmp((char*) argument->data, (char*) itt->first->data) &&
+        if(is_not_bound_in(itt->first, argument) &&
            cfl_is_free_in_typed_node((char*) itt->first->data, expression))
         {
             args.push_back(itt->second); 

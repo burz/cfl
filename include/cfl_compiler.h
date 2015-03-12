@@ -96,6 +96,11 @@ class Compiler
                                           llvm::Function* parent,
                                           llvm::BasicBlock* entry_block);
 
+    void add_arguments(cfl_typed_node* argument,
+                       llvm::Value* location,
+                       argument_register_map& register_map,
+                       function_map functions);
+
     node_compiler compile_node_function;
     node_compiler compile_node_list;
     node_compiler compile_node_tuple;

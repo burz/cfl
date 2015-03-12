@@ -185,6 +185,36 @@ llvm::Value* Compiler::populate_function_struct(
     return allocated_struct;
 }
 
+void Compiler::add_arguments(
+        cfl_typed_node* argument,
+        llvm::Value* location,
+        argument_register_map& register_map,
+        function_map functions)
+{
+    if(argument->node_type == CFL_NODE_VARIABLE && *((char*) argument->data) != '_')
+    {
+        argument_register_mapping new_mapping(argument, location);
+        register_map.push_back(new_mapping);
+    }
+    else
+        for(int i = 0; i < argument->number_of_children; ++i)
+        {
+            llvm::Value* element_space =
+                builder->CreateExtractValue(location, i, "element_space");
+
+            llvm::Type* element_type =
+                generate_type(register_map, functions, argument->children[i]);
+
+            llvm::Value* element_pointer = builder->CreatePointerCast(
+                element_space, element_type->getPointerTo(), "element_pointer");
+
+            llvm::Value* tuple_element =
+                builder->CreateLoad(element_pointer, "tuple_element");
+
+            add_arguments(argument->children[i], tuple_element, register_map, functions);
+        }
+}
+
 llvm::Value* Compiler::compile_node_function(
         cfl_typed_node* node,
         argument_register_map register_map,
@@ -226,7 +256,11 @@ llvm::Value* Compiler::compile_node_function(
         return 0;
 
     std::stringstream new_name;
-    new_name << "_function_" << (char*) node->children[0]->data;
+
+    if(node->children[0]->node_type == CFL_NODE_VARIABLE)
+        new_name << "_function_" << (char*) node->children[0]->data;
+    else
+        new_name << "_function_tuple";
 
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
@@ -243,10 +277,7 @@ llvm::Value* Compiler::compile_node_function(
     llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
 
     for( ; argument_type_itt != argument_type_end; ++argument_type_itt)
-    {
-        argument_register_mapping new_mapping(argument_type_itt->first, arg_itt++);
-        new_register_map.push_back(new_mapping);
-    }
+        add_arguments(argument_type_itt->first, arg_itt++, new_register_map, functions);
 
     llvm::Value* result = compile_node(
         node->children[1], new_register_map, functions, function_def, function_entry);
@@ -742,8 +773,12 @@ llvm::Value* Compiler::compile_node_let_rec(
         return 0;
 
     std::stringstream new_name;
-    new_name << "_let_rec_" << (char*) node->children[0]->data
-             << "_" << (char*) node->children[1]->data;
+    new_name << "_let_rec_" << (char*) node->children[0]->data;
+
+    if(node->children[1]->node_type == CFL_NODE_VARIABLE)
+        new_name << "_" << (char*) node->children[1]->data;
+    else
+        new_name << "_tuple";
 
     llvm::Function* function_def = llvm::Function::Create(
         function_type, llvm::Function::ExternalLinkage, new_name.str(), top_module);
@@ -774,10 +809,7 @@ llvm::Value* Compiler::compile_node_let_rec(
     llvm::Function::arg_iterator arg_itt = function_def->arg_begin();
 
     for( ; argument_type_itt != argument_type_end; ++argument_type_itt)
-    {
-        argument_register_mapping new_mapping(argument_type_itt->first, arg_itt++);
-        new_register_map.push_back(new_mapping);
-    }
+        add_arguments(argument_type_itt->first, arg_itt++, new_register_map, functions);
 
     llvm::Value* result = compile_node(
         node->children[2], new_register_map, functions, function_def, function_entry);
