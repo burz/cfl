@@ -14,7 +14,7 @@ endif
 
 LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
-LLVMLIBS = $(shell llvm-config --libs core)
+LLVMLIBS = $(shell llvm-config --libs core --system-libs)
 
 LIBS = $(LLVMLIBS)
 FLAGS = $(INCL) $(LLVMFLAGS)
@@ -71,7 +71,7 @@ CPPFILES = \
     cfl_compiler.print.opp
 
 cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
-	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS) -lncurses
+	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
 
 clean:
 	rm -f *.o *.opp *.a
