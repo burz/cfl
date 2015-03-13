@@ -18,10 +18,10 @@ then
             fi
             opt $FILENAME.ll > $FILENAME.bc
             rm $FILENAME.ll
-            llc $FILENAME.bc
+            llc -filetype=obj -o $FILENAME.o $FILENAME.bc
             rm $FILENAME.bc
-            clang -o $FILENAME $FILENAME.s
-            rm $FILENAME.s
+            clang -o $FILENAME $FILENAME.o
+            rm $FILENAME.o
         fi
     else
         if [ "$1" == "-ll" ]
