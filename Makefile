@@ -74,7 +74,7 @@ cfl-core: cfl_main.opp $(CPPFILES) libcfl.a
 	$(CCPP) -o cfl-core $< $(CPPFILES) -L. -lcfl $(LDFLAGS)
 
 clean:
-	rm -f *.o *.opp *.a
+	rm -f *.o *.opp
 
 %.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $^ $(INCL)
