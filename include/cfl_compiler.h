@@ -47,6 +47,9 @@ class Compiler
                                        llvm::Function* parent,
                                        llvm::BasicBlock* entry_block);
 
+    bool is_not_bound_in(cfl_typed_node* variable,
+                         cfl_typed_node* complex_variable);
+
     bool generate_function_struct_types(cfl_typed_node* argument,
                                         cfl_typed_node* expression,
                                         argument_type_map type_map,

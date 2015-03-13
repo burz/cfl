@@ -18,7 +18,7 @@ static cfl_typed_node* find_leaf_node(cfl_typed_node* node)
     }
 }
 
-static bool is_not_bound_in(
+bool Compiler::is_not_bound_in(
         cfl_typed_node* variable,
         cfl_typed_node* complex_variable)
 {
@@ -191,7 +191,8 @@ llvm::Type* Compiler::generate_type_inner(
         argument_type_map::iterator end = type_map.end();
 
         for( ; itt != end; ++itt)
-            if(!strcmp((char*) itt->first->data, name))
+            if(itt->first->node_type == CFL_NODE_VARIABLE &&
+               !strcmp((char*) itt->first->data, name))
                 return itt->second;
 
         function_map::reverse_iterator function_itt = functions.rbegin();
@@ -220,7 +221,7 @@ llvm::Type* Compiler::generate_type_inner(
     }
     else if(node->resulting_type->type == CFL_TYPE_TUPLE)
         return llvm::ArrayType::get(builder->getInt8PtrTy(),
-                                    node->number_of_children);
+                                    node->resulting_type->id);
     else if(node->resulting_type->type == CFL_TYPE_ARROW)
     {
         if(node->node_type == CFL_NODE_LET_REC)

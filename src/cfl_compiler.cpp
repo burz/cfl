@@ -197,7 +197,7 @@ void Compiler::add_arguments(
         register_map.push_back(new_mapping);
     }
     else
-        for(int i = 0; i < argument->number_of_children; ++i)
+        for(int i = 0; i < argument->resulting_type->id; ++i)
         {
             llvm::Value* element_space =
                 builder->CreateExtractValue(location, i, "element_space");
@@ -743,7 +743,7 @@ llvm::Value* Compiler::compile_node_let_rec(
         char* argument = (char*) argument_reg_itt->first->data;
 
         if(strcmp(argument, (char*) node->children[0]->data) &&
-           strcmp(argument, (char*) node->children[1]->data) &&
+           is_not_bound_in(argument_reg_itt->first, node->children[1]) &&
            cfl_is_free_in_typed_node(argument, node->children[2]))
         {
             argument_type_mapping mapping(argument_reg_itt->first,
