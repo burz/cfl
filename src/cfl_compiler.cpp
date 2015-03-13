@@ -402,17 +402,15 @@ llvm::Value* Compiler::compile_node_tuple(
         if(!child_type)
             return 0;
 
-        llvm::Constant* size = builder->getInt32(1);
-
-        llvm::AllocaInst* child_space =
-            builder->CreateAlloca(child_type, size, "child_space");
-
-        builder->CreateStore(child, child_space);
+        llvm::Value* child_space =
+            call_malloc(child_type, parent, entry_block);
 
         llvm::Value* child_pointer = builder->CreatePointerCast(
-            child_space, builder->getInt8PtrTy(), "child_pointer");
+            child_space, child_type->getPointerTo(), "child_pointer");
 
-        tuple.push_back(child_pointer);
+        builder->CreateStore(child, child_pointer);
+
+        tuple.push_back(child_space);
         zeroes.push_back(llvm::ConstantPointerNull::get(builder->getInt8PtrTy()));
     }
 
