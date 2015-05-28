@@ -6,7 +6,5 @@
 *.bc
 *.dSYM
 
-*.cfl
-
 cfl-core-c
 cfl-core
