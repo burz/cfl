@@ -2,16 +2,19 @@
 
 import os
 import subprocess
+import time
 
 def call(command):
   subprocess.call(command, shell = True)
 
 def run_tests():
   print '\033[94mRunning tests...\033[0m'
+  start = time.time()
   total_passed_tests = 0
   total_failed_tests = 0
   for test_type in ['-eval', '-jit']:
     print '\033[93mUsing command \'' + test_type + '\'...\033[0m'
+    test_start = time.time()
     passed_tests = 0
     failed_tests = 0
     for f in os.listdir('tests/'):
@@ -34,11 +37,13 @@ def run_tests():
         call('rm ' + out_file)
     total_tests = passed_tests + failed_tests
     print '\033[90m' + str(passed_tests) + ' tests passed, and ' + \
-          str(failed_tests) + ' failed.\033[0m'
+          str(failed_tests) + ' failed in ' + \
+          str(time.time() - test_start) + ' seconds.\033[0m'
     total_passed_tests += passed_tests
     total_failed_tests += failed_tests
   total_tests = passed_tests + failed_tests
   print '\033[94m' + str(total_passed_tests) + ' tests passed, and ' + \
-        str(total_failed_tests) + ' failed.\033[0m'
+        str(total_failed_tests) + ' failed in ' + \
+        str(time.time() - start) + ' seconds.\033[0m'
 
 run_tests()
