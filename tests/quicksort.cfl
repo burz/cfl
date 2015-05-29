@@ -1,0 +1,14 @@
+split x xs l r = case xs of
+      []       -> (l, r)
+    | (y : ys) -> let (l', r') = split x ys l r in if y <= x
+        then (y : l', r')
+        else (l', y : r');
+
+quicksort x = case x of
+      []       -> []
+    | (y : ys) -> let (l, r) = split y ys [] []
+        in quicksort l ++ y : quicksort r;
+
+random_list x l = if x == 0 then [] else random l : random_list (x - 1) l;
+
+main = quicksort [4, 5, 6, 0, 3, 2, 83]

@@ -1,0 +1,22 @@
+compare x y = if x > y then -1 else if x == y then 0 else 1;
+
+combine x y = case x of
+      []       -> y
+    | (z : zs) -> case y of
+          []       -> x
+        | (w : ws) -> let r = compare z w in if r <= 0
+            then w : z : combine zs ws
+            else z : w : combine zs ws; 
+
+mergesort x = case x of
+      []       -> []
+    | (y : ys) -> case ys of
+          []       -> [y]
+        | (_ : ys) -> let mergesort' x' l r = case x' of
+              []       -> combine (mergesort l) (mergesort r)
+            | (z : zs) -> case zs of
+                  []       -> combine (mergesort $ z : l) (mergesort r)
+                | (w : ws) -> mergesort' ws (z : l) (w : r)
+            in mergesort' x [] [];
+
+main = mergesort [4, 5, 6, 0, 3, 2, 83]
