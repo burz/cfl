@@ -1,0 +1,1 @@
+main = if false then 0 else if true then 1 else -1

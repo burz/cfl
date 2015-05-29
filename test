@@ -23,10 +23,10 @@ def run_tests():
         result_contents = result.read()
       if out_contents != result_contents:
         failed_tests += 1
-        print 'ERROR: Test: ' + in_file + ' failed!'
+        print '\033[91mERROR:   Test ' + in_file + ' failed!\033[0m'
       else:
         passed_tests += 1
-        print 'Test: ' + in_file + ' passed.'
+        print '\033[92mSUCCESS: Test ' + in_file + ' passed.\033[0m'
       call('rm ' + out_file)
   print 'Done with tests.'
   total_tests = passed_tests + failed_tests
