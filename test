@@ -7,30 +7,38 @@ def call(command):
   subprocess.call(command, shell = True)
 
 def run_tests():
-  print 'Running tests...'
-  passed_tests = 0
-  failed_tests = 0
-  for f in os.listdir('tests/'):
-    if f.endswith('.cfl'):
-      in_file = 'tests/' + f
-      result_file = in_file + '.out'
-      out_file = f + '.out'
-      command = './cfl -eval ' + in_file + ' &> ' + out_file
-      call(command)
-      with open(out_file, 'r') as out:
-        out_contents = out.read()
-      with open(result_file, 'r') as result:
-        result_contents = result.read()
-      if out_contents != result_contents:
-        failed_tests += 1
-        print '\033[91mERROR:   Test ' + in_file + ' failed!\033[0m'
-      else:
-        passed_tests += 1
-        print '\033[92mSUCCESS: Test ' + in_file + ' passed.\033[0m'
-      call('rm ' + out_file)
-  print 'Done with tests.'
+  print '\033[94mRunning tests...\033[0m'
+  total_passed_tests = 0
+  total_failed_tests = 0
+  for test_type in ['-eval', '-jit']:
+    print '\033[93mUsing command \'' + test_type + '\'...\033[0m'
+    passed_tests = 0
+    failed_tests = 0
+    for f in os.listdir('tests/'):
+      if f.endswith('.cfl'):
+        in_file = 'tests/' + f
+        result_file = in_file + '.out'
+        out_file = f + '.out'
+        command = './cfl ' + test_type + ' ' + in_file + ' &> ' + out_file
+        call(command)
+        with open(out_file, 'r') as out:
+          out_contents = out.read()
+        with open(result_file, 'r') as result:
+          result_contents = result.read()
+        if out_contents != result_contents:
+          failed_tests += 1
+          print '\033[91mERROR:   Test ' + in_file + ' failed!\033[0m'
+        else:
+          passed_tests += 1
+          print '\033[92mSUCCESS: Test ' + in_file + ' passed.\033[0m'
+        call('rm ' + out_file)
+    total_tests = passed_tests + failed_tests
+    print '\033[90m' + str(passed_tests) + ' tests passed, and ' + \
+          str(failed_tests) + ' failed.\033[0m'
+    total_passed_tests += passed_tests
+    total_failed_tests += failed_tests
   total_tests = passed_tests + failed_tests
-  print str(passed_tests) + ' tests passed, and ' + \
-        str(failed_tests) + ' failed; total: ' + str(total_tests)
+  print '\033[94m' + str(total_passed_tests) + ' tests passed, and ' + \
+        str(total_failed_tests) + ' failed.\033[0m'
 
 run_tests()
