@@ -1,0 +1,7 @@
+map f x = case x of
+    []       -> []
+  | (y : ys) -> f y : map f ys;
+
+complex_map f x = map (function y -> map f y) x;
+
+main = complex_map (function z -> z + 5) [[0, 1, 2, 3], [0]]

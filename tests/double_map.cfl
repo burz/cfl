@@ -1,0 +1,5 @@
+map f x = case x of
+    []       -> []
+  | (y : ys) -> f y : map f ys;
+
+main = map (function y -> map (function x -> x + 5) y) [[0, 1, 2, 3], []]

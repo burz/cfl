@@ -1,0 +1,5 @@
+foo x = x + 10;
+
+bar x = x + 15;
+
+main = foo $ bar 0

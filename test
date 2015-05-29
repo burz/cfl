@@ -7,6 +7,13 @@ import time
 def call(command):
   subprocess.call(command, shell = True)
 
+def print_info(start, passed_tests, failed_tests, color):
+  total_tests = passed_tests + failed_tests
+  print color + str(passed_tests) + ' tests passed, and ' + \
+        str(failed_tests) + ' failed (' + \
+        str((failed_tests * 100.0) / total_tests) + '%) in ' + \
+        str(time.time() - start) + ' seconds.\033[0m'
+
 def run_tests():
   print '\033[94mRunning tests...\033[0m'
   start = time.time()
@@ -35,15 +42,9 @@ def run_tests():
           passed_tests += 1
           print '\033[92mSUCCESS: Test ' + in_file + ' passed.\033[0m'
         call('rm ' + out_file)
-    total_tests = passed_tests + failed_tests
-    print '\033[90m' + str(passed_tests) + ' tests passed, and ' + \
-          str(failed_tests) + ' failed in ' + \
-          str(time.time() - test_start) + ' seconds.\033[0m'
+    print_info(test_start, passed_tests, failed_tests, '\033[90m')
     total_passed_tests += passed_tests
     total_failed_tests += failed_tests
-  total_tests = passed_tests + failed_tests
-  print '\033[94m' + str(total_passed_tests) + ' tests passed, and ' + \
-        str(total_failed_tests) + ' failed in ' + \
-        str(time.time() - start) + ' seconds.\033[0m'
+  print_info(start, total_passed_tests, total_failed_tests, '\033[94m')
 
 run_tests()
