@@ -29,7 +29,7 @@ def run_tests():
         in_file = 'tests/' + f
         result_file = in_file + '.out'
         out_file = f + '.out'
-        command = './cfl ' + test_type + ' ' + in_file + ' &> ' + out_file
+        command = './cfl ' + test_type + ' ' + in_file + ' > ' + out_file
         call(command)
         with open(out_file, 'r') as out:
           out_contents = out.read()
