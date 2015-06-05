@@ -14,13 +14,17 @@ endif
 
 LLVMFLAGS = $(shell llvm-config --cxxflags)
 LLVMLDFLAGS = $(shell llvm-config --ldflags)
-LLVMLIBS = $(shell llvm-config --libs core --system-libs)
+LLVMLIBS = $(shell llvm-config --libs core)
+
+SYSTEMLIBS = $(shell llvm-config --system-libs 2> /dev/null; echo $$?)
+ifeq ($(SYSTEM_LIBS), 0)
+    LLVMLIBS += $(shell llvm-config --system-libs)
+endif
 
 LIBS = $(LLVMLIBS)
 FLAGS = $(INCL) $(LLVMFLAGS)
 
 ARCH = $(shell getconf LONG_BIT)
-
 ifeq ($(ARCH), 32)
     FLAGS += -DARCH_32
 else
