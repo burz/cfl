@@ -9,10 +9,10 @@ then
             ./cfl-core
         else
             FILENAME="${1%.*}"
-            ./cfl-core $@ 2> $FILENAME.ll
+            ./cfl-core $@ &> $FILENAME.ll
             if [ $? != 0 ]
             then
-                cat $FILENAME.ll
+                >&2 cat $FILENAME.ll
                 rm $FILENAME.ll
                 exit 1
             fi
@@ -34,7 +34,7 @@ then
                 ./cfl-core $2 &> $FILENAME.ll
                 if [ $? != 0 ]
                 then
-                    cat $FILENAME.ll
+                    >&2 cat $FILENAME.ll
                     rm $FILENAME.ll
                     exit 1
                 fi
@@ -47,7 +47,7 @@ then
                     ./cfl-core $2 &> $FILENAME.ll
                     if [ $? != 0 ]
                     then
-                        cat $FILENAME.ll
+                        >&2 cat $FILENAME.ll
                         rm $FILENAME.ll
                         exit 1
                     fi
@@ -71,9 +71,9 @@ else
             echo "Done."
             ./cfl $@
         else
-            echo -e "\033[31mAn error ocurred while building. make output:\033[0m"
-            echo "---------------------------------------------"
-            cat .make.log
+            >&2 echo -e "\033[31mAn error ocurred while building. make output:\033[0m"
+            >&2 echo "---------------------------------------------"
+            >&2 cat .make.log
         fi
         rm .make.log
         make clean &> /dev/null
