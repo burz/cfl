@@ -92,6 +92,7 @@ cfl_node_parser cfl_parse_concatenate;
 cfl_node_parser cfl_parse_case;
 cfl_node_parser cfl_parse_atom;
 cfl_node_parser cfl_parse_factor;
+cfl_node_parser cfl_parse_sub_term;
 cfl_node_parser cfl_parse_term;
 cfl_node_parser cfl_parse_molecule;
 cfl_node_parser cfl_parse_list_molecule;

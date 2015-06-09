@@ -93,7 +93,7 @@ cfl_node* cfl_parse_subtract(
                                    &left,
                                    &right,
                                    &cfl_parse_factor,
-                                   &cfl_parse_term,
+                                   &cfl_parse_sub_term,
                                    1,
                                    "-",
                                    position,

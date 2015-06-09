@@ -126,7 +126,7 @@ cfl_node* cfl_parse_add(
     if(!cfl_parse_binary_operation(end,
                                    &left,
                                    &right,
-                                   &cfl_parse_factor,
+                                   &cfl_parse_sub_term,
                                    &cfl_parse_term,
                                    1,
                                    "+",
