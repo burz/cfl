@@ -1,0 +1,1 @@
+main = let a = random 0 in a + 0
