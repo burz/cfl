@@ -495,27 +495,24 @@ bool cfl_typecheck(
     cfl_type_hypothesis_chain hypothesis_head;
     hypothesis_head.next = 0;
 
-    unsigned int definition_hypothesis_count = 0;
+    unsigned int hypothesis_count = 0;
 
-    if(program->definitions)
+    hypothesis_count = cfl_setup_definitions(&equations,
+                                             &hypothesis_head,
+                                             program->definitions);
+
+    if(!hypothesis_count)
     {
-        definition_hypothesis_count = cfl_setup_definitions(&equations,
-                                                            &hypothesis_head,
-                                                            program->definitions);
+        cfl_delete_type_equations(&equations);
 
-        if(!definition_hypothesis_count)
-        {
-            cfl_delete_type_equations(&equations);
-
-            return false;
-        }
+        return false;
     }
 
     cfl_type* result = cfl_generate_type_equation_chain(&equations,
                                                         &hypothesis_head,
                                                         program->main);
 
-    cfl_remove_n_hypotheses(&hypothesis_head, definition_hypothesis_count);
+    cfl_remove_n_hypotheses(&hypothesis_head, hypothesis_count);
 
     if(!result)
     {
