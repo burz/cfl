@@ -990,6 +990,12 @@ llvm::Value* Compiler::compile_node_case(
         llvm::Function* parent,
         llvm::BasicBlock* entry_block)
 {
+    llvm::Type* result_type =
+        generate_type(register_map, functions, node);
+
+    if(!result_type)
+        return 0;
+
     llvm::Value* list = compile_node(
         node->children[0], register_map, functions, parent, entry_block);
 
@@ -1021,7 +1027,7 @@ llvm::Value* Compiler::compile_node_case(
 
     builder->SetInsertPoint(nonempty);
 
-    llvm::Value* list_node = builder->CreateLoad(list, "list_node");
+    llvm::Value* list_node = builder->CreateLoad(list, "a_list_node");
 
     llvm::Value* element_pointer =
         builder->CreateExtractValue(list_node, 0, "element_pointer");
@@ -1050,12 +1056,6 @@ llvm::Value* Compiler::compile_node_case(
     llvm::BasicBlock* nonempty_end = builder->GetInsertBlock();
 
     builder->SetInsertPoint(case_end);
-
-    llvm::Type* result_type =
-        generate_type(register_map, functions, node);
-
-    if(!result_type)
-        return 0;
 
     llvm::PHINode* phi = builder->CreatePHI(result_type, 2, "phi");
 
